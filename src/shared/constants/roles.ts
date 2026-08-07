@@ -1,0 +1,6 @@
+export const ROLES = {
+  STUDENT: "STUDENT",
+  TEACHER: "TEACHER",
+  MANAGEMENT: "MANAGEMENT",
+  ADMIN: "ADMIN",
+} as const;
