@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthService } from "../services/AuthService";
+import { toast } from "sonner";
 
 export function LoginPage() {
 
@@ -20,7 +21,7 @@ export function LoginPage() {
         setLoading(false);
 
         if (error) {
-            alert(error.message);
+            toast.error(error.message);
             return;
         }
 

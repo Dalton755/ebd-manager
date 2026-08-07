@@ -4,9 +4,10 @@ import type { Pessoa } from "../types/Pessoa";
 export class PeopleRepository {
   static async listar() {
     const { data, error } = await supabase
-      .from("pessoas")
-      .select("*")
-      .order("nome");
+  .from("pessoas")
+  .select("*")
+  .eq("ativo", true)
+  .order("nome");
 
     if (error) {
       throw error;
@@ -49,12 +50,15 @@ export class PeopleRepository {
   }
 
   static async inativar(id: string) {
-    const { error } = await supabase
-      .from("pessoas")
-      .update({
-        ativo: false,
-      })
-      .eq("id", id);
+    const { data, error } = await supabase
+  .from("pessoas")
+  .update({
+    ativo: false,
+  })
+  .eq("id", id)
+  .select();
+
+  console.log("Pessoa inativada:", data);
 
     if (error) {
       throw error;

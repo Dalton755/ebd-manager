@@ -1,33 +1,56 @@
-import { PeopleService } from "@/modules/people/services/PeopleService";
+import {
+  LayoutDashboard,
+  Users,
+  GraduationCap,
+  BookOpen,
+  ClipboardCheck,
+} from "lucide-react";
+
+import { PageHeader } from "@/shared/components/ui/PageHeader";
+import { StatCard } from "@/shared/components/dashboard/StatCard";
 
 export function DashboardPage() {
-  async function criarPessoaTeste() {
-    try {
-      const pessoa = await PeopleService.criar({
-  nome: "Dalton Rocha",
-  email: "dalton@teste.com",
-  telefone: "(11)99999-9999",
-});
-
-      console.log(pessoa);
-
-      alert("Pessoa criada com sucesso!");
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao criar pessoa.");
-    }
-  }
-
   return (
-    <div className="p-8">
-      <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
+    <div className="space-y-8">
 
-      <button
-        onClick={criarPessoaTeste}
-        className="rounded-lg bg-blue-600 px-6 py-3 text-white hover:bg-blue-700"
-      >
-        Criar Pessoa de Teste
-      </button>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Visão geral da Escola Bíblica"
+        icon={LayoutDashboard}
+      />
+
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+
+        <StatCard
+          title="Pessoas"
+          value={3}
+          icon={Users}
+          color="bg-blue-100 text-blue-600"
+        />
+
+        <StatCard
+          title="Classes"
+          value={0}
+          icon={GraduationCap}
+          color="bg-green-100 text-green-600"
+        />
+
+        <StatCard
+          title="Aulas"
+          value={0}
+          icon={BookOpen}
+          color="bg-purple-100 text-purple-600"
+        />
+
+        <StatCard
+          title="Presenças"
+          value={0}
+          icon={ClipboardCheck}
+          color="bg-orange-100 text-orange-600"
+        />
+
+      </div>
+
     </div>
   );
 }

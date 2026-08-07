@@ -1,27 +1,24 @@
 import { Outlet } from "react-router-dom";
 
+import { Sidebar } from "@/shared/components/layout/Sidebar";
+import { Header } from "@/shared/components/layout/Header";
+
 export function MainLayout() {
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="flex h-16 items-center justify-between border-b bg-white px-6 shadow-sm">
-        <div>
-          <h1 className="text-xl font-bold text-blue-700">
-            EBD Manager
-          </h1>
+    <div className="flex h-screen bg-muted/30">
 
-          <p className="text-xs text-slate-500">
-            Sistema de Gestão da Escola Bíblica
-          </p>
-        </div>
+      <Sidebar />
 
-        <div className="text-sm text-slate-500">
-          Usuário
-        </div>
-      </header>
+      <div className="flex flex-1 flex-col">
 
-      <main className="p-6">
-        <Outlet />
-      </main>
+        <Header />
+
+        <main className="flex-1 overflow-auto p-6">
+          <Outlet />
+        </main>
+
+      </div>
+
     </div>
   );
 }

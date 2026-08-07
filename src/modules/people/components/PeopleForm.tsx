@@ -1,32 +1,70 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import { PeopleService } from "../services/PeopleService";
+import type { Pessoa } from "../types/Pessoa";
+import { maskTelefone } from "@/shared/lib/masks";  
+import { peopleSchema } from "../validations/peopleSchema";
 
 type Props = {
+  pessoa?: Pessoa;
   onSaved: () => void;
 };
 
-export function PeopleForm({ onSaved }: Props) {
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [telefone, setTelefone] = useState("");
-
+export function PeopleForm({
+  pessoa,
+  onSaved,
+}: Props) {
+  const [nome, setNome] = useState(pessoa?.nome ?? "");
+  const [email, setEmail] = useState(pessoa?.email ?? "");
+  const [telefone, setTelefone] = useState(pessoa?.telefone ?? "");
   const [salvando, setSalvando] = useState(false);
 
-  async function salvar() {
-    if (!nome || !email) {
-      alert("Informe o nome e o e-mail.");
-      return;
+  useEffect(() => {
+    console.log("PeopleForm recebeu:", pessoa);
+
+    if (pessoa) {
+      setNome(pessoa.nome);
+      setEmail(pessoa.email);
+      setTelefone(pessoa.telefone);
+    } else {
+      setNome("");
+      setEmail("");
+      setTelefone("");
     }
+  }, [pessoa]);
+
+  async function salvar() {
+    const validacao = peopleSchema.safeParse({
+  nome,
+  email,
+  telefone,
+});
+
+if (!validacao.success) {
+  toast.error(validacao.error.issues[0].message);
+  return;
+}
 
     try {
       setSalvando(true);
 
-      await PeopleService.criar({
-        nome,
-        email,
-        telefone,
-      });
+      if (pessoa) {
+  await PeopleService.editar(pessoa.id!, {
+    nome,
+    email,
+    telefone,
+  });
+
+  toast.success("Pessoa atualizada com sucesso!");
+} else {
+  await PeopleService.criar({
+    nome,
+    email,
+    telefone,
+  });
+
+  toast.success("Pessoa cadastrada com sucesso!");
+}
 
       setNome("");
       setEmail("");
@@ -34,10 +72,14 @@ export function PeopleForm({ onSaved }: Props) {
 
       onSaved();
 
-      alert("Pessoa cadastrada com sucesso!");
+     
     } catch (error) {
       console.error(error);
-      alert("Erro ao cadastrar pessoa.");
+      toast.error(
+  pessoa
+    ? "Erro ao atualizar pessoa."
+    : "Erro ao cadastrar pessoa."
+);
     } finally {
       setSalvando(false);
     }
@@ -47,7 +89,7 @@ export function PeopleForm({ onSaved }: Props) {
     <div className="mb-8 rounded-lg border bg-white p-6 shadow-sm">
 
       <h2 className="mb-4 text-xl font-semibold">
-        Nova Pessoa
+        {pessoa ? "Editar Pessoa" : "Nova Pessoa"}
       </h2>
 
       <div className="grid gap-4">
@@ -70,7 +112,7 @@ export function PeopleForm({ onSaved }: Props) {
           className="rounded border p-3"
           placeholder="Telefone"
           value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
+          onChange={(e) => setTelefone(maskTelefone(e.target.value))}
         />
 
         <button
@@ -78,7 +120,11 @@ export function PeopleForm({ onSaved }: Props) {
           disabled={salvando}
           className="rounded bg-blue-600 p-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
         >
-          {salvando ? "Salvando..." : "Salvar"}
+          {salvando
+            ? "Salvando..."
+            : pessoa
+              ? "Salvar Alterações"
+              : "Salvar"}
         </button>
 
       </div>

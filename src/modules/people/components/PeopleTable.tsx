@@ -1,17 +1,27 @@
 import type { Pessoa } from "../types/Pessoa";
+import { Users } from "lucide-react";
+import { EmptyState } from "@/shared/components/ui/EmptyState";
 
 type Props = {
   pessoas: Pessoa[];
+  onEditar: (pessoa: Pessoa) => void;
+  onInativar: (pessoa: Pessoa) => void;
 };
 
-export function PeopleTable({ pessoas }: Props) {
+export function PeopleTable({
+  pessoas,
+  onEditar,
+  onInativar,
+}: Props) {
   if (pessoas.length === 0) {
-    return (
-      <div className="rounded-lg border bg-white p-6 text-center text-gray-500">
-        Nenhuma pessoa cadastrada.
-      </div>
-    );
-  }
+  return (
+    <EmptyState
+      icon={Users}
+      title="Nenhuma pessoa encontrada"
+      description="Cadastre a primeira pessoa para começar."
+    />
+  );
+}
 
   return (
     <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
@@ -46,12 +56,20 @@ export function PeopleTable({ pessoas }: Props) {
 
               <td className="px-4 py-3 text-center space-x-2">
                 <button
+                  onClick={() => {
+                    console.log("EDITAR", pessoa);
+                    onEditar(pessoa);
+                  }}
                   className="rounded bg-yellow-500 px-3 py-1 text-sm text-white hover:bg-yellow-600"
                 >
                   Editar
                 </button>
 
                 <button
+                  onClick={() => {
+                    console.log("INATIVAR", pessoa);
+                    onInativar(pessoa);
+                  }}
                   className="rounded bg-red-600 px-3 py-1 text-sm text-white hover:bg-red-700"
                 >
                   Inativar
