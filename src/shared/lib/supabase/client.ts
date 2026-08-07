@@ -13,6 +13,10 @@ export const supabase = createClient(
   supabaseUrl,
   supabaseAnonKey,
   {
+    db: {
+      schema: "ebd",
+    },
+
     auth: {
       persistSession: true,
       autoRefreshToken: true,
