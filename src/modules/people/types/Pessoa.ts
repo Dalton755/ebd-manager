@@ -5,4 +5,18 @@ export interface Pessoa {
   telefone: string;
   ativo?: boolean;
   criado_em?: string;
+
+  perfil:
+    | "PENDENTE"
+    | "ADMIN"
+    | "PASTOR"
+    | "SUPERINTENDENTE"
+    | "PROFESSOR"
+    | "ALUNO";
+
+  status:
+    | "PENDENTE"
+    | "ATIVO"
+    | "INATIVO"
+    | "BLOQUEADO";
 }

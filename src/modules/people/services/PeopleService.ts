@@ -7,12 +7,12 @@ export class PeopleService {
   }
 
   static async criar(pessoa: Pessoa) {
-  return await PeopleRepository.criar(pessoa);
-}
+    return await PeopleRepository.criar(pessoa);
+  }
 
  static async editar(
   id: string,
-  pessoa: Pessoa
+  pessoa: Partial<Pessoa>
 ) {
   return await PeopleRepository.editar(id, pessoa);
 }
@@ -20,4 +20,16 @@ export class PeopleService {
   static async inativar(id: string) {
     return await PeopleRepository.inativar(id);
   }
+
+  static async atualizarPerfil(
+    id: string,
+    perfil: Pessoa["perfil"]
+  ) {
+    return await PeopleRepository.atualizarPerfil(
+      id,
+      perfil
+    );
+  }
+
+
 }

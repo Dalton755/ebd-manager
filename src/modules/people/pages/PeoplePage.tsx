@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { PeopleService } from "../services/PeopleService";
 import type { Pessoa } from "../types/Pessoa";
@@ -16,36 +16,96 @@ import {
 import { ConfirmDialog } from "@/shared/components/ui/ConfirmDialog";
 import { SearchInput } from "@/shared/components/ui/SearchInput";
 import { LoadingSpinner } from "@/shared/components/ui/LoadingSpinner";
+import { useSearch } from "@/shared/hooks/useSearch";
+import { useCrud } from "@/shared/hooks/useCrud";
+import { PeopleCardList } from "../components/PeopleCardList";
+import { Accordion } from "@/shared/components/ui/Accordion";
+import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { temPermissao } from "@/shared/auth/permissions";
 
 
 export function PeoplePage() {
-  const [pessoas, setPessoas] = useState<Pessoa[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [pesquisa, setPesquisa] = useState("");
+
+  const { pessoa: usuarioLogado } = useAuth();
+
+  const perfilUsuario =
+    usuarioLogado?.perfil === "PENDENTE"
+      ? undefined
+      : usuarioLogado?.perfil;
+
+  const podeGerenciarPessoas = temPermissao(
+    perfilUsuario,
+    "GERENCIAR_PESSOAS"
+  );
+
+  const podeGerenciarPerfis = temPermissao(
+    perfilUsuario,
+    "GERENCIAR_PERFIS"
+  );
+
+  const {
+    data: pessoas,
+    loading,
+    refresh: carregarPessoas,
+  } = useCrud<Pessoa>(
+    PeopleService.listar,
+    "Erro ao carregar pessoas."
+  );
   const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | undefined>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pessoaParaInativar, setPessoaParaInativar] = useState<Pessoa | undefined>();
 
-  async function carregarPessoas() {
-    setLoading(true);
+
+  async function atualizarPerfilPessoa(
+    pessoa: Pessoa,
+    perfil: Pessoa["perfil"]
+  ) {
+    if (!podeGerenciarPerfis) {
+      toast.error(
+        "Você não tem permissão para alterar perfis."
+      );
+      return;
+    }
+
+    if (!pessoa.id) return;
 
     try {
-      const dados = await PeopleService.listar();
-      setPessoas(dados ?? []);
+      await PeopleService.atualizarPerfil(
+        pessoa.id,
+        perfil
+      );
+
+      toast.success(
+        `Perfil de ${pessoa.nome} atualizado para ${perfil}.`
+      );
+
+      carregarPessoas();
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao carregar pessoas.");
-    } finally {
-      setLoading(false);
+      toast.error("Erro ao atualizar o perfil da pessoa.");
     }
   }
 
   function inativarPessoa(pessoa: Pessoa) {
+    if (!podeGerenciarPessoas) {
+      toast.error(
+        "Você não tem permissão para inativar pessoas."
+      );
+      return;
+    }
+
     setPessoaParaInativar(pessoa);
     setDialogOpen(true);
   }
 
   async function confirmarInativacao() {
+    if (!podeGerenciarPessoas) {
+      toast.error(
+        "Você não tem permissão para inativar pessoas."
+      );
+      return;
+    }
+
     if (!pessoaParaInativar) return;
 
     try {
@@ -65,16 +125,20 @@ export function PeoplePage() {
     }
   }
 
-  useEffect(() => {
-    carregarPessoas();
-  }, []);
 
-  const pessoasFiltradas = pessoas.filter((pessoa) =>
-    pessoa.nome.toLowerCase().includes(pesquisa.toLowerCase())
-  );
+
+  const {
+    search,
+    setSearch,
+    filtered: pessoasFiltradas,
+  } = useSearch(pessoas, (pessoa) => pessoa.nome);
+
+
 
   return (
-    <div className="p-8">
+
+
+    <div className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:p-6">
 
       <PageHeader
         title="Pessoas"
@@ -85,21 +149,17 @@ export function PeoplePage() {
       <Card className="mb-6">
         <CardContent className="pt-6">
           <SearchInput
-            value={pesquisa}
-            onChange={setPesquisa}
-            placeholder="Pesquisar pessoas..."
+            value={search}
+            onChange={setSearch}
           />
         </CardContent>
       </Card>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>
-            {pessoaSelecionada ? "Editar Pessoa" : "Nova Pessoa"}
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent>
+      {podeGerenciarPessoas && (
+        <Accordion
+          title={pessoaSelecionada ? "Editar Pessoa" : "Nova Pessoa"}
+          defaultOpen={window.innerWidth >= 768}
+        >
           <PeopleForm
             pessoa={pessoaSelecionada}
             onSaved={() => {
@@ -107,8 +167,8 @@ export function PeoplePage() {
               carregarPessoas();
             }}
           />
-        </CardContent>
-      </Card>
+        </Accordion>
+      )}
 
       <Card>
         <CardHeader>
@@ -119,11 +179,29 @@ export function PeoplePage() {
           {loading ? (
             <LoadingSpinner text="Carregando pessoas..." />
           ) : (
-            <PeopleTable
-              pessoas={pessoasFiltradas}
-              onEditar={(pessoa) => setPessoaSelecionada(pessoa)}
-              onInativar={inativarPessoa}
-            />
+            <>
+              <div className="hidden md:block">
+                <PeopleTable
+                  pessoas={pessoasFiltradas}
+                  onEditar={(pessoa) => setPessoaSelecionada(pessoa)}
+                  onInativar={inativarPessoa}
+                  onAtualizarPerfil={atualizarPerfilPessoa}
+                  podeGerenciar={podeGerenciarPessoas}
+                  podeGerenciarPerfis={podeGerenciarPerfis}
+                />
+              </div>
+
+              <div className="md:hidden">
+                <PeopleCardList
+                  pessoas={pessoasFiltradas}
+                  onEditar={(pessoa) => setPessoaSelecionada(pessoa)}
+                  onInativar={inativarPessoa}
+                  onAtualizarPerfil={atualizarPerfilPessoa}
+                  podeGerenciar={podeGerenciarPessoas}
+                  podeGerenciarPerfis={podeGerenciarPerfis}
+                />
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

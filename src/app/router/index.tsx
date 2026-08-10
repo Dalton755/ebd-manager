@@ -5,12 +5,42 @@ import { DashboardPage } from "../../modules/dashboard/pages/DashboardPage";
 import { LoginPage } from "../../modules/auth/pages/LoginPage";
 import { ProtectedRoute } from "@/modules/auth/components/ProtectedRoute";
 import { PeoplePage } from "@/modules/people/pages/PeoplePage";
+import { ResetPasswordPage } from "../../modules/auth/pages/ResetPasswordPage";
+import { AttendancePage } from "../../modules/attendance/pages/AttendancePage";
+import { AttendanceHistoryPage } from "../../modules/attendance/pages/AttendanceHistoryPage";
+import { StudentCheckinPage } from "../../modules/student/pages/StudentCheckinPage";
+import { AttendanceRecordsPage } from "@/modules/reports/pages/AttendanceRecordsPage";
+import { RegisterPage } from "../../modules/auth/pages/RegisterPage";
+import { PendingApprovalPage } from "../../modules/auth/pages/PendingApprovalPage";
+import { UserApprovalPage } from "@/modules/administration/pages/UserApprovalPage";
+import { TrimestersPage } from "@/modules/lessons/pages/TrimestersPage";
+import { LessonsPage } from "@/modules/lessons/pages/LessonsPage";
+import { ClassesPage } from "@/modules/classes/pages/ClassesPage";
+import { PermissionRoute } from "@/modules/auth/components/PermissionRoute";
+import { PasswordRecoveryRequestsPage } from "@/modules/password-recovery/pages/PasswordRecoveryRequestsPage";
+
 
 export const router = createBrowserRouter([
     {
         path: "/login",
         element: <LoginPage />,
     },
+
+    {
+        path: "/cadastro",
+        element: <RegisterPage />,
+    },
+
+    {
+        path: "/aguardando-aprovacao",
+        element: <PendingApprovalPage />,
+    },
+
+    {
+        path: "/reset-password",
+        element: <ResetPasswordPage />,
+    },
+
     {
         path: "/",
         element: (
@@ -21,12 +51,128 @@ export const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <DashboardPage />,
+                element: (
+                    <PermissionRoute permission="VER_DASHBOARD">
+                        <DashboardPage />
+                    </PermissionRoute>
+                ),
             },
+
             {
                 path: "pessoas",
-                element: <PeoplePage />,
+                element: (
+                    <PermissionRoute
+                        permission="VER_PESSOAS"
+                    >
+                        <PeoplePage />
+                    </PermissionRoute>
+                ),
             },
+
+            {
+                path: "classes",
+                element: (
+                    <PermissionRoute
+                        permission="VER_CLASSES"
+                    >
+                        <ClassesPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "checkin",
+                element: (
+                    <PermissionRoute
+                        permission="REGISTRAR_PRESENCA"
+                    >
+                        <AttendancePage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "presencas",
+                element: (
+                    <PermissionRoute
+                        permission="VER_PRESENCAS"
+                    >
+                        <AttendanceHistoryPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "aluno/checkin",
+                element: (
+                    <PermissionRoute
+                        permission="FAZER_CHECKIN"
+                    >
+                        <StudentCheckinPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "relatorios/presencas",
+                element: (
+                    <PermissionRoute permission="VER_PRESENCAS">
+                        <AttendanceRecordsPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "administracao/aprovacoes",
+                element: (
+                    <PermissionRoute
+                        permission="APROVAR_USUARIOS"
+                    >
+                        <UserApprovalPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "administracao/solicitacoes-senha",
+                element: (
+                    <PermissionRoute
+                        permission="APROVAR_USUARIOS"
+                    >
+                        <PasswordRecoveryRequestsPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "aulas",
+                element: (
+                    <PermissionRoute
+                        permissions={[
+                            "VER_AULAS",
+                            "VER_MINHAS_AULAS",
+                        ]}
+                    >
+                        <TrimestersPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "aulas/:trimestreId",
+                element: (
+                    <PermissionRoute
+                        permissions={[
+                            "VER_AULAS",
+                            "VER_MINHAS_AULAS",
+                        ]}
+                    >
+                        <LessonsPage />
+                    </PermissionRoute>
+                ),
+            },
+
+
         ],
     },
 ]);

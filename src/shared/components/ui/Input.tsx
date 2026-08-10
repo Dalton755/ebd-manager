@@ -1,17 +1,17 @@
 import type { InputHTMLAttributes } from "react";
 import clsx from "clsx";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement>;
+type Props = InputHTMLAttributes<HTMLInputElement>;
 
 export function Input({
   className,
   ...props
-}: InputProps) {
+}: Props) {
   return (
     <input
       {...props}
       className={clsx(
-        "w-full rounded-lg border border-gray-300 px-3 py-2 outline-none transition focus:border-blue-600 focus:ring-2 focus:ring-blue-200",
+        "h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200",
         className
       )}
     />

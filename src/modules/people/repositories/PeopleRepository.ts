@@ -4,10 +4,10 @@ import type { Pessoa } from "../types/Pessoa";
 export class PeopleRepository {
   static async listar() {
     const { data, error } = await supabase
-  .from("pessoas")
-  .select("*")
-  .eq("ativo", true)
-  .order("nome");
+      .from("pessoas")
+      .select("*")
+      .eq("ativo", true)
+      .order("nome");
 
     if (error) {
       throw error;
@@ -16,8 +16,7 @@ export class PeopleRepository {
     return data;
   }
 
-  static async criar(pessoa: Pessoa)
-   {
+  static async criar(pessoa: Pessoa) {
     const { data, error } = await supabase
       .from("pessoas")
       .insert(pessoa)
@@ -33,7 +32,7 @@ export class PeopleRepository {
 
   static async editar(
   id: string,
-  pessoa: Pessoa
+  pessoa: Partial<Pessoa>
 ) {
     const { data, error } = await supabase
       .from("pessoas")
@@ -51,17 +50,36 @@ export class PeopleRepository {
 
   static async inativar(id: string) {
     const { data, error } = await supabase
-  .from("pessoas")
-  .update({
-    ativo: false,
-  })
-  .eq("id", id)
-  .select();
+      .from("pessoas")
+      .update({
+        ativo: false,
+      })
+      .eq("id", id)
+      .select();
 
-  console.log("Pessoa inativada:", data);
+    console.log("Pessoa inativada:", data);
 
     if (error) {
       throw error;
     }
   }
+
+  static async atualizarPerfil(
+    id: string,
+    perfil: Pessoa["perfil"]
+  ) {
+    const { data, error } = await supabase
+      .from("pessoas")
+      .update({ perfil })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    return data;
+  }
+
 }

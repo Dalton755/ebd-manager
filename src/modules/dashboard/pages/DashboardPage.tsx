@@ -9,6 +9,7 @@ import {
 import { PageHeader } from "@/shared/components/ui/PageHeader";
 import { StatCard } from "@/shared/components/dashboard/StatCard";
 
+
 export function DashboardPage() {
   return (
     <div className="space-y-8">

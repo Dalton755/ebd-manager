@@ -1,36 +1,39 @@
 import type { LucideIcon } from "lucide-react";
 
-type PageHeaderProps = {
+type Props = {
   title: string;
   subtitle?: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
 };
 
 export function PageHeader({
   title,
   subtitle,
   icon: Icon,
-}: PageHeaderProps) {
+}: Props) {
   return (
-    <div className="mb-8 flex items-center gap-4">
+    <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-      <div className="rounded-xl bg-blue-100 p-3">
-        <Icon
-          className="h-7 w-7 text-blue-600"
-          strokeWidth={2}
-        />
-      </div>
+      <div className="flex items-center gap-3">
 
-      <div>
-        <h1 className="text-3xl font-bold text-slate-900">
-          {title}
-        </h1>
-
-        {subtitle && (
-          <p className="mt-1 text-sm text-slate-500">
-            {subtitle}
-          </p>
+        {Icon && (
+          <div className="rounded-lg bg-blue-100 p-3 text-blue-600">
+            <Icon size={20} />
+          </div>
         )}
+
+        <div>
+          <h1 className="text-2xl font-bold sm:text-3xl">
+            {title}
+          </h1>
+
+          {subtitle && (
+            <p className="mt-1 text-sm text-gray-500 sm:text-base">
+              {subtitle}
+            </p>
+          )}
+        </div>
+
       </div>
 
     </div>
