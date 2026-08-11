@@ -10,10 +10,18 @@ import type {
     Session,
     User,
 } from "@supabase/supabase-js";
-import type { Pessoa } from "@/modules/people/types/Pessoa";
 
-import { supabase } from "@/shared/lib/supabase/client";
-import { AuthService } from "@/modules/auth/services/AuthService";
+import type {
+    Pessoa,
+} from "@/modules/people/types/Pessoa";
+
+import {
+    supabase,
+} from "@/shared/lib/supabase/client";
+
+import {
+    AuthService,
+} from "@/modules/auth/services/AuthService";
 
 type AuthContextType = {
     user: User | null;
@@ -23,7 +31,7 @@ type AuthContextType = {
     logout: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType>(
+const AuthContext = createContext(
     {} as AuthContextType
 );
 
@@ -34,6 +42,7 @@ type Props = {
 export function AuthProvider({
     children,
 }: Props) {
+
     const [user, setUser] =
         useState<User | null>(null);
 
@@ -46,6 +55,135 @@ export function AuthProvider({
     const [pessoa, setPessoa] =
         useState<Pessoa | null>(null);
 
+
+    // =====================================================
+    // BUSCA A PESSOA OU CRIA AUTOMATICAMENTE
+    // =====================================================
+
+    async function buscarOuCriarPessoa(
+        usuario: User
+    ): Promise<Pessoa | null> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("pessoas")
+            .select("*")
+            .eq("user_id", usuario.id)
+            .maybeSingle();
+
+        if (error) {
+
+            console.error(
+                "Erro ao buscar cadastro:",
+                error
+            );
+
+            return null;
+        }
+
+
+        // Usuário já possui cadastro
+        if (data) {
+
+            return data;
+        }
+
+
+        // =================================================
+        // PRIMEIRO LOGIN COM GOOGLE
+        // Cria automaticamente como PENDENTE
+        // =================================================
+
+        console.log(
+            "Novo usuário autenticado. Criando cadastro..."
+        );
+
+        const {
+            data: novaPessoa,
+            error: erroCadastro,
+        } = await supabase
+            .schema("ebd")
+            .from("pessoas")
+            .insert({
+                user_id: usuario.id,
+
+                nome:
+                    usuario.user_metadata?.full_name ??
+                    usuario.user_metadata?.name ??
+                    "Usuário",
+
+                email:
+                    usuario.email ?? "",
+
+                telefone: "",
+
+                ativo: false,
+
+                status: "PENDENTE",
+
+                perfil: "ALUNO",
+            })
+            .select()
+            .single();
+
+
+        if (erroCadastro) {
+
+            console.error(
+                "Erro ao criar cadastro:",
+                erroCadastro
+            );
+
+            return null;
+        }
+
+
+        console.log(
+            "Cadastro criado com sucesso:",
+            novaPessoa
+        );
+
+        return novaPessoa;
+    }
+
+
+    // =====================================================
+    // ATUALIZA ESTADO DA AUTENTICAÇÃO
+    // =====================================================
+
+    async function atualizarAutenticacao(
+        novaSession: Session | null
+    ) {
+
+        setLoading(true);
+
+        setSession(novaSession);
+
+        const usuario =
+            novaSession?.user ?? null;
+
+        setUser(usuario);
+
+
+        if (!usuario) {
+
+            setPessoa(null);
+
+            setLoading(false);
+
+            return;
+        }
+
+
+        const pessoaEncontrada =
+            await buscarOuCriarPessoa(usuario);
+
+        setPessoa(pessoaEncontrada);
+
+        setLoading(false);
+    }
+
+
     useEffect(() => {
 
         async function carregarUsuario() {
@@ -54,103 +192,91 @@ export function AuthProvider({
                 data: { session },
             } = await supabase.auth.getSession();
 
-            if (
-                session &&
-                AuthService.isSessionExpired()
-            ) {
 
-                await AuthService.logout();
+            // =============================================
+            // CONTROLE DE EXPIRAÇÃO DE 12 HORAS
+            // =============================================
 
-                setSession(null);
-                setUser(null);
-                setPessoa(null);
-                setLoading(false);
+            if (session) {
 
-                return;
-            }
-
-            setSession(session);
-            setUser(session?.user ?? null);
-
-            if (session?.user) {
-
-                const { data, error } = await supabase
-                    .schema("ebd")
-                    .from("pessoas")
-                    .select("*")
-                    .eq("user_id", session.user.id)
-                    .maybeSingle();
-
-                console.log("=== AUTH PROVIDER ===");
-                console.log("User ID da sessão:", session.user.id);
-                console.log("Pessoa retornada:", data);
-                console.log("Erro:", error);
-                console.log("=====================");
-
-                if (error) {
-                    console.error(
-                        "Erro ao carregar pessoa:",
-                        error
+                const loginAt =
+                    localStorage.getItem(
+                        "login_at"
                     );
+
+                // Login Google não passa pelo
+                // AuthService.login()
+                if (!loginAt) {
+
+                    AuthService.saveLoginTime();
                 }
 
-                setPessoa(data ?? null);
+
+                if (
+                    AuthService.isSessionExpired()
+                ) {
+
+                    await AuthService.logout();
+
+                    setSession(null);
+                    setUser(null);
+                    setPessoa(null);
+                    setLoading(false);
+
+                    return;
+                }
             }
 
-            setLoading(false);
+
+            await atualizarAutenticacao(
+                session
+            );
         }
+
 
         carregarUsuario();
 
+
         const {
-            data: { subscription },
+            data: {
+                subscription,
+            },
         } = supabase.auth.onAuthStateChange(
-            async (_event, session) => {
+            async (
+                event,
+                novaSession
+            ) => {
 
-                setLoading(true);
+                console.log(
+                    "Evento de autenticação:",
+                    event
+                );
 
-                setSession(session);
-                setUser(session?.user ?? null);
 
-                if (session?.user) {
+                if (
+                    event === "SIGNED_IN" &&
+                    novaSession
+                ) {
 
-                    const { data, error } = await supabase
-                        .schema("ebd")
-                        .from("pessoas")
-                        .select("*")
-                        .eq("user_id", session.user.id)
-                        .maybeSingle();
-
-                    console.log("=== AUTH PROVIDER ===");
-                    console.log("User ID da sessão:", session.user.id);
-                    console.log("Pessoa retornada:", data);
-                    console.log("Erro:", error);
-                    console.log("=====================");
-
-                    if (error) {
-                        console.error(
-                            "Erro ao carregar pessoa:",
-                            error.message,
-                            error.code,
-                            error.details
-                        );
-                    }
-
-                    setPessoa(data ?? null);
-
-                } else {
-
-                    setPessoa(null);
-
+                    AuthService.saveLoginTime();
                 }
 
-                setLoading(false);
+
+                await atualizarAutenticacao(
+                    novaSession
+                );
             }
         );
 
-        return () => subscription.unsubscribe();
+
+        return () => {
+
+            subscription.unsubscribe();
+
+        };
 
     }, []);
+
 
     async function logout() {
 
@@ -162,7 +288,9 @@ export function AuthProvider({
 
     }
 
+
     return (
+
         <AuthContext.Provider
             value={{
                 user,
@@ -172,11 +300,19 @@ export function AuthProvider({
                 logout,
             }}
         >
+
             {children}
+
         </AuthContext.Provider>
+
     );
 }
 
+
 export function useAuth() {
-    return useContext(AuthContext);
+
+    return useContext(
+        AuthContext
+    );
+
 }

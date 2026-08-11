@@ -30,6 +30,38 @@ export function LoginPage() {
         }
     }, [user, navigate]);
 
+    async function handleGoogleLogin() {
+        try {
+            setLoading(true);
+
+            const { error } =
+                await AuthService.loginWithGoogle();
+
+            if (error) {
+                console.error(
+                    "Erro no login com Google:",
+                    error
+                );
+
+                toast.error(
+                    "Não foi possível entrar com o Google."
+                );
+            }
+
+        } catch (error) {
+            console.error(
+                "Erro inesperado no login com Google:",
+                error
+            );
+
+            toast.error(
+                "Não foi possível entrar com o Google."
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
 
@@ -184,6 +216,29 @@ export function LoginPage() {
                         className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
                     >
                         {loading ? "Entrando..." : "Entrar"}
+                    </button>
+
+                    <div className="flex items-center gap-3">
+                        <div className="h-px flex-1 bg-slate-200" />
+
+                        <span className="text-xs text-slate-400">
+                            OU
+                        </span>
+
+                        <div className="h-px flex-1 bg-slate-200" />
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={handleGoogleLogin}
+                        disabled={loading}
+                        className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white py-3 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full text-sm font-bold text-red-500">
+                            G
+                        </span>
+
+                        Continuar com Google
                     </button>
 
                     <div className="space-y-3 text-center">

@@ -23,6 +23,15 @@ export class AuthService {
     return result;
   }
 
+  static async loginWithGoogle() {
+  return await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: window.location.origin,
+    },
+  });
+}
+
   static async logout() {
 
     localStorage.removeItem(this.SESSION_KEY);

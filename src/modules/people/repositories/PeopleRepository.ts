@@ -17,23 +17,38 @@ export class PeopleRepository {
   }
 
   static async criar(pessoa: Pessoa) {
-    const { data, error } = await supabase
-      .from("pessoas")
-      .insert(pessoa)
-      .select()
-      .single();
+    const {
+      data,
+      error,
+    } = await supabase.functions.invoke(
+      "create-user-admin",
+      {
+        body: {
+          nome: pessoa.nome,
+          email: pessoa.email,
+          telefone: pessoa.telefone,
+        },
+      }
+    );
 
     if (error) {
       throw error;
     }
 
-    return data;
+    if (!data?.success) {
+      throw new Error(
+        data?.error ??
+        "Não foi possível cadastrar o usuário."
+      );
+    }
+
+    return data.pessoa;
   }
 
   static async editar(
-  id: string,
-  pessoa: Partial<Pessoa>
-) {
+    id: string,
+    pessoa: Partial<Pessoa>
+  ) {
     const { data, error } = await supabase
       .from("pessoas")
       .update(pessoa)
