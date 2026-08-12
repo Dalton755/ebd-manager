@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { CheckinCard } from "../components/CheckinCard";
@@ -9,200 +9,264 @@ import { StudentCheckinService } from "../services/StudentCheckinService";
 export function StudentCheckinPage() {
     const [loading, setLoading] = useState(false);
     const [checkedIn, setCheckedIn] = useState(false);
+    const [checkinDisponivel, setCheckinDisponivel] =
+        useState(false);
+    const [mensagemCheckin, setMensagemCheckin] =
+        useState("Verificando disponibilidade...");
 
-   async function handleCheckin() {
+    useEffect(() => {
 
-    if (!navigator.geolocation) {
+        async function verificarDisponibilidade() {
 
-        toast.error(
-            "Seu dispositivo não suporta localização."
-        );
+            try {
 
-        return;
-    }
-
-    try {
-
-        setLoading(true);
-
-        const user =
-            await AuthService.getUser();
-
-        if (!user) {
-
-            toast.error(
-                "Não foi possível identificar o usuário."
-            );
-
-            setLoading(false);
-
-            return;
-        }
-
-        const { data: pessoa, error } =
-            await supabase
-                .schema("ebd")
-                .from("pessoas")
-                .select("id, nome, perfil, status, ativo")
-                .eq("user_id", user.id)
-                .maybeSingle();
-
-        if (error) {
-            throw error;
-        }
-
-        if (!pessoa?.id) {
-
-            toast.error(
-                "Seu cadastro de aluno não foi encontrado."
-            );
-
-            setLoading(false);
-
-            return;
-        }
-
-        if (
-            pessoa.perfil !== "ALUNO"
-        ) {
-
-            toast.error(
-                "Esta área é exclusiva para alunos."
-            );
-
-            setLoading(false);
-
-            return;
-        }
-
-        if (
-            !pessoa.ativo ||
-            pessoa.status !== "ATIVO"
-        ) {
-
-            toast.error(
-                "Seu cadastro não está ativo."
-            );
-
-            setLoading(false);
-
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-
-            async (position) => {
-
-                try {
-
-                    const {
-                        latitude,
-                        longitude,
-                        accuracy,
-                    } = position.coords;
-
+                const aula =
                     await StudentCheckinService
-                        .realizarCheckin(
-                            pessoa.id,
-                            latitude,
-                            longitude,
-                            accuracy
-                        );
+                        .buscarAulaDeHoje();
 
-                    setCheckedIn(true);
+                if (!aula) {
 
-                    toast.success(
-                        "Check-in realizado com sucesso!"
+                    setCheckinDisponivel(false);
+
+                    setMensagemCheckin(
+                        "Não há aula agendada para hoje."
                     );
 
-                } catch (error) {
-
-                    console.error(error);
-
-                    const mensagem =
-                        error instanceof Error
-                            ? error.message
-                            : "Não foi possível realizar o check-in.";
-
-                    toast.error(mensagem);
-
-                } finally {
-
-                    setLoading(false);
-
+                    return;
                 }
 
-            },
+                const janela =
+                    StudentCheckinService
+                        .verificarJanelaCheckin();
 
-            (error) => {
-
-                console.error(
-                    "Erro ao obter localização:",
-                    error
+                setCheckinDisponivel(
+                    janela.permitido
                 );
 
-                switch (error.code) {
+                setMensagemCheckin(
+                    janela.permitido
+                        ? "Check-in disponível."
+                        : janela.mensagem
+                );
 
-                    case error.PERMISSION_DENIED:
+            } catch (error) {
 
-                        toast.error(
-                            "Permissão de localização negada."
-                        );
+                console.error(error);
 
-                        break;
+                setCheckinDisponivel(false);
 
-                    case error.POSITION_UNAVAILABLE:
+                setMensagemCheckin(
+                    "Não foi possível verificar o check-in."
+                );
+            }
+        }
 
-                        toast.error(
-                            "Não foi possível obter sua localização."
-                        );
+        verificarDisponibilidade();
 
-                        break;
+        const intervalo =
+            window.setInterval(
+                verificarDisponibilidade,
+                30000
+            );
 
-                    case error.TIMEOUT:
+        return () =>
+            window.clearInterval(intervalo);
 
-                        toast.error(
-                            "Tempo limite para obter sua localização."
-                        );
+    }, []);
 
-                        break;
+    async function handleCheckin() {
 
-                    default:
+        if (!navigator.geolocation) {
 
-                        toast.error(
-                            "Erro ao obter sua localização."
-                        );
+            toast.error(
+                "Seu dispositivo não suporta localização."
+            );
 
-                }
+            return;
+        }
+
+        try {
+
+            setLoading(true);
+
+            const user =
+                await AuthService.getUser();
+
+            if (!user) {
+
+                toast.error(
+                    "Não foi possível identificar o usuário."
+                );
 
                 setLoading(false);
 
-            },
-
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0,
+                return;
             }
 
-        );
+            const { data: pessoa, error } =
+                await supabase
+                    .schema("ebd")
+                    .from("pessoas")
+                    .select("id, nome, perfil, status, ativo")
+                    .eq("user_id", user.id)
+                    .maybeSingle();
 
-    } catch (error) {
+            if (error) {
+                throw error;
+            }
 
-        console.error(error);
+            if (!pessoa?.id) {
 
-        const mensagem =
-            error instanceof Error
-                ? error.message
-                : "Não foi possível iniciar o check-in.";
+                toast.error(
+                    "Seu cadastro de aluno não foi encontrado."
+                );
 
-        toast.error(mensagem);
+                setLoading(false);
 
-        setLoading(false);
+                return;
+            }
+
+            if (
+                pessoa.perfil !== "ALUNO"
+            ) {
+
+                toast.error(
+                    "Esta área é exclusiva para alunos."
+                );
+
+                setLoading(false);
+
+                return;
+            }
+
+            if (
+                !pessoa.ativo ||
+                pessoa.status !== "ATIVO"
+            ) {
+
+                toast.error(
+                    "Seu cadastro não está ativo."
+                );
+
+                setLoading(false);
+
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+
+                async (position) => {
+
+                    try {
+
+                        const {
+                            latitude,
+                            longitude,
+                            accuracy,
+                        } = position.coords;
+
+                        await StudentCheckinService
+                            .realizarCheckin(
+                                pessoa.id,
+                                latitude,
+                                longitude,
+                                accuracy
+                            );
+
+                        setCheckedIn(true);
+
+                        toast.success(
+                            "Check-in realizado com sucesso!"
+                        );
+
+                    } catch (error) {
+
+                        console.error(error);
+
+                        const mensagem =
+                            error instanceof Error
+                                ? error.message
+                                : "Não foi possível realizar o check-in.";
+
+                        toast.error(mensagem);
+
+                    } finally {
+
+                        setLoading(false);
+
+                    }
+
+                },
+
+                (error) => {
+
+                    console.error(
+                        "Erro ao obter localização:",
+                        error
+                    );
+
+                    switch (error.code) {
+
+                        case error.PERMISSION_DENIED:
+
+                            toast.error(
+                                "Permissão de localização negada."
+                            );
+
+                            break;
+
+                        case error.POSITION_UNAVAILABLE:
+
+                            toast.error(
+                                "Não foi possível obter sua localização."
+                            );
+
+                            break;
+
+                        case error.TIMEOUT:
+
+                            toast.error(
+                                "Tempo limite para obter sua localização."
+                            );
+
+                            break;
+
+                        default:
+
+                            toast.error(
+                                "Erro ao obter sua localização."
+                            );
+
+                    }
+
+                    setLoading(false);
+
+                },
+
+                {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0,
+                }
+
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+            const mensagem =
+                error instanceof Error
+                    ? error.message
+                    : "Não foi possível iniciar o check-in.";
+
+            toast.error(mensagem);
+
+            setLoading(false);
+
+        }
 
     }
-
-}
 
     return (
         <div className="min-h-screen bg-slate-100 p-4">
@@ -222,6 +286,8 @@ export function StudentCheckinPage() {
                         checkedIn={checkedIn}
                         loading={loading}
                         onCheckin={handleCheckin}
+                        checkinDisponivel={checkinDisponivel}
+                        mensagemCheckin={mensagemCheckin}
                     />
                 </div>
             </div>

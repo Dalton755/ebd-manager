@@ -8,12 +8,16 @@ type Props = {
     checkedIn: boolean;
     loading: boolean;
     onCheckin: () => void;
+    checkinDisponivel: boolean;
+    mensagemCheckin: string;
 };
 
 export function CheckinCard({
     checkedIn,
     loading,
     onCheckin,
+    checkinDisponivel,
+    mensagemCheckin,
 }: Props) {
     return (
         <div className="rounded-2xl bg-white p-6 shadow-lg">
@@ -76,10 +80,25 @@ export function CheckinCard({
                         </div>
                     </div>
 
+                    <div className="mb-4 rounded-xl bg-slate-50 p-4 text-center">
+                        <p className="text-sm font-medium text-slate-600">
+                            {mensagemCheckin}
+                        </p>
+
+                        {checkinDisponivel && (
+                            <p className="mt-1 text-xs text-slate-400">
+                                Disponível das 09:00 às 10:45
+                            </p>
+                        )}
+                    </div>
+
                     <button
                         type="button"
                         onClick={onCheckin}
-                        disabled={loading}
+                        disabled={
+                            loading ||
+                            !checkinDisponivel
+                        }
                         className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
                     >
                         {loading ? (

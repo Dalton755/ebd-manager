@@ -11,12 +11,57 @@ export class StudentCheckinService {
         );
     }
 
+    static verificarJanelaCheckin() {
+
+        const agora = new Date();
+
+        const hora = agora.getHours();
+        const minutos = agora.getMinutes();
+
+        const minutosAtuais =
+            hora * 60 + minutos;
+
+        const inicio =
+            9 * 60; // 09:00
+
+        const fim =
+            10 * 60 + 45; // 10:45
+
+        if (minutosAtuais < inicio) {
+            return {
+                permitido: false,
+                mensagem:
+                    "O check-in estará disponível a partir das 09:00.",
+            };
+        }
+
+        if (minutosAtuais > fim) {
+            return {
+                permitido: false,
+                mensagem:
+                    "O período de check-in foi encerrado às 10:45.",
+            };
+        }
+
+        return {
+            permitido: true,
+            mensagem: "",
+        };
+    }
+
     static async realizarCheckin(
         pessoaId: string,
         latitude: number,
         longitude: number,
         precisao?: number
     ) {
+
+        const janela =
+            this.verificarJanelaCheckin();
+
+        if (!janela.permitido) {
+            throw new Error(janela.mensagem);
+        }
 
         const data = this.obterDataLocal();
 
