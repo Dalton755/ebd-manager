@@ -44,7 +44,10 @@ export function MainLayout() {
                     </button>
                 </div>
 
-                <Sidebar />
+                <Sidebar
+                
+                onNavigate={() => setMenuOpen(false)}
+                />
             </aside>
 
             {/* Área principal */}

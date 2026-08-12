@@ -27,9 +27,16 @@ type MenuItemProps = {
     label: string;
     permission: Permissao;
     end?: boolean;
+    onNavigate?: () => void;
 };
 
-export function Sidebar() {
+type SidebarProps = {
+    onNavigate?: () => void;
+};
+
+export function Sidebar({
+    onNavigate,
+}: SidebarProps) {
 
     const { pessoa } = useAuth();
 
@@ -55,6 +62,7 @@ export function Sidebar() {
         label,
         permission,
         end = false,
+        onNavigate,
     }: MenuItemProps) {
 
         if (!temAcesso(permission)) {
@@ -65,6 +73,7 @@ export function Sidebar() {
             <NavLink
                 to={to}
                 end={end}
+                onClick={onNavigate}
                 className={({ isActive }) =>
                     `block rounded-md px-3 py-2 transition ${isActive
                         ? "bg-slate-100 font-semibold text-slate-900"
@@ -116,6 +125,7 @@ export function Sidebar() {
                             icon={LayoutDashboard}
                             label="Dashboard"
                             permission="VER_DASHBOARD"
+                            onNavigate={onNavigate}
                         />
 
                         <MenuItem
@@ -123,6 +133,7 @@ export function Sidebar() {
                             icon={Users}
                             label="Pessoas"
                             permission="VER_PESSOAS"
+                            onNavigate={onNavigate}
                         />
 
                         <MenuItem
@@ -130,6 +141,7 @@ export function Sidebar() {
                             icon={GraduationCap}
                             label="Classes"
                             permission="VER_CLASSES"
+                            onNavigate={onNavigate}
                         />
 
                         <MenuItem
@@ -137,6 +149,7 @@ export function Sidebar() {
                             icon={BookOpen}
                             label="Aulas"
                             permission="VER_AULAS"
+                            onNavigate={onNavigate}
                         />
 
                         <MenuItem
@@ -144,6 +157,7 @@ export function Sidebar() {
                             icon={Wallet}
                             label="Financeiro"
                             permission="VER_FINANCEIRO"
+                            onNavigate={onNavigate}
                         />
                     </>
                 )}
@@ -161,6 +175,7 @@ export function Sidebar() {
                             icon={ClipboardCheck}
                             label="Registrar presença"
                             permission="REGISTRAR_PRESENCA"
+                            onNavigate={onNavigate}
                         />
 
                         <MenuItem
@@ -168,6 +183,7 @@ export function Sidebar() {
                             icon={History}
                             label="Histórico de presenças"
                             permission="VER_PRESENCAS"
+                            onNavigate={onNavigate}
                         />
                     </>
                 )}
@@ -183,6 +199,7 @@ export function Sidebar() {
                             icon={UserCog}
                             label="Aprovação de usuários"
                             permission="APROVAR_USUARIOS"
+                            onNavigate={onNavigate}
                         />
 
                         <MenuItem
@@ -190,6 +207,7 @@ export function Sidebar() {
                             icon={KeyRound}
                             label="Solicitações de senha"
                             permission="APROVAR_USUARIOS"
+                            onNavigate={onNavigate}
                         />
                     </>
                 )}
@@ -203,6 +221,7 @@ export function Sidebar() {
                             icon={BookOpen}
                             label="Minhas aulas"
                             permission="VER_MINHAS_AULAS"
+                            onNavigate={onNavigate}
                         />
 
                         <MenuItem
@@ -210,6 +229,7 @@ export function Sidebar() {
                             icon={MapPin}
                             label="Check-in"
                             permission="FAZER_CHECKIN"
+                            onNavigate={onNavigate}
                         />
 
                         <MenuItem
@@ -217,14 +237,17 @@ export function Sidebar() {
                             icon={History}
                             label="Minhas presenças"
                             permission="VER_MINHAS_PRESENCAS"
+                            onNavigate={onNavigate}
                         />
 
                         <div className="my-4 border-t border-slate-200" />
 
                         <NavLink
                             to="/meus-dados"
+                            onClick={() => onNavigate?.()}
                             className="block rounded-md px-3 py-2 hover:bg-muted"
                         >
+
                             <div className="flex items-center gap-3">
                                 <UserRound size={18} />
                                 <span>Meus dados</span>
