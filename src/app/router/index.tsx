@@ -1,4 +1,7 @@
-import { createBrowserRouter } from "react-router-dom";
+import {
+    createBrowserRouter,
+    Navigate,
+} from "react-router-dom";
 
 import { MainLayout } from "../layouts/MainLayout";
 import { DashboardPage } from "../../modules/dashboard/pages/DashboardPage";
@@ -23,7 +26,34 @@ import { FinancePage } from "@/modules/finance/pages/FinancePage";
 import { HomePage } from "@/modules/home/pages/HomePage";
 import { StudentAttendancePage } from "@/modules/student/pages/StudentAttendancePage";
 import { MeusDadosPage } from "@/modules/student/pages/MeusDadosPage";
+import { useAuth } from "@/modules/auth/hooks/useAuth";
 
+function RotaInicial() {
+
+    const {
+        pessoa,
+    } = useAuth();
+
+    if (
+        pessoa?.perfil === "ALUNO" ||
+        pessoa?.perfil === "PROFESSOR"
+    ) {
+        return (
+            <Navigate
+                to="/inicio"
+                replace
+            />
+        );
+    }
+
+    return (
+        <PermissionRoute
+            permission="VER_DASHBOARD"
+        >
+            <DashboardPage />
+        </PermissionRoute>
+    );
+}
 
 export const router = createBrowserRouter([
     {
@@ -68,11 +98,7 @@ export const router = createBrowserRouter([
 
             {
                 index: true,
-                element: (
-                    <PermissionRoute permission="VER_DASHBOARD">
-                        <DashboardPage />
-                    </PermissionRoute>
-                ),
+                element: <RotaInicial />,
             },
 
             {
