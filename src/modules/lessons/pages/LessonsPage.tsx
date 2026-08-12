@@ -607,8 +607,27 @@ export function LessonsPage() {
             const hojeFormatado =
                 `${ano}-${mes}-${dia}`;
 
-            return aula.data <= hojeFormatado;
+            // Encontra a próxima aula a partir de hoje
+            const proximaAula =
+                aulas
+                    .filter(
+                        (item) =>
+                            item.data >= hojeFormatado
+                    )
+                    .sort(
+                        (a, b) =>
+                            a.data.localeCompare(b.data)
+                    )[0];
 
+            // Se não houver mais aulas futuras,
+            // mostra todas as aulas do trimestre
+            if (!proximaAula) {
+                return true;
+            }
+
+            // Mostra as aulas anteriores
+            // e a próxima aula
+            return aula.data <= proximaAula.data;
         }
 
         return false;
