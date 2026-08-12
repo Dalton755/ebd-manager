@@ -19,7 +19,7 @@ Deno.serve(async (req: Request) => {
     try {
 
         // =====================================================
-        // AUTENTICAÇÃO DO ADMINISTRADOR
+        // AUTENTICAÇÃO
         // =====================================================
 
         const authorization =
@@ -50,25 +50,17 @@ Deno.serve(async (req: Request) => {
                 "SUPABASE_SERVICE_ROLE_KEY"
             );
 
-        const defaultPassword =
-            Deno.env.get(
-                "ADMIN_DEFAULT_PASSWORD"
-            );
-
 
         if (
             !supabaseUrl ||
-            !serviceRoleKey ||
-            !defaultPassword
+            !serviceRoleKey
         ) {
             throw new Error(
-                "Configuração da função não está completa."
+                "Configuração do Supabase não encontrada."
             );
         }
 
 
-        // Cliente privilegiado.
-        // Usado SOMENTE no backend.
         const supabase = createClient(
             supabaseUrl,
             serviceRoleKey
@@ -76,7 +68,7 @@ Deno.serve(async (req: Request) => {
 
 
         // =====================================================
-        // IDENTIFICA O ADMIN LOGADO
+        // IDENTIFICA O USUÁRIO LOGADO
         // =====================================================
 
         const token =
@@ -88,7 +80,7 @@ Deno.serve(async (req: Request) => {
 
         const {
             data: {
-                user: usuarioLogado,
+                user,
             },
             error: authError,
         } =
@@ -99,7 +91,7 @@ Deno.serve(async (req: Request) => {
 
         if (
             authError ||
-            !usuarioLogado
+            !user
         ) {
             return new Response(
                 JSON.stringify({
@@ -119,90 +111,22 @@ Deno.serve(async (req: Request) => {
 
 
         // =====================================================
-        // VERIFICA SE É ADMIN ATIVO
+        // RECEBE A NOVA SENHA
         // =====================================================
 
         const {
-            data: admin,
-            error: adminError,
-        } =
-            await supabase
-                .schema("ebd")
-                .from("pessoas")
-                .select(`
-                    id,
-                    perfil,
-                    ativo,
-                    status
-                `)
-                .eq(
-                    "user_id",
-                    usuarioLogado.id
-                )
-                .maybeSingle();
-
-
-        if (adminError) {
-            throw adminError;
-        }
-
-
-        const ehAdmin =
-            admin &&
-            admin.perfil === "ADMIN" &&
-            admin.ativo === true &&
-            admin.status === "ATIVO";
-
-
-        if (!ehAdmin) {
-            return new Response(
-                JSON.stringify({
-                    error:
-                        "Você não possui permissão para cadastrar usuários.",
-                }),
-                {
-                    status: 403,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
-            );
-        }
-
-
-        // =====================================================
-        // DADOS DO NOVO USUÁRIO
-        // =====================================================
-
-        const {
-            nome,
-            email,
-            telefone,
+            novaSenha,
         } = await req.json();
 
 
-        const emailNormalizado =
-            String(email ?? "")
-                .trim()
-                .toLowerCase();
-
-        const nomeNormalizado =
-            String(nome ?? "").trim();
-
-        const telefoneNormalizado =
-            String(telefone ?? "").trim();
-
-
         if (
-            !nomeNormalizado ||
-            !emailNormalizado
+            typeof novaSenha !== "string" ||
+            novaSenha.length < 6
         ) {
             return new Response(
                 JSON.stringify({
                     error:
-                        "Nome e e-mail são obrigatórios.",
+                        "A nova senha deve ter pelo menos 6 caracteres.",
                 }),
                 {
                     status: 400,
@@ -217,12 +141,12 @@ Deno.serve(async (req: Request) => {
 
 
         // =====================================================
-        // VERIFICA SE JÁ EXISTE PESSOA COM ESSE E-MAIL
+        // LOCALIZA O CADASTRO
         // =====================================================
 
         const {
-            data: pessoaExistente,
-            error: pessoaExistenteError,
+            data: pessoa,
+            error: pessoaError,
         } =
             await supabase
                 .schema("ebd")
@@ -231,30 +155,30 @@ Deno.serve(async (req: Request) => {
                     id,
                     user_id,
                     nome,
-                    email,
                     ativo,
-                    status
+                    status,
+                    senha_temporaria
                 `)
                 .eq(
-                    "email",
-                    emailNormalizado
+                    "user_id",
+                    user.id
                 )
                 .maybeSingle();
 
 
-        if (pessoaExistenteError) {
-            throw pessoaExistenteError;
+        if (pessoaError) {
+            throw pessoaError;
         }
 
 
-        if (pessoaExistente) {
+        if (!pessoa) {
             return new Response(
                 JSON.stringify({
                     error:
-                        "Já existe um cadastro com este e-mail.",
+                        "Cadastro do usuário não encontrado.",
                 }),
                 {
-                    status: 409,
+                    status: 404,
                     headers: {
                         ...corsHeaders,
                         "Content-Type":
@@ -266,95 +190,95 @@ Deno.serve(async (req: Request) => {
 
 
         // =====================================================
-        // CRIA USUÁRIO NO SUPABASE AUTH
+        // VERIFICA SE A SENHA É TEMPORÁRIA
         // =====================================================
 
-        const {
-            data: authData,
-            error: createUserError,
-        } =
-            await supabase.auth.admin.createUser({
-                email: emailNormalizado,
-                password: defaultPassword,
-                email_confirm: true,
-                user_metadata: {
-                    full_name:
-                        nomeNormalizado,
-                },
-            });
-
-
         if (
-            createUserError ||
-            !authData.user
+            pessoa.senha_temporaria !== true
         ) {
-            throw (
-                createUserError ??
-                new Error(
-                    "Não foi possível criar o usuário."
-                )
+            return new Response(
+                JSON.stringify({
+                    error:
+                        "Este usuário não possui uma senha temporária.",
+                }),
+                {
+                    status: 400,
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type":
+                            "application/json",
+                    },
+                }
             );
         }
 
 
-        const novoUserId =
-            authData.user.id;
+        // =====================================================
+        // VERIFICA SE A CONTA ESTÁ ATIVA
+        // =====================================================
+
+        if (
+            pessoa.ativo !== true ||
+            pessoa.status !== "ATIVO"
+        ) {
+            return new Response(
+                JSON.stringify({
+                    error:
+                        "A conta do usuário não está ativa.",
+                }),
+                {
+                    status: 403,
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type":
+                            "application/json",
+                    },
+                }
+            );
+        }
 
 
         // =====================================================
-        // CRIA CADASTRO NA TABELA EBD.PESSOAS
+        // ALTERA A SENHA NO SUPABASE AUTH
         // =====================================================
 
         const {
-            data: novaPessoa,
-            error: pessoaError,
+            error: updatePasswordError,
+        } =
+            await supabase.auth.admin.updateUserById(
+                user.id,
+                {
+                    password: novaSenha,
+                }
+            );
+
+
+        if (updatePasswordError) {
+            throw updatePasswordError;
+        }
+
+
+        // =====================================================
+        // MARCA A SENHA COMO NÃO TEMPORÁRIA
+        // =====================================================
+
+        const {
+            error: updatePessoaError,
         } =
             await supabase
                 .schema("ebd")
                 .from("pessoas")
-                .insert({
-                    user_id:
-                        novoUserId,
-
-                    nome:
-                        nomeNormalizado,
-
-                    email:
-                        emailNormalizado,
-
-                    telefone:
-                        telefoneNormalizado,
-
-                    ativo: true,
-
-                    status: "ATIVO",
-
-                    perfil: "ALUNO",
-
-                    senha_temporaria: true,
+                .update({
+                    senha_temporaria: false,
                 })
-                .select()
-                .single();
+                .eq(
+                    "id",
+                    pessoa.id
+                );
 
 
-        // =====================================================
-        // ROLLBACK
-        // =====================================================
-
-        if (pessoaError) {
-
-            console.error(
-                "Erro ao criar pessoa. Removendo usuário do Auth:",
-                pessoaError
-            );
-
-
-            await supabase.auth.admin.deleteUser(
-                novoUserId
-            );
-
-
-            throw pessoaError;
+        if (updatePessoaError) {
+            throw updatePessoaError;
         }
 
 
@@ -365,11 +289,8 @@ Deno.serve(async (req: Request) => {
         return new Response(
             JSON.stringify({
                 success: true,
-
                 message:
-                    "Usuário cadastrado com sucesso.",
-
-                pessoa: novaPessoa,
+                    "Senha alterada com sucesso.",
             }),
             {
                 status: 200,
@@ -381,10 +302,11 @@ Deno.serve(async (req: Request) => {
             }
         );
 
+
     } catch (error) {
 
         console.error(
-            "Erro ao criar usuário administrativo:",
+            "Erro ao alterar senha temporária:",
             error
         );
 
@@ -394,7 +316,7 @@ Deno.serve(async (req: Request) => {
                 error:
                     error instanceof Error
                         ? error.message
-                        : "Erro interno ao criar usuário.",
+                        : "Erro interno ao alterar senha.",
             }),
             {
                 status: 500,

@@ -5,6 +5,7 @@ export interface Pessoa {
   telefone: string;
   ativo?: boolean;
   criado_em?: string;
+  senha_temporaria?: boolean;
 
   perfil:
     | "PENDENTE"

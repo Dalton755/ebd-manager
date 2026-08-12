@@ -21,7 +21,9 @@ export type Permissao =
     | "MINISTRAR_AULA"
     | "FAZER_CHECKIN"
     | "VER_MINHAS_AULAS"
-    | "VER_MINHAS_PRESENCAS";
+    | "VER_MINHAS_PRESENCAS"
+    | "VER_FINANCEIRO"
+    | "GERENCIAR_FINANCEIRO";
 
 const permissoesPorPerfil: Record<
     Perfil,
@@ -38,9 +40,12 @@ const permissoesPorPerfil: Record<
         "VER_CLASSES",
         "REGISTRAR_PRESENCA",
         "VER_PRESENCAS",
+        "VER_FINANCEIRO",
+        "GERENCIAR_FINANCEIRO",
         "VALIDAR_PRESENCAS",
         "APROVAR_USUARIOS",
         "MINISTRAR_AULA",
+
     ],
 
     SUPERINTENDENTE: [
@@ -52,6 +57,8 @@ const permissoesPorPerfil: Record<
         "VER_CLASSES",
         "REGISTRAR_PRESENCA",
         "VER_PRESENCAS",
+        "VER_FINANCEIRO",
+        "GERENCIAR_FINANCEIRO",
         "VALIDAR_PRESENCAS",
         "MINISTRAR_AULA",
         "FAZER_CHECKIN",
@@ -65,6 +72,7 @@ const permissoesPorPerfil: Record<
         "VER_AULAS",
         "VER_CLASSES",
         "VER_PRESENCAS",
+        "VER_FINANCEIRO",
         "MINISTRAR_AULA",
         "FAZER_CHECKIN",
         "VER_MINHAS_AULAS",

@@ -12,7 +12,11 @@ import { Eye, EyeOff } from "lucide-react";
 export function LoginPage() {
 
     const navigate = useNavigate();
-    const { user } = useAuth();
+
+    const {
+        user,
+        pessoa,
+    } = useAuth();
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -23,12 +27,35 @@ export function LoginPage() {
     const [sendingRecovery, setSendingRecovery] = useState(false);
 
     useEffect(() => {
-        if (user) {
-            navigate("/", {
+
+        if (!user || !pessoa) {
+            return;
+        }
+
+        const perfil =
+            pessoa.perfil;
+
+        if (
+            perfil === "ALUNO" ||
+            perfil === "PROFESSOR"
+        ) {
+
+            navigate("/inicio", {
                 replace: true,
             });
+
+            return;
         }
-    }, [user, navigate]);
+
+        navigate("/", {
+            replace: true,
+        });
+
+    }, [
+        user,
+        pessoa,
+        navigate,
+    ]);
 
     async function handleGoogleLogin() {
         try {

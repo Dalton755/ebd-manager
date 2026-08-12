@@ -1,26 +1,55 @@
-import { AuthService } from "@/modules/auth/services/AuthService";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { AuthService } from "@/modules/auth/services/AuthService";
+
 export function Header() {
-  const navigate = useNavigate();
 
-  async function sair() {
-    await AuthService.logout();
-    navigate("/login");
-  }
+    const navigate =
+        useNavigate();
 
-  return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-6">
-      <h2 className="text-lg font-semibold">
-        EBD Manager
-      </h2>
+    const {
+        pessoa,
+    } = useAuth();
 
-      <button
-        onClick={sair}
-        className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-      >
-        Sair
-      </button>
-    </header>
-  );
+
+    async function sair() {
+
+        await AuthService.logout();
+
+        navigate(
+            "/login",
+            {
+                replace: true,
+            }
+        );
+    }
+
+
+    const mostrarLogout =
+        pessoa?.perfil !== "ALUNO";
+
+
+    return (
+
+        <header className="flex h-16 items-center justify-between border-b bg-background px-6">
+
+            <h2 className="text-lg font-semibold">
+                EBD Manager
+            </h2>
+
+
+            {mostrarLogout && (
+
+                <button
+                    onClick={sair}
+                    className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                >
+                    Sair
+                </button>
+
+            )}
+
+        </header>
+    );
 }

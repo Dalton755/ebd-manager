@@ -20,6 +20,7 @@ export function ClassForm({
   const [descricao, setDescricao] = useState("");
   const [idadeMinima, setIdadeMinima] = useState(0);
   const [idadeMaxima, setIdadeMaxima] = useState(0);
+  const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     if (classe) {
@@ -36,9 +37,10 @@ export function ClassForm({
   }, [classe]);
 
   async function salvar() {
-
     if (!podeGerenciar) {
-      toast.error("Você não tem permissão para gerenciar classes.");
+      toast.error(
+        "Você não tem permissão para gerenciar classes."
+      );
       return;
     }
 
@@ -51,18 +53,26 @@ export function ClassForm({
     });
 
     if (!validacao.success) {
-      toast.error(validacao.error.issues[0].message);
+      toast.error(
+        validacao.error.issues[0].message
+      );
       return;
     }
 
     try {
+      setSalvando(true);
+
       if (classe) {
-        await ClassService.editar(classe.id!, {
-          nome,
-          descricao,
-          idade_minima: idadeMinima,
-          idade_maxima: idadeMaxima,
-        });
+        await ClassService.editar(
+          classe.id!,
+          {
+            ...classe,
+            nome,
+            descricao,
+            idade_minima: idadeMinima,
+            idade_maxima: idadeMaxima,
+          }
+        );
 
         toast.success("Classe atualizada.");
       } else {
@@ -77,68 +87,109 @@ export function ClassForm({
       }
 
       onSaved();
-
     } catch (error) {
       console.error(error);
       toast.error("Erro ao salvar classe.");
+    } finally {
+      setSalvando(false);
     }
   }
 
   return (
-    <>
+    <div className="space-y-5">
 
-      <input
-        className="rounded border p-3"
-        placeholder="Nome"
-        value={nome}
-        onChange={(e) => setNome(e.target.value)}
-        disabled={!podeGerenciar}
-      />
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          Nome da classe
+        </label>
 
-      <textarea
-        className="rounded border p-3"
-        placeholder="Descrição"
-        value={descricao}
-        onChange={(e) => setDescricao(e.target.value)}
-        disabled={!podeGerenciar}
-      />
+        <input
+          className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          placeholder="Ex.: Adultos"
+          value={nome}
+          onChange={(e) =>
+            setNome(e.target.value)
+          }
+          disabled={!podeGerenciar || salvando}
+        />
+      </div>
+
+      <div>
+        <label className="mb-2 block text-sm font-medium text-slate-700">
+          Descrição
+        </label>
+
+        <textarea
+          className="min-h-24 w-full resize-none rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          placeholder="Descrição da classe..."
+          value={descricao}
+          onChange={(e) =>
+            setDescricao(e.target.value)
+          }
+          disabled={!podeGerenciar || salvando}
+        />
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
 
-        <input
-          type="number"
-          className="rounded border p-3"
-          placeholder="Idade mínima"
-          value={idadeMinima}
-          disabled={!podeGerenciar}
-          onChange={(e) =>
-            setIdadeMinima(Number(e.target.value))
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Idade mínima
+          </label>
 
-          }
-        />
+          <input
+            type="number"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            value={idadeMinima}
+            onChange={(e) =>
+              setIdadeMinima(
+                Number(e.target.value)
+              )
+            }
+            disabled={!podeGerenciar || salvando}
+          />
+        </div>
 
-        <input
-          type="number"
-          className="rounded border p-3"
-          placeholder="Idade máxima"
-          value={idadeMaxima}
-          disabled={!podeGerenciar}
-          onChange={(e) =>
-            setIdadeMaxima(Number(e.target.value))
-          }
-        />
+        <div>
+          <label className="mb-2 block text-sm font-medium text-slate-700">
+            Idade máxima
+          </label>
+
+          <input
+            type="number"
+            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            value={idadeMaxima}
+            onChange={(e) =>
+              setIdadeMaxima(
+                Number(e.target.value)
+              )
+            }
+            disabled={!podeGerenciar || salvando}
+          />
+        </div>
 
       </div>
 
-      {podeGerenciar && (
-        <button
-          onClick={salvar}
-          className="rounded bg-blue-600 p-3 text-white"
-        >
-          {classe ? "Salvar Alterações" : "Salvar"}
-        </button>
-      )}
+      <div className="flex justify-end pt-2">
 
-    </>
+        <button
+          type="button"
+          onClick={salvar}
+          disabled={
+            !podeGerenciar ||
+            salvando
+          }
+          className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {salvando
+            ? "Salvando..."
+            : classe
+              ? "Salvar alterações"
+              : "Criar classe"}
+        </button>
+
+      </div>
+
+    </div>
   );
 }

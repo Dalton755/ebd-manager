@@ -3,6 +3,8 @@ import {
     useState,
 } from "react";
 
+import { useFormDraft } from "@/shared/hooks/useFormDraft";
+
 import {
     useNavigate,
     useParams,
@@ -16,6 +18,8 @@ import {
     Loader2,
     Plus,
     UserRound,
+    Pencil,
+    Trash2,
 } from "lucide-react";
 
 import { LessonService } from "../services/LessonService";
@@ -82,25 +86,52 @@ export function LessonsPage() {
         setSuccess,
     ] = useState("");
 
-    const [
-        numero,
-        setNumero,
-    ] = useState("");
+    const {
+        valores: formulario,
+        setValores: setFormulario,
+        limparRascunho,
+    } = useFormDraft(
+        `aula-form-${trimestreId ?? "novo"}`,
+        {
+            numero: "",
+            titulo: "",
+            data: "",
+            linkDrive: "",
+        }
+    );
 
-    const [
-        titulo,
-        setTitulo,
-    ] = useState("");
+    const numero = formulario.numero;
+    const titulo = formulario.titulo;
+    const data = formulario.data;
+    const linkDrive = formulario.linkDrive;
 
-    const [
-        data,
-        setData,
-    ] = useState("");
+    function setNumero(valor: string) {
+        setFormulario((atual) => ({
+            ...atual,
+            numero: valor,
+        }));
+    }
 
-    const [
-        linkDrive,
-        setLinkDrive,
-    ] = useState("");
+    function setTitulo(valor: string) {
+        setFormulario((atual) => ({
+            ...atual,
+            titulo: valor,
+        }));
+    }
+
+    function setData(valor: string) {
+        setFormulario((atual) => ({
+            ...atual,
+            data: valor,
+        }));
+    }
+
+    function setLinkDrive(valor: string) {
+        setFormulario((atual) => ({
+            ...atual,
+            linkDrive: valor,
+        }));
+    }
 
     const [
         professores,
@@ -125,6 +156,26 @@ export function LessonsPage() {
     const [
         salvandoProfessor,
         setSalvandoProfessor,
+    ] = useState(false);
+
+    const [
+        aulaParaEditar,
+        setAulaParaEditar,
+    ] = useState<Aula | null>(null);
+
+    const [
+        aulaParaExcluir,
+        setAulaParaExcluir,
+    ] = useState<Aula | null>(null);
+
+    const [
+        salvandoEdicao,
+        setSalvandoEdicao,
+    ] = useState(false);
+
+    const [
+        excluindoAula,
+        setExcluindoAula,
     ] = useState(false);
 
 
@@ -318,6 +369,137 @@ export function LessonsPage() {
 
     }
 
+    function abrirEdicaoAula(aula: Aula) {
+
+        if (!podeGerenciarAulas) {
+            return;
+        }
+
+        setAulaParaEditar(aula);
+    }
+
+    async function salvarEdicaoAula(
+        event: React.FormEvent<HTMLFormElement>
+    ) {
+
+        event.preventDefault();
+
+        if (!aulaParaEditar) {
+            return;
+        }
+
+        try {
+
+            setSalvandoEdicao(true);
+
+            setError("");
+            setSuccess("");
+
+            const formulario =
+                new FormData(event.currentTarget);
+
+            const numero =
+                Number(
+                    formulario.get("numero")
+                );
+
+            const titulo =
+                String(
+                    formulario.get("titulo") ?? ""
+                ).trim();
+
+            const data =
+                String(
+                    formulario.get("data") ?? ""
+                );
+
+            const linkDrive =
+                String(
+                    formulario.get("linkDrive") ?? ""
+                ).trim();
+
+            await LessonService.atualizarAula(
+                aulaParaEditar.id,
+                {
+                    numero,
+                    titulo,
+                    data,
+                    professor_id:
+                        aulaParaEditar.professor_id,
+                    link_drive:
+                        linkDrive || null,
+                }
+            );
+
+            setAulaParaEditar(null);
+
+            setSuccess(
+                "Aula atualizada com sucesso!"
+            );
+
+            await carregarDados();
+
+        } catch (error) {
+
+            console.error(error);
+
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Não foi possível atualizar a aula."
+            );
+
+        } finally {
+
+            setSalvandoEdicao(false);
+
+        }
+
+    }
+
+    async function confirmarExclusaoAula() {
+
+        if (!aulaParaExcluir) {
+            return;
+        }
+
+        try {
+
+            setExcluindoAula(true);
+
+            setError("");
+            setSuccess("");
+
+            await LessonService.excluirAula(
+                aulaParaExcluir.id
+            );
+
+            setAulaParaExcluir(null);
+
+            setSuccess(
+                "Aula excluída com sucesso!"
+            );
+
+            await carregarDados();
+
+        } catch (error) {
+
+            console.error(error);
+
+            setError(
+                error instanceof Error
+                    ? error.message
+                    : "Não foi possível excluir a aula."
+            );
+
+        } finally {
+
+            setExcluindoAula(false);
+
+        }
+
+    }
+
 
     async function handleSubmit(
         event: React.FormEvent
@@ -346,6 +528,8 @@ export function LessonsPage() {
                 link_drive:
                     linkDrive.trim() || null,
             });
+
+            limparRascunho();
 
             setNumero("");
 
@@ -819,6 +1003,36 @@ export function LessonsPage() {
 
                                             )}
 
+                                            {podeGerenciarAulas && (
+
+                                                <>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            abrirEdicaoAula(aula)
+                                                        }
+                                                        className="flex items-center gap-2 rounded-lg border border-amber-200 px-3 py-2 text-sm font-medium text-amber-700 transition hover:bg-amber-50"
+                                                    >
+                                                        <Pencil className="h-4 w-4" />
+
+                                                        Editar
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setAulaParaExcluir(aula)
+                                                        }
+                                                        className="flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50"
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+
+                                                        Excluir
+                                                    </button>
+                                                </>
+
+                                            )}
+
 
                                             {aula.link_drive && (
 
@@ -971,6 +1185,242 @@ export function LessonsPage() {
                                 </div>
 
                             )}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            )}
+
+            {aulaParaEditar && (
+
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+
+                    <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+
+                        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+
+                            <div>
+
+                                <h2 className="font-semibold text-slate-800">
+                                    Editar aula
+                                </h2>
+
+                                <p className="mt-1 text-sm text-slate-500">
+                                    Atualize os dados da aula.
+                                </p>
+
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setAulaParaEditar(null)
+                                }
+                                disabled={salvandoEdicao}
+                                className="rounded-lg px-3 py-2 text-sm text-slate-500 hover:bg-slate-100"
+                            >
+                                Fechar
+                            </button>
+
+                        </div>
+
+
+                        <form
+                            onSubmit={salvarEdicaoAula}
+                            className="space-y-4 p-5"
+                        >
+
+                            <div>
+
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    Número da aula
+                                </label>
+
+                                <input
+                                    name="numero"
+                                    type="number"
+                                    min="1"
+                                    defaultValue={
+                                        aulaParaEditar.numero
+                                    }
+                                    required
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
+                                />
+
+                            </div>
+
+
+                            <div>
+
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    Título da aula
+                                </label>
+
+                                <input
+                                    name="titulo"
+                                    type="text"
+                                    defaultValue={
+                                        aulaParaEditar.titulo
+                                    }
+                                    required
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
+                                />
+
+                            </div>
+
+
+                            <div>
+
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    Data
+                                </label>
+
+                                <input
+                                    name="data"
+                                    type="date"
+                                    defaultValue={
+                                        aulaParaEditar.data
+                                    }
+                                    required
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
+                                />
+
+                            </div>
+
+
+                            <div>
+
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    Link do Google Drive
+                                </label>
+
+                                <input
+                                    name="linkDrive"
+                                    type="url"
+                                    defaultValue={
+                                        aulaParaEditar.link_drive ??
+                                        ""
+                                    }
+                                    placeholder="Opcional"
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
+                                />
+
+                            </div>
+
+
+                            <div className="flex gap-3 pt-2">
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setAulaParaEditar(null)
+                                    }
+                                    disabled={salvandoEdicao}
+                                    className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                                >
+                                    Cancelar
+                                </button>
+
+                                <button
+                                    type="submit"
+                                    disabled={salvandoEdicao}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+
+                                    {salvandoEdicao && (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    )}
+
+                                    {salvandoEdicao
+                                        ? "Salvando..."
+                                        : "Salvar alterações"}
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
+            )}
+
+            {aulaParaExcluir && (
+
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+
+                    <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
+
+                        <div className="border-b border-slate-200 px-5 py-4">
+
+                            <h2 className="font-semibold text-slate-800">
+                                Excluir aula
+                            </h2>
+
+                        </div>
+
+
+                        <div className="space-y-4 p-5">
+
+                            <p className="text-sm text-slate-600">
+
+                                Tem certeza que deseja excluir a aula{" "}
+
+                                <strong>
+                                    {aulaParaExcluir.numero}
+                                    {" - "}
+                                    {aulaParaExcluir.titulo}
+                                </strong>
+
+                                ?
+
+                            </p>
+
+                            <p className="text-sm text-red-600">
+
+                                Essa ação não poderá ser desfeita.
+
+                            </p>
+
+
+                            <div className="flex gap-3 pt-2">
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setAulaParaExcluir(null)
+                                    }
+                                    disabled={excluindoAula}
+                                    className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                                >
+                                    Cancelar
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={
+                                        confirmarExclusaoAula
+                                    }
+                                    disabled={excluindoAula}
+                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+
+                                    {excluindoAula && (
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                    )}
+
+                                    {excluindoAula
+                                        ? "Excluindo..."
+                                        : "Excluir aula"}
+
+                                </button>
+
+                            </div>
 
                         </div>
 

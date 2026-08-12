@@ -6,6 +6,7 @@ import { LoginPage } from "../../modules/auth/pages/LoginPage";
 import { ProtectedRoute } from "@/modules/auth/components/ProtectedRoute";
 import { PeoplePage } from "@/modules/people/pages/PeoplePage";
 import { ResetPasswordPage } from "../../modules/auth/pages/ResetPasswordPage";
+import { ChangeTemporaryPasswordPage } from "../../modules/auth/pages/ChangeTemporaryPasswordPage";
 import { AttendancePage } from "../../modules/attendance/pages/AttendancePage";
 import { AttendanceHistoryPage } from "../../modules/attendance/pages/AttendanceHistoryPage";
 import { StudentCheckinPage } from "../../modules/student/pages/StudentCheckinPage";
@@ -18,6 +19,10 @@ import { LessonsPage } from "@/modules/lessons/pages/LessonsPage";
 import { ClassesPage } from "@/modules/classes/pages/ClassesPage";
 import { PermissionRoute } from "@/modules/auth/components/PermissionRoute";
 import { PasswordRecoveryRequestsPage } from "@/modules/password-recovery/pages/PasswordRecoveryRequestsPage";
+import { FinancePage } from "@/modules/finance/pages/FinancePage";
+import { HomePage } from "@/modules/home/pages/HomePage";
+import { StudentAttendancePage } from "@/modules/student/pages/StudentAttendancePage";
+import { MeusDadosPage } from "@/modules/student/pages/MeusDadosPage";
 
 
 export const router = createBrowserRouter([
@@ -42,6 +47,11 @@ export const router = createBrowserRouter([
     },
 
     {
+        path: "/alterar-senha",
+        element: <ChangeTemporaryPasswordPage />,
+    },
+
+    {
         path: "/",
         element: (
             <ProtectedRoute>
@@ -49,6 +59,13 @@ export const router = createBrowserRouter([
             </ProtectedRoute>
         ),
         children: [
+
+            {
+                path: "inicio",
+                element: <HomePage />,
+            },
+
+
             {
                 index: true,
                 element: (
@@ -76,6 +93,20 @@ export const router = createBrowserRouter([
                         permission="VER_CLASSES"
                     >
                         <ClassesPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "financeiro",
+                element: (
+                    <PermissionRoute
+                        permissions={[
+                            "VER_FINANCEIRO",
+                            "GERENCIAR_FINANCEIRO",
+                        ]}
+                    >
+                        <FinancePage />
                     </PermissionRoute>
                 ),
             },
@@ -109,6 +140,28 @@ export const router = createBrowserRouter([
                         permission="FAZER_CHECKIN"
                     >
                         <StudentCheckinPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "minhas-presencas",
+                element: (
+                    <PermissionRoute
+                        permission="VER_MINHAS_PRESENCAS"
+                    >
+                        <StudentAttendancePage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "meus-dados",
+                element: (
+                    <PermissionRoute
+                        permission="VER_MINHAS_AULAS"
+                    >
+                        <MeusDadosPage />
                     </PermissionRoute>
                 ),
             },

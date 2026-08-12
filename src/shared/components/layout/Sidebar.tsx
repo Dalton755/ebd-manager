@@ -11,6 +11,7 @@ import {
     UserRound,
     MapPin,
     KeyRound,
+    Wallet,
 } from "lucide-react";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
@@ -136,6 +137,13 @@ export function Sidebar() {
                             icon={BookOpen}
                             label="Aulas"
                             permission="VER_AULAS"
+                        />
+
+                        <MenuItem
+                            to="/financeiro"
+                            icon={Wallet}
+                            label="Financeiro"
+                            permission="VER_FINANCEIRO"
                         />
                     </>
                 )}

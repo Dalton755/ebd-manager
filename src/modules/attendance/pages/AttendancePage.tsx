@@ -41,8 +41,9 @@ export function AttendancePage() {
             const alunosAtivos = (pessoas ?? [])
                 .filter(
                     (pessoa) =>
-                        pessoa.perfil === "ALUNO" &&
-                        pessoa.ativo
+                        pessoa.ativo &&
+                        pessoa.perfil !== "ADMIN" &&
+                        pessoa.perfil !== "SUPERINTENDENTE"
                 );
 
             const presencas =

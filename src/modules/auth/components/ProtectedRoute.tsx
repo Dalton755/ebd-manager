@@ -10,6 +10,7 @@ export function ProtectedRoute({ children }: Props) {
   const {
     user,
     pessoa,
+    senhaTemporaria,
     loading,
     logout,
   } = useAuth();
@@ -29,6 +30,15 @@ export function ProtectedRoute({ children }: Props) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (senhaTemporaria) {
+    return (
+      <Navigate
+        to="/alterar-senha"
+        replace
+      />
+    );
   }
 
   if (!pessoa) {

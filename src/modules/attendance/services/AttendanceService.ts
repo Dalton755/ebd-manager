@@ -81,4 +81,14 @@ export class AttendanceService {
 
   }
 
+  static async listarMinhasPresencas(
+    pessoaId: string
+  ) {
+
+    return await AttendanceRepository
+      .listarMinhasPresencas(
+        pessoaId
+      );
+  }
+
 }

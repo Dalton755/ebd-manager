@@ -23,21 +23,26 @@ import {
     AuthService,
 } from "@/modules/auth/services/AuthService";
 
+
 type AuthContextType = {
     user: User | null;
     session: Session | null;
     pessoa: Pessoa | null;
+    senhaTemporaria: boolean;
     loading: boolean;
     logout: () => Promise<void>;
 };
+
 
 const AuthContext = createContext(
     {} as AuthContextType
 );
 
+
 type Props = {
     children: ReactNode;
 };
+
 
 export function AuthProvider({
     children,
@@ -55,6 +60,9 @@ export function AuthProvider({
     const [pessoa, setPessoa] =
         useState<Pessoa | null>(null);
 
+    const [senhaTemporaria, setSenhaTemporaria] =
+        useState(false);
+
 
     // =====================================================
     // BUSCA A PESSOA OU CRIA AUTOMATICAMENTE
@@ -64,12 +72,16 @@ export function AuthProvider({
         usuario: User
     ): Promise<Pessoa | null> {
 
-        const { data, error } = await supabase
+        const {
+            data,
+            error,
+        } = await supabase
             .schema("ebd")
             .from("pessoas")
             .select("*")
             .eq("user_id", usuario.id)
             .maybeSingle();
+
 
         if (error) {
 
@@ -97,6 +109,7 @@ export function AuthProvider({
         console.log(
             "Novo usuário autenticado. Criando cadastro..."
         );
+
 
         const {
             data: novaPessoa,
@@ -143,6 +156,7 @@ export function AuthProvider({
             novaPessoa
         );
 
+
         return novaPessoa;
     }
 
@@ -169,6 +183,8 @@ export function AuthProvider({
 
             setPessoa(null);
 
+            setSenhaTemporaria(false);
+
             setLoading(false);
 
             return;
@@ -178,19 +194,38 @@ export function AuthProvider({
         const pessoaEncontrada =
             await buscarOuCriarPessoa(usuario);
 
+
         setPessoa(pessoaEncontrada);
+
+
+        setSenhaTemporaria(
+            pessoaEncontrada?.senha_temporaria === true
+        );
+
 
         setLoading(false);
     }
 
 
+    // =====================================================
+    // CARREGA USUÁRIO AO INICIAR O APP
+    // =====================================================
+
     useEffect(() => {
+
+        let ativo = true;
+
 
         async function carregarUsuario() {
 
             const {
                 data: { session },
             } = await supabase.auth.getSession();
+
+
+            if (!ativo) {
+                return;
+            }
 
 
             // =============================================
@@ -200,9 +235,8 @@ export function AuthProvider({
             if (session) {
 
                 const loginAt =
-                    localStorage.getItem(
-                        "login_at"
-                    );
+                    localStorage.getItem("login_at");
+
 
                 // Login Google não passa pelo
                 // AuthService.login()
@@ -218,9 +252,20 @@ export function AuthProvider({
 
                     await AuthService.logout();
 
+
+                    if (!ativo) {
+                        return;
+                    }
+
+
                     setSession(null);
+
                     setUser(null);
+
                     setPessoa(null);
+
+                    setSenhaTemporaria(false);
+
                     setLoading(false);
 
                     return;
@@ -228,14 +273,16 @@ export function AuthProvider({
             }
 
 
-            await atualizarAutenticacao(
-                session
-            );
+            await atualizarAutenticacao(session);
         }
 
 
         carregarUsuario();
 
+
+        // =================================================
+        // OBSERVA ALTERAÇÕES DE AUTENTICAÇÃO
+        // =================================================
 
         const {
             data: {
@@ -271,40 +318,49 @@ export function AuthProvider({
 
         return () => {
 
-            subscription.unsubscribe();
+            ativo = false;
 
+            subscription.unsubscribe();
         };
 
     }, []);
 
+
+    // =====================================================
+    // LOGOUT
+    // =====================================================
 
     async function logout() {
 
         await AuthService.logout();
 
         setSession(null);
+
         setUser(null);
+
         setPessoa(null);
 
+        setSenhaTemporaria(false);
     }
 
 
-    return (
+    // =====================================================
+    // PROVIDER
+    // =====================================================
 
+    return (
         <AuthContext.Provider
             value={{
                 user,
                 session,
                 pessoa,
+                senhaTemporaria,
                 loading,
                 logout,
             }}
         >
-
             {children}
-
         </AuthContext.Provider>
-
     );
 }
 
@@ -314,5 +370,4 @@ export function useAuth() {
     return useContext(
         AuthContext
     );
-
 }

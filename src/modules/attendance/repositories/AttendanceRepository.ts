@@ -251,4 +251,52 @@ export class AttendanceRepository {
     return data;
   }
 
+  static async listarMinhasPresencas(
+    pessoaId: string
+  ) {
+
+    const { data, error } = await supabase
+      .schema("ebd")
+      .from("presencas")
+      .select(`
+            id,
+            pessoa_id,
+            aula_id,
+            data,
+            hora_checkin,
+            tipo_registro,
+            status_validacao,
+            observacao_validacao,
+            aula:aulas!presencas_aula_id_fkey (
+                id,
+                numero,
+                titulo,
+                data
+            )
+        `)
+      .eq("pessoa_id", pessoaId)
+      .order("data", {
+        ascending: false,
+      })
+      .order("hora_checkin", {
+        ascending: false,
+      });
+
+    if (error) {
+      throw error;
+    }
+
+    return (data ?? []).map(
+      (presenca) => ({
+        ...presenca,
+
+        aula: Array.isArray(
+          presenca.aula
+        )
+          ? presenca.aula[0] ?? undefined
+          : presenca.aula,
+      })
+    );
+  }
+
 }

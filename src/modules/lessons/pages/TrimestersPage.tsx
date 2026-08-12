@@ -45,6 +45,11 @@ export function TrimestersPage() {
     const [trimestres, setTrimestres] =
         useState<Trimestre[]>([]);
 
+    const trimestresVisiveis =
+        perfilUsuario === "ALUNO"
+            ? trimestres.filter((trimestre) => trimestre.ativo)
+            : trimestres;
+
     const [loading, setLoading] =
         useState(true);
 
@@ -340,7 +345,7 @@ export function TrimestersPage() {
                             Carregando trimestres...
                         </div>
 
-                    ) : trimestres.length === 0 ? (
+                    ) : trimestresVisiveis.length === 0 ? (
 
                         <div className="p-8 text-center text-slate-500">
                             Nenhum trimestre cadastrado.
@@ -350,7 +355,7 @@ export function TrimestersPage() {
 
                         <div className="divide-y divide-slate-100">
 
-                            {trimestres.map((trimestre) => (
+                            {trimestresVisiveis.map((trimestre) => (
 
                                 <div
                                     key={trimestre.id}
