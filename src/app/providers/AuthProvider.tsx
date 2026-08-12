@@ -289,7 +289,7 @@ export function AuthProvider({
                 subscription,
             },
         } = supabase.auth.onAuthStateChange(
-            async (
+            (
                 event,
                 novaSession
             ) => {
@@ -299,19 +299,22 @@ export function AuthProvider({
                     event
                 );
 
-
                 if (
                     event === "SIGNED_IN" &&
                     novaSession
                 ) {
-
                     AuthService.saveLoginTime();
                 }
 
-
-                await atualizarAutenticacao(
-                    novaSession
-                );
+                // Importante:
+                // não fazemos consultas ao Supabase
+                // diretamente dentro do callback de
+                // onAuthStateChange.
+                setTimeout(() => {
+                    void atualizarAutenticacao(
+                        novaSession
+                    );
+                }, 0);
             }
         );
 
