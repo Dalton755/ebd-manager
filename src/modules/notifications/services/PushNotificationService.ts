@@ -86,104 +86,366 @@ export const PushNotificationService = {
         pessoaId: string
     ): Promise<boolean> {
 
+        console.log(
+            "=========================================="
+        );
+
+        console.log(
+            "[PUSH] Iniciando registro do dispositivo..."
+        );
+
+        console.log(
+            "[PUSH] pessoaId:",
+            pessoaId
+        );
+
+        // =====================================================
+        // 1. VERIFICA SUPORTE
+        // =====================================================
+
+        console.log(
+            "[PUSH] Notification:",
+            "Notification" in window
+        );
+
+        console.log(
+            "[PUSH] serviceWorker:",
+            "serviceWorker" in navigator
+        );
+
+        console.log(
+            "[PUSH] PushManager:",
+            "PushManager" in window
+        );
+
         if (
             !("Notification" in window) ||
             !("serviceWorker" in navigator) ||
             !("PushManager" in window)
         ) {
+
             console.warn(
-                "Este navegador não suporta notificações push."
+                "[PUSH] Navegador não suporta Push."
             );
 
             return false;
         }
 
-        const permissao =
-            await Notification.requestPermission();
+
+        // =====================================================
+        // 2. PERMISSÃO
+        // =====================================================
+
+        console.log(
+            "[PUSH] Permissão atual:",
+            Notification.permission
+        );
+
+
+        let permissao =
+            Notification.permission;
+
+
+        if (permissao === "default") {
+
+            console.log(
+                "[PUSH] Solicitando permissão..."
+            );
+
+            try {
+
+                permissao =
+                    await Notification.requestPermission();
+
+                console.log(
+                    "[PUSH] Resultado da permissão:",
+                    permissao
+                );
+
+            } catch (erro) {
+
+                console.error(
+                    "[PUSH] Erro ao solicitar permissão:",
+                    erro
+                );
+
+                return false;
+            }
+        }
+
 
         if (permissao !== "granted") {
+
             console.warn(
-                "Permissão para notificações não concedida."
+                "[PUSH] Permissão não concedida:",
+                permissao
             );
 
             return false;
         }
 
-        const registration =
-            await navigator.serviceWorker.ready;
 
-        let subscription =
-            await registration.pushManager.getSubscription();
+        // =====================================================
+        // 3. SERVICE WORKER
+        // =====================================================
+
+        console.log(
+            "[PUSH] Aguardando Service Worker..."
+        );
+
+        let registration:
+            ServiceWorkerRegistration;
+
+        try {
+
+            registration =
+                await navigator.serviceWorker.ready;
+
+            console.log(
+                "[PUSH] Service Worker pronto:",
+                registration
+            );
+
+            console.log(
+                "[PUSH] Service Worker ativo:",
+                registration.active?.scriptURL
+            );
+
+        } catch (erro) {
+
+            console.error(
+                "[PUSH] Erro no Service Worker:",
+                erro
+            );
+
+            return false;
+        }
+
+
+        // =====================================================
+        // 4. VERIFICA SUBSCRIPTION EXISTENTE
+        // =====================================================
+
+        console.log(
+            "[PUSH] Verificando subscription existente..."
+        );
+
+        let subscription:
+            PushSubscription | null = null;
+
+        try {
+
+            subscription =
+                await registration.pushManager.getSubscription();
+
+            console.log(
+                "[PUSH] Subscription existente:",
+                subscription
+            );
+
+        } catch (erro) {
+
+            console.error(
+                "[PUSH] Erro ao consultar subscription:",
+                erro
+            );
+
+            return false;
+        }
+
+
+        // =====================================================
+        // 5. CRIA NOVA SUBSCRIPTION
+        // =====================================================
 
         if (!subscription) {
 
-            subscription =
-                await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey:
-                        converterChavePublica(
-                            import.meta.env
-                                .VITE_VAPID_PUBLIC_KEY
-                        ),
-                });
+            console.log(
+                "[PUSH] Nenhuma subscription encontrada."
+            );
+
+            const vapidKey =
+                import.meta.env
+                    .VITE_VAPID_PUBLIC_KEY;
+
+            console.log(
+                "[PUSH] VAPID configurada:",
+                Boolean(vapidKey)
+            );
+
+            if (!vapidKey) {
+
+                console.error(
+                    "[PUSH] VITE_VAPID_PUBLIC_KEY não encontrada."
+                );
+
+                return false;
+            }
+
+
+            try {
+
+                console.log(
+                    "[PUSH] Criando nova subscription..."
+                );
+
+                subscription =
+                    await registration.pushManager.subscribe({
+                        userVisibleOnly: true,
+
+                        applicationServerKey:
+                            converterChavePublica(
+                                vapidKey.trim()
+                            ),
+                    });
+
+                console.log(
+                    "[PUSH] Subscription criada:",
+                    subscription
+                );
+
+            } catch (erro) {
+
+                console.error(
+                    "[PUSH] ERRO AO CRIAR SUBSCRIPTION:",
+                    erro
+                );
+
+                return false;
+            }
+
+        } else {
+
+            console.log(
+                "[PUSH] Usando subscription existente."
+            );
         }
+
+
+        // =====================================================
+        // 6. EXTRAI DADOS
+        // =====================================================
 
         const dados =
             subscription.toJSON();
+
+        console.log(
+            "[PUSH] Dados da subscription:",
+            dados
+        );
+
 
         if (
             !dados.endpoint ||
             !dados.keys?.p256dh ||
             !dados.keys?.auth
         ) {
+
             console.error(
-                "Assinatura Push inválida."
+                "[PUSH] Subscription inválida."
             );
 
             return false;
         }
 
-        const pushData: PushSubscriptionData = {
-            endpoint: dados.endpoint,
-            p256dh: dados.keys.p256dh,
-            auth: dados.keys.auth,
+
+        const pushData:
+            PushSubscriptionData = {
+
+            endpoint:
+                dados.endpoint,
+
+            p256dh:
+                dados.keys.p256dh,
+
+            auth:
+                dados.keys.auth,
         };
 
-        const { error } =
-            await supabase
-                .schema("ebd")
-                .from("push_subscriptions")
-                .upsert(
-                    {
-                        pessoa_id: pessoaId,
-                        endpoint:
-                            pushData.endpoint,
-                        p256dh:
-                            pushData.p256dh,
-                        auth:
-                            pushData.auth,
-                        user_agent:
-                            navigator.userAgent,
-                        updated_at:
-                            new Date().toISOString(),
-                    },
-                    {
-                        onConflict:
-                            "pessoa_id,endpoint",
-                    }
+
+        // =====================================================
+        // 7. SALVA NO SUPABASE
+        // =====================================================
+
+        console.log(
+            "[PUSH] Salvando subscription no Supabase..."
+        );
+
+        try {
+
+            const {
+                error,
+            } =
+                await supabase
+                    .schema("ebd")
+                    .from("push_subscriptions")
+                    .upsert(
+                        {
+                            pessoa_id:
+                                pessoaId,
+
+                            endpoint:
+                                pushData.endpoint,
+
+                            p256dh:
+                                pushData.p256dh,
+
+                            auth:
+                                pushData.auth,
+
+                            user_agent:
+                                navigator.userAgent,
+
+                            updated_at:
+                                new Date().toISOString(),
+                        },
+                        {
+                            onConflict:
+                                "pessoa_id,endpoint",
+                        }
+                    );
+
+
+            if (error) {
+
+                console.error(
+                    "[PUSH] ERRO AO SALVAR NO SUPABASE:",
+                    error
                 );
 
-        if (error) {
+                return false;
+            }
+
+        } catch (erro) {
+
             console.error(
-                "Erro ao registrar dispositivo:",
-                error
+                "[PUSH] Exceção ao salvar subscription:",
+                erro
             );
 
             return false;
         }
 
+
+        // =====================================================
+        // 8. SUCESSO
+        // =====================================================
+
         console.log(
-            "Dispositivo registrado para Push."
+            "[PUSH] ========================================"
+        );
+
+        console.log(
+            "[PUSH] DISPOSITIVO REGISTRADO COM SUCESSO!"
+        );
+
+        console.log(
+            "[PUSH] endpoint:",
+            pushData.endpoint
+        );
+
+        console.log(
+            "[PUSH] ========================================"
         );
 
         return true;
