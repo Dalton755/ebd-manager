@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import logoAdve from "@/assets/logo-adve.png";
 
 import {
     LayoutDashboard,
@@ -76,8 +77,8 @@ export function Sidebar({
                 onClick={onNavigate}
                 className={({ isActive }) =>
                     `block rounded-md px-3 py-2 transition ${isActive
-                        ? "bg-slate-100 font-semibold text-slate-900"
-                        : "hover:bg-muted"
+                        ? "bg-blue-50 font-semibold text-blue-800"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-blue-700"
                     }`
                 }
             >
@@ -107,11 +108,15 @@ export function Sidebar({
         temAcesso("VER_MINHAS_PRESENCAS");
 
     return (
-        <aside className="flex h-full w-full flex-col">
+        <aside className="flex h-full w-full flex-col bg-[#F8F4EC]">    
 
-            <h1 className="mb-8 text-2xl font-bold">
-                EBD Manager
-            </h1>
+            <div className="mb-8 flex justify-center">
+                <img
+                    src={logoAdve}
+                    alt="Estudo Bíblico ADVE"
+                    className="h-auto w-full max-w-[180px] object-contain"
+                />
+            </div>
 
             <nav className="space-y-2">
 
@@ -167,7 +172,7 @@ export function Sidebar({
                 {temMenuPresencas && (
                     <>
                         {temMenuAdministrativo && (
-                            <div className="my-4 border-t border-slate-200" />
+                            <div className="my-4 border-t border-[#E8DFD1]" />
                         )}
 
                         <MenuItem
@@ -192,7 +197,7 @@ export function Sidebar({
 
                 {temAcesso("APROVAR_USUARIOS") && (
                     <>
-                        <div className="my-4 border-t border-slate-200" />
+                        <div className="my-4 border-t border-[#E8DFD1]" />
 
                         <MenuItem
                             to="/administracao/aprovacoes"
@@ -240,12 +245,17 @@ export function Sidebar({
                             onNavigate={onNavigate}
                         />
 
-                        <div className="my-4 border-t border-slate-200" />
+                        <div className="my-4 border-t border-[#E8DFD1]" />
 
                         <NavLink
                             to="/meus-dados"
                             onClick={() => onNavigate?.()}
-                            className="block rounded-md px-3 py-2 hover:bg-muted"
+                            className={({ isActive }) =>
+                                `block rounded-md px-3 py-2 transition ${isActive
+                                    ? "bg-blue-50 font-semibold text-blue-800"
+                                    : "text-slate-700 hover:bg-[#F0E9DE] hover:text-blue-700"
+                                }`
+                            }
                         >
 
                             <div className="flex items-center gap-3">

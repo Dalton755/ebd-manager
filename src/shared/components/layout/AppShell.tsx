@@ -1,6 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
+//import marcaDagua from "@/assets/marca-dagua.png";
 
 export function AppShell() {
   return (
@@ -12,7 +13,22 @@ export function AppShell() {
 
         <Header />
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main
+          style={{
+            backgroundColor: "red",
+            minHeight: "100vh",
+          }}
+        >
+          <div
+            style={{
+              padding: "40px",
+              color: "white",
+              fontSize: "30px",
+            }}
+          >
+            TESTE APPSHELL
+          </div>
+
           <Outlet />
         </main>
 

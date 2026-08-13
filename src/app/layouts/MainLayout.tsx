@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 
 import { Sidebar } from "@/shared/components/layout/Sidebar";
 import { Header } from "@/shared/components/layout/Header";
+import marcaDagua from "@/assets/marca-dagua.png";
 
 export function MainLayout() {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -27,11 +28,10 @@ export function MainLayout() {
 
             {/* Sidebar mobile */}
             <aside
-                className={`fixed inset-y-0 left-0 z-50 w-72 transform border-r border-slate-200 bg-white p-6 shadow-xl transition-transform duration-300 md:hidden ${
-                    menuOpen
+                className={`fixed inset-y-0 left-0 z-50 w-72 transform border-r border-slate-200 bg-white p-6 shadow-xl transition-transform duration-300 md:hidden ${menuOpen
                         ? "translate-x-0"
                         : "-translate-x-full"
-                }`}
+                    }`}
             >
                 <div className="mb-6 flex items-center justify-end">
                     <button
@@ -45,8 +45,8 @@ export function MainLayout() {
                 </div>
 
                 <Sidebar
-                
-                onNavigate={() => setMenuOpen(false)}
+
+                    onNavigate={() => setMenuOpen(false)}
                 />
             </aside>
 
@@ -65,8 +65,25 @@ export function MainLayout() {
 
                 <Header />
 
-                <main className="min-w-0 flex-1 overflow-auto p-4 md:p-6">
-                    <Outlet />
+                <main className="relative min-w-0 flex-1 overflow-auto bg-slate-50">
+
+                    {/* MARCA D'ÁGUA */}
+                    <div
+                        className="pointer-events-none absolute inset-0 z-0 flex items-center justify-center overflow-hidden"
+                        aria-hidden="true"
+                    >
+                        <img
+                            src={marcaDagua}
+                            alt=""
+                            className="w-[90%] max-w-[1100px] opacity-30"
+                        />
+                    </div>
+
+                    {/* CONTEÚDO */}
+                    <div className="relative z-10 p-4 md:p-6">
+                        <Outlet />
+                    </div>
+
                 </main>
             </div>
         </div>
