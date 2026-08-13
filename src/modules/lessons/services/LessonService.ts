@@ -2,6 +2,9 @@ import type { Aula } from "../types/Aula";
 import type { Trimestre } from "../types/Trimestre";
 
 import { LessonRepository } from "../repositories/LessonRepository";
+import { PeopleRepository } from "../../people/repositories/PeopleRepository";
+import { NotificationService } from "../../notifications/services/NotificationService";
+
 
 export type AulaComStatus = Aula & {
     statusProfessor: "DEFINIDO" | "PENDENTE";
@@ -141,33 +144,107 @@ export const LessonService = {
         }));
     },
 
+    
     async criarAula(
-        aula: Omit<
-            Aula,
-            "id" | "created_at" | "updated_at"
-        >
-    ): Promise<Aula> {
+    aula: Omit<
+        Aula,
+        "id" | "created_at" | "updated_at"
+    >
+): Promise<Aula> {
 
-        if (!aula.numero || aula.numero < 1) {
-            throw new Error(
-                "Informe um número de aula válido."
+    if (!aula.numero || aula.numero < 1) {
+        throw new Error(
+            "Informe um número de aula válido."
+        );
+    }
+
+    if (!aula.titulo.trim()) {
+        throw new Error(
+            "Informe o título da aula."
+        );
+    }
+
+    if (!aula.data) {
+        throw new Error(
+            "Informe a data da aula."
+        );
+    }
+
+    // 1. Cria a aula primeiro
+    const aulaCriada =
+        await LessonRepository.criarAula(aula);
+
+    // 2. A partir daqui, qualquer erro de
+    // notificação NÃO deve impedir a criação da aula.
+    try {
+
+        const pessoas =
+            await PeopleRepository.listar();
+
+        const alunos =
+            pessoas.filter(
+                (pessoa) =>
+                    pessoa.perfil === "ALUNO" &&
+                    pessoa.ativo === true &&
+                    pessoa.status === "ATIVO"
             );
+
+        console.log(
+            `Alunos ativos encontrados para notificação: ${alunos.length}`
+        );
+
+        // 3. Cria a notificação e envia Push
+        // individualmente para cada aluno.
+        for (const aluno of alunos) {
+
+            try {
+
+                await NotificationService.criar({
+
+                    pessoa_id:
+                        aluno.id,
+
+                    tipo:
+                        "NOVA_AULA",
+
+                    titulo:
+                        "Nova aula disponível",
+
+                    mensagem:
+                        `Aula ${aulaCriada.numero} — ${aulaCriada.titulo}`,
+
+                    aula_id:
+                        aulaCriada.id,
+
+                    url:
+                        `/aulas/${aulaCriada.trimestre_id}`,
+                });
+
+                console.log(
+                    `Notificação enviada para: ${aluno.nome}`
+                );
+
+            } catch (error) {
+
+                console.error(
+                    `Erro ao notificar o aluno ${aluno.nome}:`,
+                    error
+                );
+
+            }
         }
 
-        if (!aula.titulo.trim()) {
-            throw new Error(
-                "Informe o título da aula."
-            );
-        }
+    } catch (error) {
 
-        if (!aula.data) {
-            throw new Error(
-                "Informe a data da aula."
-            );
-        }
+        console.error(
+            "Aula criada, mas ocorreu um erro ao buscar os alunos para notificação:",
+            error
+        );
 
-        return LessonRepository.criarAula(aula);
-    },
+    }
+
+    return aulaCriada;
+},
 
     async buscarProximaAula(): Promise<{
         trimestre: Trimestre;

@@ -23,6 +23,10 @@ import {
     AuthService,
 } from "@/modules/auth/services/AuthService";
 
+import {
+    PushNotificationService,
+} from "@/modules/notifications/services/PushNotificationService";
+
 
 type AuthContextType = {
     user: User | null;
@@ -173,11 +177,16 @@ export function AuthProvider({
 
         setSession(novaSession);
 
+
         const usuario =
             novaSession?.user ?? null;
 
         setUser(usuario);
 
+
+        // =================================================
+        // USUÁRIO DESLOGADO
+        // =================================================
 
         if (!usuario) {
 
@@ -191,6 +200,10 @@ export function AuthProvider({
         }
 
 
+        // =================================================
+        // BUSCA / CRIA PESSOA
+        // =================================================
+
         const pessoaEncontrada =
             await buscarOuCriarPessoa(usuario);
 
@@ -201,6 +214,35 @@ export function AuthProvider({
         setSenhaTemporaria(
             pessoaEncontrada?.senha_temporaria === true
         );
+
+
+        // =================================================
+        // REGISTRA DISPOSITIVO PARA PUSH
+        // =================================================
+
+        if (pessoaEncontrada?.id) {
+
+            try {
+
+                const pushRegistrado =
+                    await PushNotificationService.registrarDispositivo(
+                        pessoaEncontrada.id
+                    );
+
+
+                console.log(
+                    "Resultado do registro Push:",
+                    pushRegistrado
+                );
+
+            } catch (erro) {
+
+                console.error(
+                    "Erro ao registrar dispositivo Push:",
+                    erro
+                );
+            }
+        }
 
 
         setLoading(false);
@@ -219,7 +261,9 @@ export function AuthProvider({
         async function carregarUsuario() {
 
             const {
-                data: { session },
+                data: {
+                    session,
+                },
             } = await supabase.auth.getSession();
 
 
@@ -299,25 +343,35 @@ export function AuthProvider({
                     event
                 );
 
+
                 if (
                     event === "SIGNED_IN" &&
                     novaSession
                 ) {
+
                     AuthService.saveLoginTime();
                 }
 
-                // Importante:
-                // não fazemos consultas ao Supabase
-                // diretamente dentro do callback de
-                // onAuthStateChange.
+
+                // Não fazemos consultas ao Supabase
+                // diretamente dentro do callback.
                 setTimeout(() => {
-                    void atualizarAutenticacao(
-                        novaSession
-                    );
+
+                    if (ativo) {
+
+                        void atualizarAutenticacao(
+                            novaSession
+                        );
+                    }
+
                 }, 0);
             }
         );
 
+
+        // =================================================
+        // LIMPEZA
+        // =================================================
 
         return () => {
 
@@ -336,6 +390,7 @@ export function AuthProvider({
     async function logout() {
 
         await AuthService.logout();
+
 
         setSession(null);
 
@@ -367,6 +422,10 @@ export function AuthProvider({
     );
 }
 
+
+// =========================================================
+// HOOK
+// =========================================================
 
 export function useAuth() {
 

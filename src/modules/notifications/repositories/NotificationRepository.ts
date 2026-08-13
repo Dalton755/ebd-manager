@@ -56,7 +56,7 @@ export const NotificationRepository = {
         return count ?? 0;
     },
 
-    async marcarComoLida(
+       async marcarComoLida(
         notificacaoId: string
     ): Promise<void> {
 
@@ -74,4 +74,47 @@ export const NotificationRepository = {
         }
     },
 
+    async criar(
+        notificacao: {
+            pessoa_id: string;
+            tipo: string;
+            titulo: string;
+            mensagem: string;
+            aula_id?: string | null;
+        }
+    ): Promise<Notificacao> {
+
+        const { data, error } =
+            await supabase
+                .schema("ebd")
+                .from("notificacoes")
+                .insert({
+                    pessoa_id:
+                        notificacao.pessoa_id,
+
+                    tipo:
+                        notificacao.tipo,
+
+                    titulo:
+                        notificacao.titulo,
+
+                    mensagem:
+                        notificacao.mensagem,
+
+                    aula_id:
+                        notificacao.aula_id ?? null,
+
+                    lida: false,
+                })
+                .select()
+                .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    },
+
 };
+

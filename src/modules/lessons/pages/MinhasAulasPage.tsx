@@ -59,18 +59,80 @@ export function MinhasAulasPage() {
                         trimestreAtivo.id
                     );
 
-                const minhasAulas =
-                    todasAsAulas
-                        .filter(
-                            (aula) =>
-                                aula.professor_id === pessoa.id
-                        )
-                        .sort(
+                let aulasParaExibir: Aula[] = [];
+
+                if (pessoa.perfil === "PROFESSOR") {
+
+                    // PROFESSOR:
+                    // mostra somente as aulas em que está escalado.
+                    aulasParaExibir =
+                        todasAsAulas
+                            .filter(
+                                (aula) =>
+                                    aula.professor_id === pessoa.id
+                            )
+                            .sort(
+                                (a, b) =>
+                                    a.numero - b.numero
+                            );
+
+                } else if (pessoa.perfil === "ALUNO") {
+
+                    // ALUNO:
+                    // mostra todas as aulas já realizadas
+                    // e também somente a próxima aula.
+
+                    const hoje = new Date();
+
+                    hoje.setHours(
+                        0,
+                        0,
+                        0,
+                        0
+                    );
+
+                    const aulasOrdenadas =
+                        [...todasAsAulas].sort(
                             (a, b) =>
                                 a.numero - b.numero
                         );
 
-                setAulas(minhasAulas);
+                    const aulasPassadas =
+                        aulasOrdenadas.filter(
+                            (aula) => {
+
+                                const dataAula =
+                                    new Date(
+                                        `${aula.data}T00:00:00`
+                                    );
+
+                                return dataAula < hoje;
+                            }
+                        );
+
+                    const proximaAula =
+                        aulasOrdenadas.find(
+                            (aula) => {
+
+                                const dataAula =
+                                    new Date(
+                                        `${aula.data}T00:00:00`
+                                    );
+
+                                return dataAula >= hoje;
+                            }
+                        );
+
+                    aulasParaExibir = [
+                        ...aulasPassadas,
+                        ...(proximaAula
+                            ? [proximaAula]
+                            : []),
+                    ];
+
+                }
+
+                setAulas(aulasParaExibir);
 
             } catch (error) {
 
@@ -162,7 +224,9 @@ export function MinhasAulasPage() {
                         </h1>
 
                         <p className="text-sm text-slate-500">
-                            Aulas em que você está escalado
+                            {pessoa?.perfil === "ALUNO"
+                                ? "Aulas do trimestre atual"
+                                : "Aulas em que você está escalado"}
                         </p>
 
                     </div>
@@ -213,7 +277,9 @@ export function MinhasAulasPage() {
                             <div>
 
                                 <p className="text-xs text-slate-500">
-                                    Professor
+                                    {pessoa?.perfil === "ALUNO"
+                                        ? "Aluno"
+                                        : "Professor"}
                                 </p>
 
                                 <p className="text-sm font-semibold text-slate-700">
@@ -265,12 +331,15 @@ export function MinhasAulasPage() {
                     />
 
                     <h2 className="mt-4 font-semibold text-slate-700">
-                        Nenhuma aula escalada
+                        {pessoa?.perfil === "ALUNO"
+                            ? "Nenhuma aula disponível"
+                            : "Nenhuma aula escalada"}
                     </h2>
 
                     <p className="mt-1 text-sm text-slate-500">
-                        Você ainda não está escalado para ministrar
-                        nenhuma aula neste trimestre.
+                        {pessoa?.perfil === "ALUNO"
+                            ? "Ainda não existem aulas disponíveis neste trimestre."
+                            : "Você ainda não está escalado para ministrar nenhuma aula neste trimestre."}
                     </p>
 
                 </div>

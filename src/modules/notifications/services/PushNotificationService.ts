@@ -8,6 +8,80 @@ type PushSubscriptionData = {
 
 export const PushNotificationService = {
 
+    async enviar(
+        dados: {
+            pessoa_id: string;
+            titulo: string;
+            mensagem: string;
+            aula_id?: string | null;
+            url?: string;
+        }
+    ): Promise<void> {
+
+        if (!dados.pessoa_id) {
+            throw new Error(
+                "pessoa_id é obrigatório para enviar Push."
+            );
+        }
+
+        if (!dados.titulo?.trim()) {
+            throw new Error(
+                "titulo é obrigatório para enviar Push."
+            );
+        }
+
+        if (!dados.mensagem?.trim()) {
+            throw new Error(
+                "mensagem é obrigatória para enviar Push."
+            );
+        }
+
+        const { data, error } =
+            await supabase.functions.invoke(
+                "send-push",
+                {
+                    body: {
+                        pessoa_id:
+                            dados.pessoa_id,
+
+                        titulo:
+                            dados.titulo,
+
+                        mensagem:
+                            dados.mensagem,
+
+                        aula_id:
+                            dados.aula_id ?? null,
+
+                        url:
+                            dados.url ?? "/",
+                    },
+                }
+            );
+
+        if (error) {
+            console.error(
+                "Erro ao chamar Edge Function send-push:",
+                error
+            );
+
+            throw error;
+        }
+
+        if (!data?.success) {
+            throw new Error(
+                data?.error ??
+                "Não foi possível enviar a notificação Push."
+            );
+        }
+
+        console.log(
+            "Push enviado:",
+            data
+        );
+    },
+
+
     async registrarDispositivo(
         pessoaId: string
     ): Promise<boolean> {
