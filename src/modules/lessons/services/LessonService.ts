@@ -289,7 +289,7 @@ export const LessonService = {
         professorId: string | null
     ): Promise<Aula> {
 
-        // 1. Atualiza a aula primeiro
+        // 1. Atualiza o professor da aula
         const aulaAtualizada =
             await LessonRepository.atualizarAula(
                 aulaId,
@@ -298,69 +298,47 @@ export const LessonService = {
                 }
             );
 
-        // 2. Se não existe professor,
-        // não há ninguém para notificar.
+        // 2. Se não existe professor, não há ninguém para notificar
         if (!professorId) {
             return aulaAtualizada;
         }
 
-        // 3. A notificação nunca deve impedir
-        // a alteração do professor.
+        // 3. Cria a notificação para o novo professor
         try {
 
-            // Busca o professor pelo ID
-            const pessoas =
-                await PeopleRepository.listar();
-
-            const professor =
-                pessoas.find(
-                    (pessoa) =>
-                        pessoa.id === professorId
-                );
-
-            if (!professor) {
-
-                console.warn(
-                    "Professor não encontrado para notificação:",
-                    professorId
-                );
-
-                return aulaAtualizada;
-            }
-
-            // 4. Cria a notificação e envia Push
             await NotificationService.criar({
 
                 pessoa_id:
-                    professor.id,
+                    professorId,
 
                 tipo:
-                    "AULA_PROFESSOR",
+                    "NOVA_AULA_PROFESSOR",
 
                 titulo:
-                    "Nova aula atribuída",
+                    "Nova aula atribuída a você",
 
                 mensagem:
-                    `Você foi designado para ministrar a Aula ${aulaAtualizada.numero} — ${aulaAtualizada.titulo}`,
+                    `Você foi escalado para ministrar a aula ${aulaAtualizada.numero} — ${aulaAtualizada.titulo} em ${aulaAtualizada.data}.`,
 
                 aula_id:
                     aulaAtualizada.id,
 
                 url:
-                    `/aulas/${aulaAtualizada.trimestre_id}`,
+                    "/minhas-aulas",
             });
 
             console.log(
-                `Notificação enviada para o professor: ${professor.nome}`
+                `[AULA] Professor ${professorId} notificado com sucesso.`
             );
 
         } catch (error) {
 
             console.error(
-                "Professor definido, mas ocorreu um erro ao enviar a notificação:",
+                "[AULA] Aula atribuída, mas não foi possível enviar a notificação:",
                 error
             );
 
+            // A aula continua atribuída mesmo se a notificação falhar.
         }
 
         return aulaAtualizada;
