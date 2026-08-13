@@ -65,11 +65,11 @@ self.addEventListener("push", (event) => {
 
                 icon:
                     data.icon ||
-                    "/favicon.svg",
+                    "/logo-adve.png",
 
                 badge:
                     data.badge ||
-                    "/favicon.svg",
+                    "/logo-adve.png",
 
                 data: {
 
