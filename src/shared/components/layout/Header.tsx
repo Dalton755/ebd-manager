@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { AuthService } from "@/modules/auth/services/AuthService";
+import { NotificationBell } from "@/shared/components/notifications/NotificationBell";
 
 export function Header() {
 
@@ -39,16 +40,22 @@ export function Header() {
             </h2>
 
 
-            {mostrarLogout && (
+            <div className="flex items-center gap-3">
 
-                <button
-                    onClick={sair}
-                    className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
-                >
-                    Sair
-                </button>
+                <NotificationBell />
 
-            )}
+                {mostrarLogout && (
+
+                    <button
+                        onClick={sair}
+                        className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                    >
+                        Sair
+                    </button>
+
+                )}
+
+            </div>
 
         </header>
     );

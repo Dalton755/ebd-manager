@@ -26,6 +26,7 @@ import { FinancePage } from "@/modules/finance/pages/FinancePage";
 import { HomePage } from "@/modules/home/pages/HomePage";
 import { StudentAttendancePage } from "@/modules/student/pages/StudentAttendancePage";
 import { MeusDadosPage } from "@/modules/student/pages/MeusDadosPage";
+import { MinhasAulasPage } from "../../modules/lessons/pages/MinhasAulasPage";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 
 function RotaInicial() {
@@ -93,6 +94,17 @@ export const router = createBrowserRouter([
             {
                 path: "inicio",
                 element: <HomePage />,
+            },
+
+            {
+                path: "minhas-aulas",
+                element: (
+                    <PermissionRoute
+                        permission="VER_MINHAS_AULAS"
+                    >
+                        <MinhasAulasPage />
+                    </PermissionRoute>
+                ),
             },
 
 

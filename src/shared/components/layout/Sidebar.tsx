@@ -222,7 +222,7 @@ export function Sidebar({
                 {temMenuAluno && (
                     <>
                         <MenuItem
-                            to="/aulas"
+                            to="/minhas-aulas"
                             icon={BookOpen}
                             label="Minhas aulas"
                             permission="VER_MINHAS_AULAS"
