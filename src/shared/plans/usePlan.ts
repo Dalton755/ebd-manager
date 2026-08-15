@@ -17,11 +17,14 @@ export function usePlan() {
 
     const {
         plano,
+        loading,
     } = useAuth();
 
     return {
 
         plano,
+
+        loading,
 
         limites: plano?.limites ?? null,
 
