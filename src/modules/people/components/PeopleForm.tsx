@@ -81,12 +81,58 @@ export function PeopleForm({
       onSaved();
 
 
-    } catch (error) {
+    } catch (error: any) {
 
       console.error(
         "Erro ao salvar pessoa:",
         error
       );
+
+      // =====================================================
+      // ERRO DA EDGE FUNCTION
+      // =====================================================
+
+      if (error?.context instanceof Response) {
+
+        try {
+
+          const resposta = await error.context.json();
+
+          console.log(
+            "Resposta da Edge Function:",
+            resposta
+          );
+
+          if (
+            resposta?.codigo ===
+            "LIMITE_PESSOAS_ATINGIDO"
+          ) {
+            toast.error(
+              resposta.error ??
+              "O limite de pessoas do seu plano foi atingido."
+            );
+
+            return;
+          }
+
+          if (resposta?.error) {
+            toast.error(resposta.error);
+            return;
+          }
+
+        } catch (erroLeitura) {
+
+          console.error(
+            "Erro ao interpretar resposta da Edge Function:",
+            erroLeitura
+          );
+
+        }
+      }
+
+      // =====================================================
+      // ERRO GENÉRICO
+      // =====================================================
 
       const mensagem =
         error instanceof Error

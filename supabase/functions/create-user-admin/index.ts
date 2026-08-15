@@ -266,6 +266,10 @@ Deno.serve(async (req: Request) => {
                     .eq(
                         "igreja_id",
                         igrejaId
+                    )
+                    .eq(
+                        "ativo",
+                        true
                     );
 
             if (countError) {
