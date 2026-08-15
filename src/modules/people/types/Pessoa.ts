@@ -1,4 +1,4 @@
-export interface Pessoa {
+﻿export interface Pessoa {
   id?: string;
   nome: string;
   email: string;
@@ -6,6 +6,7 @@ export interface Pessoa {
   ativo?: boolean;
   criado_em?: string;
   senha_temporaria?: boolean;
+  igreja_id?: string;
 
   perfil:
     | "PENDENTE"

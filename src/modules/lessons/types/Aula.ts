@@ -11,6 +11,11 @@ export type Aula = {
 
     professor_id: string | null;
 
+    professor?: {
+        id: string;
+        nome: string;
+    } | null;
+
     link_drive: string | null;
 
     created_at?: string;

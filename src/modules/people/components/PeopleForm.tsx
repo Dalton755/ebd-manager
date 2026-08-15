@@ -82,12 +82,21 @@ export function PeopleForm({
 
 
     } catch (error) {
-      console.error(error);
-      toast.error(
-        pessoa
-          ? "Erro ao atualizar pessoa."
-          : "Erro ao cadastrar pessoa."
+
+      console.error(
+        "Erro ao salvar pessoa:",
+        error
       );
+
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : pessoa
+            ? "Erro ao atualizar pessoa."
+            : "Erro ao cadastrar pessoa.";
+
+      toast.error(mensagem);
+
     } finally {
       setSalvando(false);
     }

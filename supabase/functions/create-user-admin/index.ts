@@ -1,4 +1,4 @@
-import { createClient } from "jsr:@supabase/supabase-js@2";
+﻿import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -7,6 +7,22 @@ const corsHeaders = {
     "Access-Control-Allow-Methods":
         "POST, OPTIONS",
 };
+
+function resposta(
+    body: Record<string, unknown>,
+    status: number
+) {
+    return new Response(
+        JSON.stringify(body),
+        {
+            status,
+            headers: {
+                ...corsHeaders,
+                "Content-Type": "application/json",
+            },
+        }
+    );
+}
 
 Deno.serve(async (req: Request) => {
 
@@ -19,28 +35,21 @@ Deno.serve(async (req: Request) => {
     try {
 
         // =====================================================
-        // AUTENTICAÇÃO DO ADMINISTRADOR
+        // AUTENTICAÇÃO
         // =====================================================
 
         const authorization =
             req.headers.get("Authorization");
 
         if (!authorization) {
-            return new Response(
-                JSON.stringify({
-                    error: "Usuário não autenticado.",
-                }),
+            return resposta(
                 {
-                    status: 401,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
+                    error:
+                        "Usuário não autenticado.",
+                },
+                401
             );
         }
-
 
         const supabaseUrl =
             Deno.env.get("SUPABASE_URL");
@@ -55,7 +64,6 @@ Deno.serve(async (req: Request) => {
                 "ADMIN_DEFAULT_PASSWORD"
             );
 
-
         if (
             !supabaseUrl ||
             !serviceRoleKey ||
@@ -66,17 +74,13 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-
-        // Cliente privilegiado.
-        // Usado SOMENTE no backend.
         const supabase = createClient(
             supabaseUrl,
             serviceRoleKey
         );
 
-
         // =====================================================
-        // IDENTIFICA O ADMIN LOGADO
+        // IDENTIFICA O USUÁRIO LOGADO
         // =====================================================
 
         const token =
@@ -84,7 +88,6 @@ Deno.serve(async (req: Request) => {
                 "Bearer ",
                 ""
             );
-
 
         const {
             data: {
@@ -96,30 +99,21 @@ Deno.serve(async (req: Request) => {
                 token
             );
 
-
         if (
             authError ||
             !usuarioLogado
         ) {
-            return new Response(
-                JSON.stringify({
+            return resposta(
+                {
                     error:
                         "Sessão inválida.",
-                }),
-                {
-                    status: 401,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
+                },
+                401
             );
         }
 
-
         // =====================================================
-        // VERIFICA SE É ADMIN ATIVO
+        // BUSCA O ADMINISTRADOR E A IGREJA
         // =====================================================
 
         const {
@@ -133,7 +127,8 @@ Deno.serve(async (req: Request) => {
                     id,
                     perfil,
                     ativo,
-                    status
+                    status,
+                    igreja_id
                 `)
                 .eq(
                     "user_id",
@@ -141,11 +136,9 @@ Deno.serve(async (req: Request) => {
                 )
                 .maybeSingle();
 
-
         if (adminError) {
             throw adminError;
         }
-
 
         const ehAdmin =
             admin &&
@@ -153,24 +146,154 @@ Deno.serve(async (req: Request) => {
             admin.ativo === true &&
             admin.status === "ATIVO";
 
-
         if (!ehAdmin) {
-            return new Response(
-                JSON.stringify({
+            return resposta(
+                {
                     error:
                         "Você não possui permissão para cadastrar usuários.",
-                }),
-                {
-                    status: 403,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
+                },
+                403
             );
         }
 
+        if (!admin.igreja_id) {
+            return resposta(
+                {
+                    error:
+                        "Seu usuário não está vinculado a uma igreja.",
+                },
+                400
+            );
+        }
+
+        const igrejaId =
+            admin.igreja_id;
+
+        // =====================================================
+        // BUSCA A ASSINATURA ATIVA
+        // =====================================================
+
+        const {
+            data: assinatura,
+            error: assinaturaError,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("assinaturas")
+                .select(`
+                    id,
+                    plano_id,
+                    status
+                `)
+                .eq(
+                    "igreja_id",
+                    igrejaId
+                )
+                .eq(
+                    "status",
+                    "ATIVA"
+                )
+                .maybeSingle();
+
+        if (assinaturaError) {
+            throw assinaturaError;
+        }
+
+        if (!assinatura) {
+            return resposta(
+                {
+                    error:
+                        "A igreja não possui uma assinatura ativa.",
+                },
+                403
+            );
+        }
+
+        // =====================================================
+        // BUSCA O LIMITE DO PLANO
+        // =====================================================
+
+        const {
+            data: limites,
+            error: limitesError,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("plano_limites")
+                .select(`
+                    max_pessoas
+                `)
+                .eq(
+                    "plano_id",
+                    assinatura.plano_id
+                )
+                .maybeSingle();
+
+        if (limitesError) {
+            throw limitesError;
+        }
+
+        if (!limites) {
+            return resposta(
+                {
+                    error:
+                        "Os limites do plano não foram encontrados.",
+                },
+                500
+            );
+        }
+
+        // =====================================================
+        // VERIFICA LIMITE DE PESSOAS
+        // =====================================================
+
+        if (limites.max_pessoas !== -1) {
+
+            const {
+                count,
+                error: countError,
+            } =
+                await supabase
+                    .schema("ebd")
+                    .from("pessoas")
+                    .select(
+                        "id",
+                        {
+                            count: "exact",
+                            head: true,
+                        }
+                    )
+                    .eq(
+                        "igreja_id",
+                        igrejaId
+                    );
+
+            if (countError) {
+                throw countError;
+            }
+
+            const quantidadeAtual =
+                count ?? 0;
+
+            if (
+                quantidadeAtual >=
+                limites.max_pessoas
+            ) {
+                return resposta(
+                    {
+                        error:
+                            `O limite de ${limites.max_pessoas} pessoas do seu plano foi atingido.`,
+                        codigo:
+                            "LIMITE_PESSOAS_ATINGIDO",
+                        limite:
+                            limites.max_pessoas,
+                        utilizado:
+                            quantidadeAtual,
+                    },
+                    403
+                );
+            }
+        }
 
         // =====================================================
         // DADOS DO NOVO USUÁRIO
@@ -181,7 +304,6 @@ Deno.serve(async (req: Request) => {
             email,
             telefone,
         } = await req.json();
-
 
         const emailNormalizado =
             String(email ?? "")
@@ -194,30 +316,21 @@ Deno.serve(async (req: Request) => {
         const telefoneNormalizado =
             String(telefone ?? "").trim();
 
-
         if (
             !nomeNormalizado ||
             !emailNormalizado
         ) {
-            return new Response(
-                JSON.stringify({
+            return resposta(
+                {
                     error:
                         "Nome e e-mail são obrigatórios.",
-                }),
-                {
-                    status: 400,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
+                },
+                400
             );
         }
 
-
         // =====================================================
-        // VERIFICA SE JÁ EXISTE PESSOA COM ESSE E-MAIL
+        // VERIFICA E-MAIL DUPLICADO
         // =====================================================
 
         const {
@@ -241,29 +354,19 @@ Deno.serve(async (req: Request) => {
                 )
                 .maybeSingle();
 
-
         if (pessoaExistenteError) {
             throw pessoaExistenteError;
         }
 
-
         if (pessoaExistente) {
-            return new Response(
-                JSON.stringify({
+            return resposta(
+                {
                     error:
                         "Já existe um cadastro com este e-mail.",
-                }),
-                {
-                    status: 409,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
+                },
+                409
             );
         }
-
 
         // =====================================================
         // CRIA USUÁRIO NO SUPABASE AUTH
@@ -274,15 +377,19 @@ Deno.serve(async (req: Request) => {
             error: createUserError,
         } =
             await supabase.auth.admin.createUser({
-                email: emailNormalizado,
-                password: defaultPassword,
+                email:
+                    emailNormalizado,
+
+                password:
+                    defaultPassword,
+
                 email_confirm: true,
+
                 user_metadata: {
                     full_name:
                         nomeNormalizado,
                 },
             });
-
 
         if (
             createUserError ||
@@ -296,13 +403,11 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-
         const novoUserId =
             authData.user.id;
 
-
         // =====================================================
-        // CRIA CADASTRO NA TABELA EBD.PESSOAS
+        // CRIA PESSOA
         // =====================================================
 
         const {
@@ -332,10 +437,12 @@ Deno.serve(async (req: Request) => {
                     perfil: "ALUNO",
 
                     senha_temporaria: true,
+
+                    igreja_id:
+                        igrejaId,
                 })
                 .select()
                 .single();
-
 
         // =====================================================
         // ROLLBACK
@@ -348,37 +455,27 @@ Deno.serve(async (req: Request) => {
                 pessoaError
             );
 
-
             await supabase.auth.admin.deleteUser(
                 novoUserId
             );
 
-
             throw pessoaError;
         }
-
 
         // =====================================================
         // SUCESSO
         // =====================================================
 
-        return new Response(
-            JSON.stringify({
+        return resposta(
+            {
                 success: true,
 
                 message:
                     "Usuário cadastrado com sucesso.",
 
                 pessoa: novaPessoa,
-            }),
-            {
-                status: 200,
-                headers: {
-                    ...corsHeaders,
-                    "Content-Type":
-                        "application/json",
-                },
-            }
+            },
+            200
         );
 
     } catch (error) {
@@ -388,22 +485,14 @@ Deno.serve(async (req: Request) => {
             error
         );
 
-
-        return new Response(
-            JSON.stringify({
+        return resposta(
+            {
                 error:
                     error instanceof Error
                         ? error.message
                         : "Erro interno ao criar usuário.",
-            }),
-            {
-                status: 500,
-                headers: {
-                    ...corsHeaders,
-                    "Content-Type":
-                        "application/json",
-                },
-            }
+            },
+            500
         );
     }
 });

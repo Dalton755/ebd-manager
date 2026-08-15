@@ -31,16 +31,66 @@ export class PeopleRepository {
       }
     );
 
+    // =====================================================
+    // ERRO DA EDGE FUNCTION
+    // =====================================================
+
     if (error) {
-      throw error;
+
+      console.error(
+        "Erro retornado pela Edge Function:",
+        error
+      );
+
+      let mensagem =
+        "Não foi possível cadastrar o usuário.";
+
+      try {
+
+        if (
+          "context" in error &&
+          error.context instanceof Response
+        ) {
+
+          const resposta =
+            await error.context.json();
+
+          console.error(
+            "Resposta da Edge Function:",
+            resposta
+          );
+
+          if (resposta?.error) {
+            mensagem = resposta.error;
+          }
+        }
+
+      } catch (erroLeitura) {
+
+        console.error(
+          "Não foi possível ler a resposta da Edge Function:",
+          erroLeitura
+        );
+      }
+
+      throw new Error(mensagem);
     }
 
+    // =====================================================
+    // RESPOSTA INVÁLIDA
+    // =====================================================
+
     if (!data?.success) {
+
       throw new Error(
         data?.error ??
         "Não foi possível cadastrar o usuário."
       );
     }
+
+    // =====================================================
+    // SUCESSO
+    // =====================================================
 
     return data.pessoa;
   }

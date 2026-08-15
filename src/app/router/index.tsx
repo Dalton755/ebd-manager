@@ -21,6 +21,7 @@ import { TrimestersPage } from "@/modules/lessons/pages/TrimestersPage";
 import { LessonsPage } from "@/modules/lessons/pages/LessonsPage";
 import { ClassesPage } from "@/modules/classes/pages/ClassesPage";
 import { PermissionRoute } from "@/modules/auth/components/PermissionRoute";
+import { PlanGuard } from "@/modules/auth/components/PlanGuard";
 import { PasswordRecoveryRequestsPage } from "@/modules/password-recovery/pages/PasswordRecoveryRequestsPage";
 import { FinancePage } from "@/modules/finance/pages/FinancePage";
 import { HomePage } from "@/modules/home/pages/HomePage";
@@ -119,7 +120,9 @@ export const router = createBrowserRouter([
                     <PermissionRoute
                         permission="VER_PESSOAS"
                     >
-                        <PeoplePage />
+                        <PlanGuard recurso="PESSOAS">
+                            <PeoplePage />
+                        </PlanGuard>
                     </PermissionRoute>
                 ),
             },
@@ -130,7 +133,9 @@ export const router = createBrowserRouter([
                     <PermissionRoute
                         permission="VER_CLASSES"
                     >
-                        <ClassesPage />
+                        <PlanGuard recurso="CLASSES">
+                            <ClassesPage />
+                        </PlanGuard>
                     </PermissionRoute>
                 ),
             },
@@ -144,7 +149,9 @@ export const router = createBrowserRouter([
                             "GERENCIAR_FINANCEIRO",
                         ]}
                     >
-                        <FinancePage />
+                        <PlanGuard recurso="FINANCEIRO">
+                            <FinancePage />
+                        </PlanGuard>
                     </PermissionRoute>
                 ),
             },
@@ -244,7 +251,9 @@ export const router = createBrowserRouter([
                             "VER_MINHAS_AULAS",
                         ]}
                     >
-                        <TrimestersPage />
+                        <PlanGuard recurso="TRIMESTRES">
+                            <TrimestersPage />
+                        </PlanGuard>
                     </PermissionRoute>
                 ),
             },
@@ -258,7 +267,9 @@ export const router = createBrowserRouter([
                             "VER_MINHAS_AULAS",
                         ]}
                     >
-                        <LessonsPage />
+                        <PlanGuard recurso="AULAS">
+                            <LessonsPage />
+                        </PlanGuard>
                     </PermissionRoute>
                 ),
             },

@@ -1,4 +1,4 @@
-import {
+﻿import {
     createContext,
     useContext,
     useEffect,
@@ -27,11 +27,20 @@ import {
     PushNotificationService,
 } from "@/modules/notifications/services/PushNotificationService";
 
+import {
+    PlanService,
+} from "@/shared/plans/PlanService";
+
+import type {
+    PlanoCompleto,
+} from "@/shared/plans/PlanTypes";
+
 
 type AuthContextType = {
     user: User | null;
     session: Session | null;
     pessoa: Pessoa | null;
+    plano: PlanoCompleto | null;
     senhaTemporaria: boolean;
     loading: boolean;
     logout: () => Promise<void>;
@@ -67,6 +76,9 @@ export function AuthProvider({
     const [senhaTemporaria, setSenhaTemporaria] =
         useState(false);
 
+    const [plano, setPlano] =
+        useState<PlanoCompleto | null>(null);
+
 
     // =====================================================
     // BUSCA A PESSOA OU CRIA AUTOMATICAMENTE
@@ -98,7 +110,7 @@ export function AuthProvider({
         }
 
 
-        // Usuário já possui cadastro
+        // UsuÃ¡rio jÃ¡ possui cadastro
         if (data) {
 
             return data;
@@ -111,7 +123,7 @@ export function AuthProvider({
         // =================================================
 
         console.log(
-            "Novo usuário autenticado. Criando cadastro..."
+            "Novo usuÃ¡rio autenticado. Criando cadastro..."
         );
 
 
@@ -127,7 +139,7 @@ export function AuthProvider({
                 nome:
                     usuario.user_metadata?.full_name ??
                     usuario.user_metadata?.name ??
-                    "Usuário",
+                    "UsuÃ¡rio",
 
                 email:
                     usuario.email ?? "",
@@ -166,7 +178,7 @@ export function AuthProvider({
 
 
     // =====================================================
-    // ATUALIZA ESTADO DA AUTENTICAÇÃO
+    // ATUALIZA ESTADO DA AUTENTICAÃ‡ÃƒO
     // =====================================================
 
     async function atualizarAutenticacao(
@@ -185,12 +197,14 @@ export function AuthProvider({
 
 
         // =================================================
-        // USUÁRIO DESLOGADO
+        // USUÃRIO DESLOGADO
         // =================================================
 
         if (!usuario) {
 
             setPessoa(null);
+
+            setPlano(null);
 
             setSenhaTemporaria(false);
 
@@ -214,6 +228,42 @@ export function AuthProvider({
         setSenhaTemporaria(
             pessoaEncontrada?.senha_temporaria === true
         );
+
+
+        // =================================================
+        // CARREGA PLANO DA IGREJA
+        // =================================================
+
+        if (pessoaEncontrada?.igreja_id) {
+
+            try {
+
+                const planoEncontrado =
+                    await PlanService.buscarPlanoDaIgreja(
+                        pessoaEncontrada.igreja_id
+                    );
+
+                setPlano(planoEncontrado);
+
+                console.log(
+                    "Plano da igreja:",
+                    planoEncontrado
+                );
+
+            } catch (erro) {
+
+                console.error(
+                    "Erro ao carregar plano da igreja:",
+                    erro
+                );
+
+                setPlano(null);
+            }
+
+        } else {
+
+            setPlano(null);
+        }
 
 
         // =================================================
@@ -250,7 +300,7 @@ export function AuthProvider({
 
 
     // =====================================================
-    // CARREGA USUÁRIO AO INICIAR O APP
+    // CARREGA USUÃRIO AO INICIAR O APP
     // =====================================================
 
     useEffect(() => {
@@ -273,7 +323,7 @@ export function AuthProvider({
 
 
             // =============================================
-            // CONTROLE DE EXPIRAÇÃO DE 12 HORAS
+            // CONTROLE DE EXPIRAÃ‡ÃƒO DE 12 HORAS
             // =============================================
 
             if (session) {
@@ -282,7 +332,7 @@ export function AuthProvider({
                     localStorage.getItem("login_at");
 
 
-                // Login Google não passa pelo
+                // Login Google nÃ£o passa pelo
                 // AuthService.login()
                 if (!loginAt) {
 
@@ -312,6 +362,8 @@ export function AuthProvider({
 
                     setLoading(false);
 
+                    setPlano(null);
+
                     return;
                 }
             }
@@ -325,7 +377,7 @@ export function AuthProvider({
 
 
         // =================================================
-        // OBSERVA ALTERAÇÕES DE AUTENTICAÇÃO
+        // OBSERVA ALTERAÃ‡Ã•ES DE AUTENTICAÃ‡ÃƒO
         // =================================================
 
         const {
@@ -339,7 +391,7 @@ export function AuthProvider({
             ) => {
 
                 console.log(
-                    "Evento de autenticação:",
+                    "Evento de autenticaÃ§Ã£o:",
                     event
                 );
 
@@ -353,7 +405,7 @@ export function AuthProvider({
                 }
 
 
-                // Não fazemos consultas ao Supabase
+                // NÃ£o fazemos consultas ao Supabase
                 // diretamente dentro do callback.
                 setTimeout(() => {
 
@@ -398,6 +450,8 @@ export function AuthProvider({
 
         setPessoa(null);
 
+        setPlano(null);
+
         setSenhaTemporaria(false);
     }
 
@@ -412,6 +466,7 @@ export function AuthProvider({
                 user,
                 session,
                 pessoa,
+                plano,
                 senhaTemporaria,
                 loading,
                 logout,

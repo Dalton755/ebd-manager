@@ -1,4 +1,4 @@
-import { Navigate } from "react-router-dom";
+﻿import { Navigate } from "react-router-dom";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 
@@ -7,18 +7,32 @@ import {
     type Permissao,
 } from "@/shared/auth/permissions";
 
+import {
+    temRecurso,
+} from "@/shared/plans/PlanAccess";
+
+import type {
+    RecursoCodigo,
+} from "@/shared/plans/PlanTypes";
+
 type Props = {
     permission?: Permissao;
     permissions?: Permissao[];
+    recurso?: RecursoCodigo;
     children: React.ReactNode;
 };
 
 export function PermissionRoute({
     permission,
     permissions,
+    recurso,
     children,
 }: Props) {
-    const { pessoa } = useAuth();
+
+    const {
+        pessoa,
+        plano,
+    } = useAuth();
 
     const perfil =
         pessoa?.perfil === "PENDENTE"
@@ -26,17 +40,30 @@ export function PermissionRoute({
             : pessoa?.perfil;
 
     const permissoesNecessarias =
-        permissions ?? (permission ? [permission] : []);
+        permissions ??
+        (permission ? [permission] : []);
 
     const possuiPermissao =
-        permissoesNecessarias.some((permissao) =>
-            temPermissao(
-                perfil,
-                permissao
-            )
+        permissoesNecessarias.some(
+            (permissao) =>
+                temPermissao(
+                    perfil,
+                    permissao
+                )
         );
 
-    if (!possuiPermissao) {
+    const possuiRecurso =
+        recurso
+            ? temRecurso(
+                plano,
+                recurso
+            )
+            : true;
+
+    if (
+        !possuiPermissao ||
+        !possuiRecurso
+    ) {
         return (
             <Navigate
                 to="/"
