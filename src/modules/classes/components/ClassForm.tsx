@@ -9,12 +9,17 @@ type Props = {
   classe?: Classe;
   onSaved: () => void;
   podeGerenciar: boolean;
+  onLimitReached?: (
+    utilizado: number,
+    limite: number
+  ) => void;
 };
 
 export function ClassForm({
   classe,
   onSaved,
   podeGerenciar,
+  onLimitReached,
 }: Props) {
   const [nome, setNome] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -87,9 +92,38 @@ export function ClassForm({
       }
 
       onSaved();
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao salvar classe.");
+    } catch (error: any) {
+      console.error(
+        "Erro ao salvar classe:",
+        error
+      );
+
+      // =====================================================
+      // LIMITE DE CLASSES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_CLASSES_ATINGIDO"
+      ) {
+        onLimitReached?.(
+          error.utilizado ?? 0,
+          error.limite ?? 0
+        );
+
+        return;
+      }
+
+      // =====================================================
+      // ERRO GENÉRICO
+      // =====================================================
+
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Erro ao salvar classe.";
+
+      toast.error(mensagem);
     } finally {
       setSalvando(false);
     }

@@ -24,13 +24,13 @@ export class AuthService {
   }
 
   static async loginWithGoogle() {
-  return await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo: window.location.origin,
-    },
-  });
-}
+    return await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+  }
 
   static async logout() {
 
@@ -101,61 +101,57 @@ export class AuthService {
 
   }
 
-  static async register(
-    nome: string,
-    email: string,
-    telefone: string,
-    password: string
-  ) {
-    const { data: authData, error: authError } =
-      await supabase.auth.signUp({
-        email,
-        password,
-      });
+ static async register(
+  nome: string,
+  email: string,
+  telefone: string,
+  password: string,
+  igrejaId: string
+) {
 
-    if (authError) {
-      return {
-        data: null,
-        error: authError,
-      };
-    }
-
-    if (!authData.user) {
-      return {
-        data: null,
-        error: new Error(
-          "Não foi possível criar o usuário."
-        ),
-      };
-    }
-
-    const { data: pessoaData, error: pessoaError } =
-      await supabase
-        .schema("ebd")
-        .from("pessoas")
-        .insert({
-          user_id: authData.user.id,
+  const { data, error } =
+    await supabase.functions.invoke(
+      "public-register",
+      {
+        body: {
           nome,
           email,
           telefone,
-          ativo: false,
-          status: "PENDENTE",
-          perfil: "ALUNO",
-        })
-        .select()
-        .single();
+          password,
+          igreja_id: igrejaId,
+        },
+      }
+    );
 
-    if (pessoaError) {
-      return {
-        data: null,
-        error: pessoaError,
-      };
-    }
+  if (error) {
+    console.error(
+      "Erro ao chamar public-register:",
+      error
+    );
 
     return {
-      data: pessoaData,
-      error: null,
+      data: null,
+      error,
     };
   }
+
+  if (!data?.success) {
+
+    const erro = new Error(
+      data?.error ??
+      "Não foi possível realizar o cadastro."
+    );
+
+    return {
+      data: null,
+      error: erro,
+    };
+  }
+
+  return {
+    data: data.pessoa,
+    error: null,
+  };
+}
 
 }

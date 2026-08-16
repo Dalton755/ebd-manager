@@ -28,6 +28,7 @@ import { HomePage } from "@/modules/home/pages/HomePage";
 import { StudentAttendancePage } from "@/modules/student/pages/StudentAttendancePage";
 import { MeusDadosPage } from "@/modules/student/pages/MeusDadosPage";
 import { MinhasAulasPage } from "../../modules/lessons/pages/MinhasAulasPage";
+import { PlansPage } from "@/modules/plans/pages/PlansPage";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 
 function RotaInicial() {
@@ -69,6 +70,11 @@ export const router = createBrowserRouter([
     },
 
     {
+        path: "/register",
+        element: <RegisterPage />,
+    },
+
+    {
         path: "/aguardando-aprovacao",
         element: <PendingApprovalPage />,
     },
@@ -91,6 +97,11 @@ export const router = createBrowserRouter([
             </ProtectedRoute>
         ),
         children: [
+
+            {
+                path: "planos",
+                element: <PlansPage />,
+            },
 
             {
                 path: "inicio",

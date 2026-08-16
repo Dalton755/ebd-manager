@@ -1,11 +1,15 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { AuthService } from "../services/AuthService";
 import { Eye, EyeOff } from "lucide-react";
 
 export function RegisterPage() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    const igrejaId =
+        searchParams.get("igreja")?.trim() || null;
 
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
@@ -50,6 +54,13 @@ export function RegisterPage() {
     ) {
         event.preventDefault();
 
+        if (!igrejaId) {
+            toast.error(
+                "Este link de cadastro não está vinculado a uma igreja."
+            );
+            return;
+        }
+
         if (
             !nome.trim() ||
             !email.trim() ||
@@ -84,7 +95,8 @@ export function RegisterPage() {
                     nome.trim(),
                     email.trim(),
                     telefone.trim(),
-                    password
+                    password,
+                    igrejaId
                 );
 
             if (error) {

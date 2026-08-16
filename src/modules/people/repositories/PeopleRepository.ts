@@ -42,9 +42,6 @@ export class PeopleRepository {
         error
       );
 
-      let mensagem =
-        "Não foi possível cadastrar o usuário.";
-
       try {
 
         if (
@@ -60,20 +57,42 @@ export class PeopleRepository {
             resposta
           );
 
-          if (resposta?.error) {
-            mensagem = resposta.error;
-          }
+          const erroComDados = new Error(
+            resposta?.error ??
+            "Não foi possível cadastrar o usuário."
+          ) as Error & {
+            codigo?: string;
+            utilizado?: number;
+            limite?: number;
+          };
+
+          erroComDados.codigo =
+            resposta?.codigo;
+
+          erroComDados.utilizado =
+            resposta?.utilizado;
+
+          erroComDados.limite =
+            resposta?.limite;
+
+          throw erroComDados;
         }
 
       } catch (erroLeitura) {
 
+        if (erroLeitura instanceof Error) {
+          throw erroLeitura;
+        }
+
         console.error(
-          "Não foi possível ler a resposta da Edge Function:",
+          "Não foi possível interpretar a resposta da Edge Function:",
           erroLeitura
         );
       }
 
-      throw new Error(mensagem);
+      throw new Error(
+        "Não foi possível cadastrar o usuário."
+      );
     }
 
     // =====================================================

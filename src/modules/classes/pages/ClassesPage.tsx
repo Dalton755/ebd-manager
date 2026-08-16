@@ -24,6 +24,7 @@ import { temPermissao } from "@/shared/auth/permissions";
 
 import { ManageClassStudents } from "../components/ManageClassStudents";
 import { Modal } from "@/shared/components/ui/Modal";
+import { PlanLimitModal } from "@/shared/components/plans/PlanLimitModal";
 
 export function ClassesPage() {
     const { pessoa } = useAuth();
@@ -60,6 +61,15 @@ export function ClassesPage() {
 
     const [dialogOpen, setDialogOpen] =
         useState(false);
+
+    const [planLimitModalOpen, setPlanLimitModalOpen] =
+        useState(false);
+
+    const [classesUtilizadas, setClassesUtilizadas] =
+        useState(0);
+
+    const [limiteClasses, setLimiteClasses] =
+        useState(0);
 
     useEffect(() => {
         carregarClasses();
@@ -247,6 +257,11 @@ export function ClassesPage() {
                                     fecharFormulario();
                                     await carregarClasses();
                                 }}
+                                onLimitReached={(utilizado, limite) => {
+                                    setClassesUtilizadas(utilizado);
+                                    setLimiteClasses(limite);
+                                    setPlanLimitModalOpen(true);
+                                }}
                             />
 
                         </div>
@@ -292,6 +307,17 @@ export function ClassesPage() {
                 }}
             />
 
+            <PlanLimitModal
+                open={planLimitModalOpen}
+                utilizado={classesUtilizadas}
+                limite={limiteClasses}
+                onClose={() =>
+                    setPlanLimitModalOpen(false)
+                }
+            />
+
         </div>
+
+
     );
 }

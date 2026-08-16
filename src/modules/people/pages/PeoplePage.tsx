@@ -22,6 +22,7 @@ import { PeopleCardList } from "../components/PeopleCardList";
 import { Accordion } from "@/shared/components/ui/Accordion";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { temPermissao } from "@/shared/auth/permissions";
+import { PlanLimitModal } from "@/shared/components/plans/PlanLimitModal";
 
 
 export function PeoplePage() {
@@ -54,6 +55,9 @@ export function PeoplePage() {
   const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | undefined>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pessoaParaInativar, setPessoaParaInativar] = useState<Pessoa | undefined>();
+  const [planLimitModalOpen, setPlanLimitModalOpen] = useState(false);
+  const [pessoasUtilizadas, setPessoasUtilizadas] = useState(0);
+  const [limitePessoas, setLimitePessoas] = useState(0);
 
 
   async function atualizarPerfilPessoa(
@@ -166,6 +170,11 @@ export function PeoplePage() {
               setPessoaSelecionada(undefined);
               carregarPessoas();
             }}
+            onLimitReached={(utilizado, limite) => {
+              setPessoasUtilizadas(utilizado);
+              setLimitePessoas(limite);
+              setPlanLimitModalOpen(true);
+            }}
           />
         </Accordion>
       )}
@@ -217,6 +226,13 @@ export function PeoplePage() {
           setDialogOpen(false);
           setPessoaParaInativar(undefined);
         }}
+      />
+
+      <PlanLimitModal
+        open={planLimitModalOpen}
+        utilizado={pessoasUtilizadas}
+        limite={limitePessoas}
+        onClose={() => setPlanLimitModalOpen(false)}
       />
 
     </div>

@@ -11,11 +11,13 @@ import { Button } from "@/shared/components/ui/Button";
 type Props = {
   pessoa?: Pessoa;
   onSaved: () => void;
+  onLimitReached?: (utilizado: number, limite: number) => void;
 };
 
 export function PeopleForm({
   pessoa,
   onSaved,
+  onLimitReached,
 }: Props) {
   const [nome, setNome] = useState(pessoa?.nome ?? "");
   const [email, setEmail] = useState(pessoa?.email ?? "");
@@ -92,42 +94,16 @@ export function PeopleForm({
       // ERRO DA EDGE FUNCTION
       // =====================================================
 
-      if (error?.context instanceof Response) {
+      if (
+        error?.codigo ===
+        "LIMITE_PESSOAS_ATINGIDO"
+      ) {
+        onLimitReached?.(
+          error.utilizado ?? 0,
+          error.limite ?? 0
+        );
 
-        try {
-
-          const resposta = await error.context.json();
-
-          console.log(
-            "Resposta da Edge Function:",
-            resposta
-          );
-
-          if (
-            resposta?.codigo ===
-            "LIMITE_PESSOAS_ATINGIDO"
-          ) {
-            toast.error(
-              resposta.error ??
-              "O limite de pessoas do seu plano foi atingido."
-            );
-
-            return;
-          }
-
-          if (resposta?.error) {
-            toast.error(resposta.error);
-            return;
-          }
-
-        } catch (erroLeitura) {
-
-          console.error(
-            "Erro ao interpretar resposta da Edge Function:",
-            erroLeitura
-          );
-
-        }
+        return;
       }
 
       // =====================================================

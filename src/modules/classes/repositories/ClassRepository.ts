@@ -22,21 +22,97 @@ export class ClassRepository {
 
 
   static async criar(classe: Classe) {
+  const {
+    data,
+    error,
+  } = await supabase.functions.invoke(
+    "create-class-admin",
+    {
+      body: {
+        nome: classe.nome,
+        descricao: classe.descricao,
+        idade_minima: classe.idade_minima,
+        idade_maxima: classe.idade_maxima,
+      },
+    }
+  );
 
-    const { data, error } =
-      await supabase
-        .schema("ebd")
-        .from("classes")
-        .insert(classe)
-        .select()
-        .single();
+  // =====================================================
+  // ERRO DA EDGE FUNCTION
+  // =====================================================
 
-    if (error) {
-      throw error;
+  if (error) {
+    console.error(
+      "Erro retornado pela Edge Function:",
+      error
+    );
+
+    try {
+      if (
+        "context" in error &&
+        error.context instanceof Response
+      ) {
+        const resposta =
+          await error.context.json();
+
+        console.error(
+          "Resposta da Edge Function:",
+          resposta
+        );
+
+        const erroComDados = new Error(
+          resposta?.error ??
+          "Não foi possível cadastrar a classe."
+        ) as Error & {
+          codigo?: string;
+          utilizado?: number;
+          limite?: number;
+        };
+
+        erroComDados.codigo =
+          resposta?.codigo;
+
+        erroComDados.utilizado =
+          resposta?.utilizado;
+
+        erroComDados.limite =
+          resposta?.limite;
+
+        throw erroComDados;
+      }
+    } catch (erroLeitura) {
+      if (erroLeitura instanceof Error) {
+        throw erroLeitura;
+      }
+
+      console.error(
+        "Não foi possível interpretar a resposta da Edge Function:",
+        erroLeitura
+      );
     }
 
-    return data;
+    throw new Error(
+      "Não foi possível cadastrar a classe."
+    );
   }
+
+  // =====================================================
+  // RESPOSTA INVÁLIDA
+  // =====================================================
+
+  if (!data?.success) {
+    throw new Error(
+      data?.error ??
+      "Não foi possível cadastrar a classe."
+    );
+  }
+
+  // =====================================================
+  // SUCESSO
+  // =====================================================
+
+  return data.classe;
+}
 
 
   static async editar(
