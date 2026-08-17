@@ -15,13 +15,22 @@ import { useNavigate } from "react-router-dom";
 import type { Trimestre } from "../types/Trimestre";
 import { LessonService } from "../services/LessonService";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { usePlan } from "@/shared/plans/usePlan";
 import { temPermissao } from "@/shared/auth/permissions";
+import { PlanLimitModal } from "@/shared/components/plans/PlanLimitModal";
 
 export function TrimestersPage() {
 
     const navigate = useNavigate();
 
     const { pessoa } = useAuth();
+
+    const {
+        obterLimite,
+    } = usePlan();
+
+    const maxTrimestresCadastrados =
+    obterLimite("max_trimestres");
 
     const perfilUsuario =
         pessoa?.perfil === "PENDENTE"
@@ -56,6 +65,9 @@ export function TrimestersPage() {
     const [saving, setSaving] =
         useState(false);
 
+    const [mostrarModalLimite, setMostrarModalLimite] =
+        useState(false);
+
     const [numero, setNumero] =
         useState("1");
 
@@ -69,6 +81,8 @@ export function TrimestersPage() {
 
     const [trimestreSelecionado, setTrimestreSelecionado] =
         useState<Trimestre | undefined>();
+
+
 
     async function carregarTrimestres() {
 
@@ -108,6 +122,20 @@ export function TrimestersPage() {
 
         event.preventDefault();
 
+        if (!trimestreSelecionado) {
+
+            const quantidadeTrimestres =
+                trimestres.length;
+
+            if (
+                maxTrimestresCadastrados !== -1 &&
+                quantidadeTrimestres >= maxTrimestresCadastrados
+            ) {
+                setMostrarModalLimite(true);
+                return;
+            }
+        }
+
         try {
 
             setSaving(true);
@@ -132,17 +160,14 @@ export function TrimestersPage() {
                 await LessonService.criarTrimestre(
                     Number(numero),
                     Number(ano),
-                    tema
+                    tema,
+                    maxTrimestresCadastrados
                 );
 
                 toast.success(
                     "Trimestre cadastrado com sucesso!"
                 );
             }
-
-            toast.success(
-                "Trimestre cadastrado com sucesso!"
-            );
 
             setTema("");
 
@@ -194,9 +219,10 @@ export function TrimestersPage() {
             console.error(error);
 
             toast.error(
-                "Não foi possível ativar o trimestre."
+                error instanceof Error
+                    ? error.message
+                    : "Não foi possível ativar o trimestre."
             );
-
         }
     }
 
@@ -501,7 +527,19 @@ export function TrimestersPage() {
 
             </div>
 
+            <PlanLimitModal
+                open={mostrarModalLimite}
+                utilizado={trimestres.length}
+                limite={maxTrimestresCadastrados}
+                recurso="trimestres"
+                onClose={() =>
+                    setMostrarModalLimite(false)
+                }
+            />  
+
         </div>
+
+
 
     );
 }

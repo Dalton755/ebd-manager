@@ -66,10 +66,14 @@ export class PlanService {
             .from("plano_limites")
             .select(`
                 max_pessoas,
-                max_classes,
-                max_professores,
-                max_administradores,
-                max_trimestres_ativos
+                    max_classes,
+                    max_professores,
+                    max_secretarios,
+                    max_pastores,
+                    max_administradores,
+                    max_trimestres,
+                    max_trimestres_ativos,
+                    max_superintendentes
             `)
             .eq("plano_id", assinatura.plano_id)
             .maybeSingle();
@@ -144,9 +148,14 @@ export class PlanService {
                 max_pessoas: limites.max_pessoas,
                 max_classes: limites.max_classes,
                 max_professores: limites.max_professores,
+                max_secretarios: limites.max_secretarios,
+                max_pastores: limites.max_pastores,
                 max_administradores: limites.max_administradores,
+                max_trimestres: limites.max_trimestres,
                 max_trimestres_ativos:
                     limites.max_trimestres_ativos,
+                max_superintendentes:
+                    limites.max_superintendentes,
             },
 
             recursos: codigos,

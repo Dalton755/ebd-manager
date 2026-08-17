@@ -152,18 +152,109 @@ export class PeopleRepository {
     id: string,
     perfil: Pessoa["perfil"]
   ) {
-    const { data, error } = await supabase
-      .from("pessoas")
-      .update({ perfil })
-      .eq("id", id)
-      .select()
-      .single();
+    const {
+      data,
+      error,
+    } = await supabase.functions.invoke(
+      "update-person-profile-admin",
+      {
+        body: {
+          pessoa_id: id,
+          perfil,
+        },
+      }
+    );
+
+    // =====================================================
+    // ERRO DA EDGE FUNCTION
+    // =====================================================
 
     if (error) {
-      throw error;
+      console.error(
+        "Erro retornado pela Edge Function:",
+        error
+      );
+
+      try {
+        if (
+          "context" in error &&
+          error.context instanceof Response
+        ) {
+          const resposta =
+            await error.context.json();
+
+          console.error(
+            "Resposta da Edge Function:",
+            resposta
+          );
+
+          const erroComDados = new Error(
+            resposta?.error ??
+            "Não foi possível atualizar o perfil."
+          ) as Error & {
+            codigo?: string;
+            utilizado?: number;
+            limite?: number;
+          };
+
+          erroComDados.codigo =
+            resposta?.codigo;
+
+          erroComDados.utilizado =
+            resposta?.utilizado;
+
+          erroComDados.limite =
+            resposta?.limite;
+
+          throw erroComDados;
+        }
+      } catch (erroLeitura) {
+        if (erroLeitura instanceof Error) {
+          throw erroLeitura;
+        }
+
+        console.error(
+          "Não foi possível interpretar a resposta da Edge Function:",
+          erroLeitura
+        );
+      }
+
+      throw new Error(
+        "Não foi possível atualizar o perfil."
+      );
     }
 
-    return data;
+    // =====================================================
+    // RESPOSTA INVÁLIDA
+    // =====================================================
+
+    if (!data?.success) {
+      const erroComDados = new Error(
+        data?.error ??
+        "Não foi possível atualizar o perfil."
+      ) as Error & {
+        codigo?: string;
+        utilizado?: number;
+        limite?: number;
+      };
+
+      erroComDados.codigo =
+        data?.codigo;
+
+      erroComDados.utilizado =
+        data?.utilizado;
+
+      erroComDados.limite =
+        data?.limite;
+
+      throw erroComDados;
+    }
+
+    // =====================================================
+    // SUCESSO
+    // =====================================================
+
+    return data.pessoa;
   }
 
 }

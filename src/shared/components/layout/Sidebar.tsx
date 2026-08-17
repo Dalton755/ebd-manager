@@ -13,6 +13,7 @@ import {
     MapPin,
     KeyRound,
     Wallet,
+    CreditCard,
 } from "lucide-react";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
@@ -108,7 +109,7 @@ export function Sidebar({
         temAcesso("VER_MINHAS_PRESENCAS");
 
     return (
-        <aside className="flex h-full w-full flex-col bg-[#F8F4EC]">    
+        <aside className="flex h-full w-full flex-col bg-[#F8F4EC]">
 
             <div className="mb-8 flex justify-center">
                 <img
@@ -265,6 +266,24 @@ export function Sidebar({
                         </NavLink>
                     </>
                 )}
+
+                {/* MEU PLANO */}
+
+                <NavLink
+                    to="/meu-plano"
+                    onClick={() => onNavigate?.()}
+                    className={({ isActive }) =>
+                        `block rounded-md px-3 py-2 transition ${isActive
+                            ? "bg-blue-50 font-semibold text-blue-800"
+                            : "text-slate-700 hover:bg-slate-50 hover:text-blue-700"
+                        }`
+                    }
+                >
+                    <div className="flex items-center gap-3">
+                        <CreditCard size={18} />
+                        <span>Meu Plano</span>
+                    </div>
+                </NavLink>
 
             </nav>
 

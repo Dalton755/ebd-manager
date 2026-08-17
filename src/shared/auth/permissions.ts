@@ -2,6 +2,7 @@ export type Perfil =
     | "ADMIN"
     | "PASTOR"
     | "SUPERINTENDENTE"
+    | "SECRETARIO"
     | "PROFESSOR"
     | "ALUNO";
 
@@ -45,7 +46,6 @@ const permissoesPorPerfil: Record<
         "VALIDAR_PRESENCAS",
         "APROVAR_USUARIOS",
         "MINISTRAR_AULA",
-
     ],
 
     SUPERINTENDENTE: [
@@ -74,6 +74,19 @@ const permissoesPorPerfil: Record<
         "VER_PRESENCAS",
         "VER_FINANCEIRO",
         "MINISTRAR_AULA",
+        "FAZER_CHECKIN",
+        "VER_MINHAS_AULAS",
+        "VER_MINHAS_PRESENCAS",
+    ],
+
+    SECRETARIO: [
+        "VER_DASHBOARD",
+        "VER_PESSOAS",
+        "VER_AULAS",
+        "VER_CLASSES",
+        "REGISTRAR_PRESENCA",
+        "VER_PRESENCAS",
+        "APROVAR_USUARIOS",
         "FAZER_CHECKIN",
         "VER_MINHAS_AULAS",
         "VER_MINHAS_PRESENCAS",

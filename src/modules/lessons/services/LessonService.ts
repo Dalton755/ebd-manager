@@ -23,7 +23,8 @@ export const LessonService = {
     async criarTrimestre(
         numero: number,
         ano: number,
-        tema: string
+        tema: string,
+        maxTrimestres: number
     ): Promise<Trimestre> {
 
         const trimestres =
@@ -38,6 +39,16 @@ export const LessonService = {
         if (jaExiste) {
             throw new Error(
                 "Este trimestre já está cadastrado."
+            );
+        }
+
+        // -1 = ilimitado
+        if (
+            maxTrimestres !== -1 &&
+            trimestres.length >= maxTrimestres
+        ) {
+            throw new Error(
+                `Seu plano permite no máximo ${maxTrimestres} trimestre${maxTrimestres === 1 ? "" : "s"} cadastrados.`
             );
         }
 
@@ -56,15 +67,29 @@ export const LessonService = {
         const trimestres =
             await LessonRepository.listarTrimestres();
 
+        const trimestreSelecionado =
+            trimestres.find(
+                (trimestre) =>
+                    trimestre.id === trimestreId
+            );
+
+        if (!trimestreSelecionado) {
+            throw new Error(
+                "Trimestre não encontrado."
+            );
+        }
+
+        if (trimestreSelecionado.ativo) {
+            return;
+        }
+
         const trimestreAtivo =
             trimestres.find(
                 (trimestre) => trimestre.ativo
             );
 
-        if (
-            trimestreAtivo &&
-            trimestreAtivo.id !== trimestreId
-        ) {
+        if (trimestreAtivo) {
+
             await LessonRepository.atualizarTrimestre(
                 trimestreAtivo.id,
                 {

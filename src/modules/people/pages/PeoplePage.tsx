@@ -58,6 +58,15 @@ export function PeoplePage() {
   const [planLimitModalOpen, setPlanLimitModalOpen] = useState(false);
   const [pessoasUtilizadas, setPessoasUtilizadas] = useState(0);
   const [limitePessoas, setLimitePessoas] = useState(0);
+  const [recursoLimite, setRecursoLimite] = useState<
+    | "pessoas"
+    | "classes"
+    | "professores"
+    | "secretarios"
+    | "pastores"
+    | "administradores"
+    | "superintendentes"
+  >("pessoas");
 
 
   async function atualizarPerfilPessoa(
@@ -84,9 +93,139 @@ export function PeoplePage() {
       );
 
       carregarPessoas();
-    } catch (error) {
-      console.error(error);
-      toast.error("Erro ao atualizar o perfil da pessoa.");
+    } catch (error: any) {
+      console.error(
+        "Erro ao atualizar perfil:",
+        error
+      );
+
+      // =====================================================
+      // LIMITE DE PROFESSORES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_PROFESSORES_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite("professores");
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // LIMITE DE ADMINISTRADORES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_ADMINISTRADORES_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite("administradores");
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // LIMITE DE SECRETÁRIOS
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_SECRETARIOS_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite("secretarios");
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // LIMITE DE PASTORES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_PASTORES_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite("pastores");
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // LIMITE DE SUPERINTENDENTES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_SUPERINTENDENTES_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite(
+          "superintendentes"
+        );
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // ERRO GENÉRICO
+      // =====================================================
+
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Erro ao atualizar o perfil da pessoa.";
+
+      toast.error(mensagem);
     }
   }
 
@@ -232,6 +371,7 @@ export function PeoplePage() {
         open={planLimitModalOpen}
         utilizado={pessoasUtilizadas}
         limite={limitePessoas}
+        recurso={recursoLimite}
         onClose={() => setPlanLimitModalOpen(false)}
       />
 

@@ -9,16 +9,17 @@
   igreja_id?: string;
 
   perfil:
-    | "PENDENTE"
-    | "ADMIN"
-    | "PASTOR"
-    | "SUPERINTENDENTE"
-    | "PROFESSOR"
-    | "ALUNO";
+  | "PENDENTE"
+  | "ADMIN"
+  | "PASTOR"
+  | "SUPERINTENDENTE"
+  | "SECRETARIO"
+  | "PROFESSOR"
+  | "ALUNO";
 
   status:
-    | "PENDENTE"
-    | "ATIVO"
-    | "INATIVO"
-    | "BLOQUEADO";
+  | "PENDENTE"
+  | "ATIVO"
+  | "INATIVO"
+  | "BLOQUEADO";
 }

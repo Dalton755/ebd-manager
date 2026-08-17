@@ -311,6 +311,7 @@ export function ClassesPage() {
                 open={planLimitModalOpen}
                 utilizado={classesUtilizadas}
                 limite={limiteClasses}
+                recurso="classes"
                 onClose={() =>
                     setPlanLimitModalOpen(false)
                 }

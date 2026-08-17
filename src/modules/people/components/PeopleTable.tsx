@@ -81,6 +81,7 @@ export function PeopleTable({
                     <option value="SUPERINTENDENTE">
                       Superintendente
                     </option>
+                    <option value="SECRETARIO">Secretário</option>
                     <option value="PASTOR">Pastor</option>
                     <option value="ADMIN">Administrador</option>
                   </select>

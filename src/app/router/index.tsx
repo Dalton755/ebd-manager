@@ -20,6 +20,7 @@ import { UserApprovalPage } from "@/modules/administration/pages/UserApprovalPag
 import { TrimestersPage } from "@/modules/lessons/pages/TrimestersPage";
 import { LessonsPage } from "@/modules/lessons/pages/LessonsPage";
 import { ClassesPage } from "@/modules/classes/pages/ClassesPage";
+import { MyPlanPage } from "@/modules/plans/pages/MyPlanPage";
 import { PermissionRoute } from "@/modules/auth/components/PermissionRoute";
 import { PlanGuard } from "@/modules/auth/components/PlanGuard";
 import { PasswordRecoveryRequestsPage } from "@/modules/password-recovery/pages/PasswordRecoveryRequestsPage";
@@ -220,6 +221,11 @@ export const router = createBrowserRouter([
                         <MeusDadosPage />
                     </PermissionRoute>
                 ),
+            },
+
+            {
+                path: "/meu-plano",
+                element: <MyPlanPage />,
             },
 
             {

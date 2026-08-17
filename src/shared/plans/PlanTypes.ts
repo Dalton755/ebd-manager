@@ -32,8 +32,12 @@ export type PlanoLimites = {
   max_pessoas: number;
   max_classes: number;
   max_professores: number;
+  max_secretarios: number;
+  max_pastores: number;
   max_administradores: number;
+  max_trimestres: number;
   max_trimestres_ativos: number;
+  max_superintendentes: number;
 };
 
 export type PlanoRecurso = {

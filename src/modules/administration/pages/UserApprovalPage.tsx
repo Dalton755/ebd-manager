@@ -285,6 +285,7 @@ export function UserApprovalPage() {
                 open={limitePessoas !== null}
                 utilizado={limitePessoas?.utilizado ?? 0}
                 limite={limitePessoas?.limite ?? 0}
+                recurso="pessoas"
                 onClose={() => setLimitePessoas(null)}
             />
         </>
