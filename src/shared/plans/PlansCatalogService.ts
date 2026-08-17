@@ -54,7 +54,8 @@ export class PlansCatalogService {
                     max_pastores,
                     max_administradores,
                     max_trimestres,
-                    max_trimestres_ativos
+                    max_trimestres_ativos,
+                    max_superintendentes
                 `)
                 .eq("plano_id", plano.id)
                 .maybeSingle();
@@ -122,6 +123,8 @@ export class PlansCatalogService {
                         limites.max_trimestres,
                     max_trimestres_ativos:
                         limites.max_trimestres_ativos,
+                    max_superintendentes:
+                        limites.max_superintendentes,
                 },
 
                 recursos: codigos,
