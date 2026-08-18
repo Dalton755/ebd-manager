@@ -14,6 +14,7 @@ import {
     KeyRound,
     Wallet,
     CreditCard,
+    Crown,
 } from "lucide-react";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
@@ -107,6 +108,10 @@ export function Sidebar({
         temAcesso("VER_MINHAS_AULAS") ||
         temAcesso("FAZER_CHECKIN") ||
         temAcesso("VER_MINHAS_PRESENCAS");
+
+    const podeVerPlanos =
+        pessoa?.perfil === "ADMIN" ||
+        pessoa?.perfil === "PASTOR";
 
     return (
         <aside className="flex h-full w-full flex-col bg-[#F8F4EC]">
@@ -267,23 +272,53 @@ export function Sidebar({
                     </>
                 )}
 
-                {/* MEU PLANO */}
+                {/* PLANOS */}
 
-                <NavLink
-                    to="/meu-plano"
-                    onClick={() => onNavigate?.()}
-                    className={({ isActive }) =>
-                        `block rounded-md px-3 py-2 transition ${isActive
-                            ? "bg-blue-50 font-semibold text-blue-800"
-                            : "text-slate-700 hover:bg-slate-50 hover:text-blue-700"
-                        }`
-                    }
-                >
-                    <div className="flex items-center gap-3">
-                        <CreditCard size={18} />
-                        <span>Meu Plano</span>
-                    </div>
-                </NavLink>
+                {podeVerPlanos && (
+                    <>
+                        <NavLink
+                            to="/planos"
+                            onClick={() => onNavigate?.()}
+                            className={({ isActive }) =>
+                                `group block rounded-md border px-3 py-2 transition ${isActive
+                                    ? "border-blue-300 bg-gradient-to-r from-blue-100 to-purple-100 font-bold text-blue-800 shadow-sm"
+                                    : "border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 font-semibold text-blue-700 hover:border-blue-300 hover:from-blue-100 hover:to-purple-100 hover:text-purple-700"
+                                }`
+                            }
+                        >
+                            <div className="flex items-center gap-3">
+                                <Crown
+                                    size={18}
+                                    className="text-purple-600 transition-transform group-hover:scale-110"
+                                />
+
+                                <span>Planos</span>
+
+                                <span className="ml-auto rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
+                                    Upgrade
+                                </span>
+                            </div>
+                        </NavLink>
+
+                        {/* MEU PLANO */}
+
+                        <NavLink
+                            to="/meu-plano"
+                            onClick={() => onNavigate?.()}
+                            className={({ isActive }) =>
+                                `block rounded-md px-3 py-2 transition ${isActive
+                                    ? "bg-blue-50 font-semibold text-blue-800"
+                                    : "text-slate-700 hover:bg-slate-50 hover:text-blue-700"
+                                }`
+                            }
+                        >
+                            <div className="flex items-center gap-3">
+                                <CreditCard size={18} />
+                                <span>Meu Plano</span>
+                            </div>
+                        </NavLink>
+                    </>
+                )}
 
             </nav>
 
