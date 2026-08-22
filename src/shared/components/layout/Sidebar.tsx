@@ -120,9 +120,9 @@ export function Sidebar({
         pessoa?.perfil === "PASTOR";
 
     return (
-        <aside className="flex h-full w-full flex-col border-r border-slate-200 bg-white">
+        <aside className="flex h-full min-h-0 w-full flex-col border-r border-slate-200 bg-white">
 
-            <div className="mb-8 flex justify-center px-4">
+            <div className="shrink-0 mb-8 flex justify-center px-4">
                 <img
                     src="/logo-ebd-manager.png"
                     alt="EBD Manager"
@@ -130,7 +130,7 @@ export function Sidebar({
                 />
             </div>
 
-            <nav className="space-y-2">
+            <nav className="min-h-0 flex-1 overflow-y-auto space-y-2 px-2 pb-4">
 
                 {/* MENU ADMINISTRATIVO */}
 
