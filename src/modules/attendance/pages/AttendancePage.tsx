@@ -14,11 +14,18 @@ import { AttendanceService } from "../services/AttendanceService";
 import type { Pessoa } from "@/modules/people/types/Pessoa";
 import { ManualAttendanceModal } from "../components/ManualAttendanceModal";
 
+import { useAuth } from "@/modules/auth/hooks/useAuth";
+
 type Aluno = Pessoa & {
     presente: boolean;
 };
 
 export function AttendancePage() {
+
+    const { pessoa } = useAuth();
+
+
+
     const [data, setData] = useState(
         new Date().toISOString().split("T")[0]
     );
@@ -36,7 +43,18 @@ export function AttendancePage() {
         setLoading(true);
 
         try {
-            const pessoas = await PeopleService.listar();
+            
+
+            if (!pessoa?.igreja_id) {
+                throw new Error(
+                    "Não foi possível identificar a igreja do usuário."
+                );
+            }
+
+            const pessoas =
+                await PeopleService.listar(
+                    pessoa.igreja_id
+                );
 
             const alunosAtivos = (pessoas ?? [])
                 .filter(
@@ -71,8 +89,12 @@ export function AttendancePage() {
     }
 
     useEffect(() => {
-        carregarDados();
-    }, [data]);
+    if (!pessoa?.igreja_id) {
+        return;
+    }
+
+    carregarDados();
+}, [data, pessoa?.igreja_id]);
 
     async function registrarPresenca(
         aluno: Aluno

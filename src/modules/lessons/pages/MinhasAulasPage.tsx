@@ -43,8 +43,18 @@ export function MinhasAulasPage() {
                     return;
                 }
 
+                const igrejaId = pessoa?.igreja_id;
+
+                if (!igrejaId) {
+                    throw new Error(
+                        "Não foi possível identificar a igreja do usuário."
+                    );
+                }
+
                 const trimestreAtivo =
-                    await LessonService.buscarTrimestreAtivo();
+                    await LessonService.buscarTrimestreAtivo(
+                        igrejaId
+                    );
 
                 if (!trimestreAtivo) {
                     setTrimestre(null);
@@ -151,7 +161,7 @@ export function MinhasAulasPage() {
 
         carregar();
 
-    }, [pessoa?.id]);
+    }, [pessoa?.id, pessoa?.igreja_id]);
 
 
     function formatarData(data: string) {

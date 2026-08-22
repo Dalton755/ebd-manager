@@ -31,6 +31,12 @@ import { MeusDadosPage } from "@/modules/student/pages/MeusDadosPage";
 import { MinhasAulasPage } from "../../modules/lessons/pages/MinhasAulasPage";
 import { PlansPage } from "@/modules/plans/pages/PlansPage";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { FinancePageBloqueada } from "@/modules/finance/pages/FinancePageBloqueada";
+import { PlatformAdminPage } from "@/modules/platform-admin/pages/PlatformAdminPage";
+import { IgrejasPage } from "@/modules/platform-admin/pages/IgrejasPage";
+import { AssinaturasPage } from "@/modules/platform-admin/pages/AssinaturasPage";
+import { PlanosPage } from "@/modules/platform-admin/pages/PlanosPage";
+import { RecursosPage } from "@/modules/platform-admin/pages/RecursosPage";
 
 function RotaInicial() {
 
@@ -100,8 +106,33 @@ export const router = createBrowserRouter([
         children: [
 
             {
+                path: "administracao/plataforma",
+                element: <PlatformAdminPage />,
+            },
+
+            {
+                path: "administracao/plataforma/igrejas",
+                element: <IgrejasPage />,
+            },
+
+            {
                 path: "planos",
                 element: <PlansPage />,
+            },
+
+            {
+                path: "administracao/plataforma/assinaturas",
+                element: <AssinaturasPage />,
+            },
+
+            {
+                path: "administracao/plataforma/planos",
+                element: <PlanosPage />,
+            },
+
+            {
+                path: "administracao/plataforma/recursos",
+                element: <RecursosPage />,
             },
 
             {
@@ -161,7 +192,10 @@ export const router = createBrowserRouter([
                             "GERENCIAR_FINANCEIRO",
                         ]}
                     >
-                        <PlanGuard recurso="FINANCEIRO">
+                        <PlanGuard
+                            recurso="FINANCEIRO"
+                            fallback={<FinancePageBloqueada />}
+                        >
                             <FinancePage />
                         </PlanGuard>
                     </PermissionRoute>
@@ -232,7 +266,9 @@ export const router = createBrowserRouter([
                 path: "relatorios/presencas",
                 element: (
                     <PermissionRoute permission="VER_PRESENCAS">
-                        <AttendanceRecordsPage />
+                        <PlanGuard recurso="RELATORIOS">
+                            <AttendanceRecordsPage />
+                        </PlanGuard>
                     </PermissionRoute>
                 ),
             },
@@ -254,7 +290,9 @@ export const router = createBrowserRouter([
                     <PermissionRoute
                         permission="APROVAR_USUARIOS"
                     >
-                        <PasswordRecoveryRequestsPage />
+                        <PlanGuard recurso="SOLICITACOES_SENHA">
+                            <PasswordRecoveryRequestsPage />
+                        </PlanGuard>
                     </PermissionRoute>
                 ),
             },

@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import logoAdve from "@/assets/logo-adve.png";
+
 
 import {
     LayoutDashboard,
@@ -15,9 +15,12 @@ import {
     Wallet,
     CreditCard,
     Crown,
+    Settings,
 } from "lucide-react";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
+
+import { PlanGuard } from "@/modules/auth/components/PlanGuard";
 
 import {
     temPermissao,
@@ -41,7 +44,10 @@ export function Sidebar({
     onNavigate,
 }: SidebarProps) {
 
-    const { pessoa } = useAuth();
+    const {
+        pessoa,
+        isSuperAdmin,
+    } = useAuth();
 
     function temAcesso(
         permissao: Permissao
@@ -114,12 +120,12 @@ export function Sidebar({
         pessoa?.perfil === "PASTOR";
 
     return (
-        <aside className="flex h-full w-full flex-col bg-[#F8F4EC]">
+        <aside className="flex h-full w-full flex-col border-r border-slate-200 bg-white">
 
-            <div className="mb-8 flex justify-center">
+            <div className="mb-8 flex justify-center px-4">
                 <img
-                    src={logoAdve}
-                    alt="Estudo Bíblico ADVE"
+                    src="/logo-ebd-manager.png"
+                    alt="EBD Manager"
                     className="h-auto w-full max-w-[180px] object-contain"
                 />
             </div>
@@ -213,13 +219,15 @@ export function Sidebar({
                             onNavigate={onNavigate}
                         />
 
-                        <MenuItem
-                            to="/administracao/solicitacoes-senha"
-                            icon={KeyRound}
-                            label="Solicitações de senha"
-                            permission="APROVAR_USUARIOS"
-                            onNavigate={onNavigate}
-                        />
+                        <PlanGuard recurso="SOLICITACOES_SENHA">
+                            <MenuItem
+                                to="/administracao/solicitacoes-senha"
+                                icon={KeyRound}
+                                label="Solicitações de senha"
+                                permission="APROVAR_USUARIOS"
+                                onNavigate={onNavigate}
+                            />
+                        </PlanGuard>
                     </>
                 )}
 
@@ -315,6 +323,30 @@ export function Sidebar({
                             <div className="flex items-center gap-3">
                                 <CreditCard size={18} />
                                 <span>Meu Plano</span>
+                            </div>
+                        </NavLink>
+                    </>
+                )}
+
+                {/* ADMINISTRAÇÃO DA PLATAFORMA */}
+
+                {isSuperAdmin && (
+                    <>
+                        <div className="my-4 border-t border-[#E8DFD1]" />
+
+                        <NavLink
+                            to="/administracao/plataforma"
+                            onClick={() => onNavigate?.()}
+                            className={({ isActive }) =>
+                                `block rounded-md px-3 py-2 transition ${isActive
+                                    ? "bg-slate-100 font-semibold text-slate-900"
+                                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                }`
+                            }
+                        >
+                            <div className="flex items-center gap-3">
+                                <Settings size={18} />
+                                <span>Administração da plataforma</span>
                             </div>
                         </NavLink>
                     </>

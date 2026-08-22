@@ -1,4 +1,4 @@
-﻿import {
+import {
     useEffect,
     useState,
 } from "react";
@@ -212,7 +212,7 @@ export function LessonsPage() {
 
             if (!igrejaId) {
                 throw new Error(
-                    "NÃ£o foi possÃ­vel identificar a igreja do usuÃ¡rio."
+                    "Não foi possível identificar a igreja do usuário."
                 );
             }
 
@@ -230,7 +230,7 @@ export function LessonsPage() {
             if (!trimestreEncontrado) {
 
                 setError(
-                    "Trimestre nÃ£o encontrado."
+                    "Trimestre não encontrado."
                 );
 
                 return;
@@ -238,7 +238,17 @@ export function LessonsPage() {
 
             setTrimestre(
                 trimestreEncontrado
-            );const [
+            );
+
+            const igrejaId = pessoa?.igreja_id;
+
+            if (!igrejaId) {
+                throw new Error(
+                    "Não foi possível identificar a igreja do usuário."
+                );
+            }
+
+            const [
                 aulasDoTrimestre,
                 pessoasCadastradas,
             ] = await Promise.all([
@@ -261,7 +271,7 @@ export function LessonsPage() {
             console.error(error);
 
             setError(
-                "NÃ£o foi possÃ­vel carregar as aulas."
+                "Não foi possível carregar as aulas."
             );
 
         } finally {
@@ -286,7 +296,7 @@ export function LessonsPage() {
 
             if (!igrejaId) {
                 throw new Error(
-                    "NÃ£o foi possÃ­vel identificar a igreja do usuÃ¡rio."
+                    "Não foi possível identificar a igreja do usuário."
                 );
             }
 
@@ -319,7 +329,7 @@ export function LessonsPage() {
             console.error(error);
 
             setError(
-                "NÃ£o foi possÃ­vel carregar os professores."
+                "Não foi possível carregar os professores."
             );
 
         } finally {
@@ -379,7 +389,7 @@ export function LessonsPage() {
             console.error(error);
 
             setError(
-                "NÃ£o foi possÃ­vel escalar o professor."
+                "Não foi possível escalar o professor."
             );
 
         } finally {
@@ -467,7 +477,7 @@ export function LessonsPage() {
             setError(
                 error instanceof Error
                     ? error.message
-                    : "NÃ£o foi possÃ­vel atualizar a aula."
+                    : "Não foi possível atualizar a aula."
             );
 
         } finally {
@@ -498,7 +508,7 @@ export function LessonsPage() {
             setAulaParaExcluir(null);
 
             setSuccess(
-                "Aula excluÃ­da com sucesso!"
+                "Aula excluída com sucesso!"
             );
 
             await carregarDados();
@@ -510,7 +520,7 @@ export function LessonsPage() {
             setError(
                 error instanceof Error
                     ? error.message
-                    : "NÃ£o foi possÃ­vel excluir a aula."
+                    : "Não foi possível excluir a aula."
             );
 
         } finally {
@@ -540,18 +550,15 @@ export function LessonsPage() {
 
             setSuccess("");
 
-            await LessonService.criarAula(
-                {
-                    trimestre_id: trimestreId,
-                    numero: Number(numero),
-                    titulo: titulo.trim(),
-                    data,
-                    professor_id: null,
-                    link_drive:
-                        linkDrive.trim() || null,
-                },
-                pessoa?.igreja_id ?? ""
-            );
+            await LessonService.criarAula({
+                trimestre_id: trimestreId,
+                numero: Number(numero),
+                titulo: titulo.trim(),
+                data,
+                professor_id: null,
+                link_drive:
+                    linkDrive.trim() || null,
+            });
 
             limparRascunho();
 
@@ -576,7 +583,7 @@ export function LessonsPage() {
             setError(
                 error instanceof Error
                     ? error.message
-                    : "NÃ£o foi possÃ­vel cadastrar a aula."
+                    : "Não foi possível cadastrar a aula."
             );
 
         } finally {
@@ -631,7 +638,7 @@ export function LessonsPage() {
             const hojeFormatado =
                 `${ano}-${mes}-${dia}`;
 
-            // Encontra a prÃ³xima aula a partir de hoje
+            // Encontra a próxima aula a partir de hoje
             const proximaAula =
                 aulas
                     .filter(
@@ -643,14 +650,14 @@ export function LessonsPage() {
                             a.data.localeCompare(b.data)
                     )[0];
 
-            // Se nÃ£o houver mais aulas futuras,
+            // Se não houver mais aulas futuras,
             // mostra todas as aulas do trimestre
             if (!proximaAula) {
                 return true;
             }
 
             // Mostra as aulas anteriores
-            // e a prÃ³xima aula
+            // e a próxima aula
             return aula.data <= proximaAula.data;
         }
 
@@ -739,7 +746,7 @@ export function LessonsPage() {
                     <h1 className="text-2xl font-bold text-slate-800">
 
                         {trimestre
-                            ? `${trimestre.numero}Âº Trimestre de ${trimestre.ano}`
+                            ? `${trimestre.numero}º Trimestre de ${trimestre.ano}`
                             : "Aulas"}
 
                     </h1>
@@ -811,7 +818,7 @@ export function LessonsPage() {
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
 
-                                    NÃºmero da aula
+                                    Número da aula
 
                                 </label>
 
@@ -836,7 +843,7 @@ export function LessonsPage() {
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
 
-                                    TÃ­tulo da aula
+                                    Título da aula
 
                                 </label>
 
@@ -849,7 +856,7 @@ export function LessonsPage() {
                                         )
                                     }
                                     required
-                                    placeholder="Ex.: Doutrina das Ãšltimas Coisas"
+                                    placeholder="Ex.: Doutrina das Últimas Coisas"
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
                                 />
 
@@ -1279,7 +1286,7 @@ export function LessonsPage() {
                             <div>
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                                    NÃºmero da aula
+                                    Número da aula
                                 </label>
 
                                 <input
@@ -1299,7 +1306,7 @@ export function LessonsPage() {
                             <div>
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                                    TÃ­tulo da aula
+                                    Título da aula
                                 </label>
 
                                 <input
@@ -1379,7 +1386,7 @@ export function LessonsPage() {
 
                                     {salvandoEdicao
                                         ? "Salvando..."
-                                        : "Salvar alteraÃ§Ãµes"}
+                                        : "Salvar alterações"}
 
                                 </button>
 
@@ -1426,7 +1433,7 @@ export function LessonsPage() {
 
                             <p className="text-sm text-red-600">
 
-                                Essa aÃ§Ã£o nÃ£o poderÃ¡ ser desfeita.
+                                Essa ação não poderá ser desfeita.
 
                             </p>
 
@@ -1480,8 +1487,3 @@ export function LessonsPage() {
     );
 
 }
-
-
-
-
-

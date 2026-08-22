@@ -1,4 +1,4 @@
-import type { Aula } from "../types/Aula";
+﻿import type { Aula } from "../types/Aula";
 import type { Trimestre } from "../types/Trimestre";
 
 import { LessonRepository } from "../repositories/LessonRepository";
@@ -12,15 +12,20 @@ export type AulaComStatus = Aula & {
 
 export const LessonService = {
 
-    async listarTrimestres(): Promise<Trimestre[]> {
-        return LessonRepository.listarTrimestres();
+    async listarTrimestres(
+        igrejaId: string
+    ): Promise<Trimestre[]> {
+        return LessonRepository.listarTrimestres(igrejaId);
     },
 
-    async buscarTrimestreAtivo(): Promise<Trimestre | null> {
-        return LessonRepository.buscarTrimestreAtivo();
+    async buscarTrimestreAtivo(
+        igrejaId: string
+    ): Promise<Trimestre | null> {
+        return LessonRepository.buscarTrimestreAtivo(igrejaId);
     },
 
     async criarTrimestre(
+        igrejaId: string,
         numero: number,
         ano: number,
         tema: string,
@@ -28,7 +33,7 @@ export const LessonService = {
     ): Promise<Trimestre> {
 
         const trimestres =
-            await LessonRepository.listarTrimestres();
+            await LessonRepository.listarTrimestres(igrejaId);
 
         const jaExiste = trimestres.some(
             (trimestre) =>
@@ -38,7 +43,7 @@ export const LessonService = {
 
         if (jaExiste) {
             throw new Error(
-                "Este trimestre já está cadastrado."
+                "Este trimestre jÃ¡ estÃ¡ cadastrado."
             );
         }
 
@@ -48,24 +53,28 @@ export const LessonService = {
             trimestres.length >= maxTrimestres
         ) {
             throw new Error(
-                `Seu plano permite no máximo ${maxTrimestres} trimestre${maxTrimestres === 1 ? "" : "s"} cadastrados.`
+                `Seu plano permite no mÃ¡ximo ${maxTrimestres} trimestre${maxTrimestres === 1 ? "" : "s"} cadastrados.`
             );
         }
 
-        return LessonRepository.criarTrimestre({
-            numero,
-            ano,
-            tema,
-            ativo: false,
-        });
+        return LessonRepository.criarTrimestre(
+            igrejaId,
+            {
+                numero,
+                ano,
+                tema,
+                ativo: false,
+            }
+        );
     },
 
     async ativarTrimestre(
+        igrejaId: string,
         trimestreId: string
     ): Promise<void> {
 
         const trimestres =
-            await LessonRepository.listarTrimestres();
+            await LessonRepository.listarTrimestres(igrejaId);
 
         const trimestreSelecionado =
             trimestres.find(
@@ -91,6 +100,7 @@ export const LessonService = {
         if (trimestreAtivo) {
 
             await LessonRepository.atualizarTrimestre(
+                igrejaId,
                 trimestreAtivo.id,
                 {
                     ativo: false,
@@ -99,14 +109,15 @@ export const LessonService = {
         }
 
         await LessonRepository.atualizarTrimestre(
+            igrejaId,
             trimestreId,
             {
                 ativo: true,
             }
         );
     },
-
     async atualizarTrimestre(
+        igrejaId: string,
         trimestreId: string,
         dados: Partial<
             Pick<
@@ -123,7 +134,7 @@ export const LessonService = {
                 dados.numero > 4
             ) {
                 throw new Error(
-                    "O número do trimestre deve estar entre 1 e 4."
+                    "O nÃºmero do trimestre deve estar entre 1 e 4."
                 );
             }
         }
@@ -134,7 +145,7 @@ export const LessonService = {
                 dados.ano < 2000)
         ) {
             throw new Error(
-                "Informe um ano válido."
+                "Informe um ano vÃ¡lido."
             );
         }
 
@@ -148,6 +159,7 @@ export const LessonService = {
         }
 
         return LessonRepository.atualizarTrimestre(
+            igrejaId,
             trimestreId,
             dados
         );
@@ -174,18 +186,19 @@ export const LessonService = {
         aula: Omit<
             Aula,
             "id" | "created_at" | "updated_at"
-        >
+        >,
+        igrejaId: string
     ): Promise<Aula> {
 
         if (!aula.numero || aula.numero < 1) {
             throw new Error(
-                "Informe um número de aula válido."
+                "Informe um nÃºmero de aula vÃ¡lido."
             );
         }
 
         if (!aula.titulo.trim()) {
             throw new Error(
-                "Informe o título da aula."
+                "Informe o tÃ­tulo da aula."
             );
         }
 
@@ -200,11 +213,11 @@ export const LessonService = {
             await LessonRepository.criarAula(aula);
 
         // 2. A partir daqui, qualquer erro de
-        // notificação NÃO deve impedir a criação da aula.
+        // notificaÃ§Ã£o NÃƒO deve impedir a criaÃ§Ã£o da aula.
         try {
 
             const pessoas =
-                await PeopleRepository.listar();
+                await PeopleRepository.listar(igrejaId);
 
             const alunos =
                 pessoas.filter(
@@ -215,10 +228,10 @@ export const LessonService = {
                 );
 
             console.log(
-                `Alunos ativos encontrados para notificação: ${alunos.length}`
+                `Alunos ativos encontrados para notificaÃ§Ã£o: ${alunos.length}`
             );
 
-            // 3. Cria a notificação e envia Push
+            // 3. Cria a notificaÃ§Ã£o e envia Push
             // individualmente para cada aluno.
             for (const aluno of alunos) {
 
@@ -233,10 +246,10 @@ export const LessonService = {
                             "NOVA_AULA",
 
                         titulo:
-                            "Nova aula disponível",
+                            "Nova aula disponÃ­vel",
 
                         mensagem:
-                            `Aula ${aulaCriada.numero} — ${aulaCriada.titulo}`,
+                            `Aula ${aulaCriada.numero} â€” ${aulaCriada.titulo}`,
 
                         aula_id:
                             aulaCriada.id,
@@ -246,7 +259,7 @@ export const LessonService = {
                     });
 
                     console.log(
-                        `Notificação enviada para: ${aluno.nome}`
+                        `NotificaÃ§Ã£o enviada para: ${aluno.nome}`
                     );
 
                 } catch (error) {
@@ -262,7 +275,7 @@ export const LessonService = {
         } catch (error) {
 
             console.error(
-                "Aula criada, mas ocorreu um erro ao buscar os alunos para notificação:",
+                "Aula criada, mas ocorreu um erro ao buscar os alunos para notificaÃ§Ã£o:",
                 error
             );
 
@@ -271,13 +284,17 @@ export const LessonService = {
         return aulaCriada;
     },
 
-    async buscarProximaAula(): Promise<{
+    async buscarProximaAula(
+        igrejaId: string
+    ): Promise<{
         trimestre: Trimestre;
         aula: AulaComStatus | null;
     } | null> {
 
         const trimestre =
-            await LessonRepository.buscarTrimestreAtivo();
+            await LessonRepository.buscarTrimestreAtivo(
+                igrejaId
+            );
 
         if (!trimestre) {
             return null;
@@ -323,12 +340,12 @@ export const LessonService = {
                 }
             );
 
-        // 2. Se não existe professor, não há ninguém para notificar
+        // 2. Se nÃ£o existe professor, nÃ£o hÃ¡ ninguÃ©m para notificar
         if (!professorId) {
             return aulaAtualizada;
         }
 
-        // 3. Cria a notificação para o novo professor
+        // 3. Cria a notificaÃ§Ã£o para o novo professor
         try {
 
             await NotificationService.criar({
@@ -340,10 +357,10 @@ export const LessonService = {
                     "NOVA_AULA_PROFESSOR",
 
                 titulo:
-                    "Nova aula atribuída a você",
+                    "Nova aula atribuÃ­da a vocÃª",
 
                 mensagem:
-                    `Você foi escalado para ministrar a aula ${aulaAtualizada.numero} — ${aulaAtualizada.titulo} em ${aulaAtualizada.data}.`,
+                    `VocÃª foi escalado para ministrar a aula ${aulaAtualizada.numero} â€” ${aulaAtualizada.titulo} em ${aulaAtualizada.data}.`,
 
                 aula_id:
                     aulaAtualizada.id,
@@ -359,11 +376,11 @@ export const LessonService = {
         } catch (error) {
 
             console.error(
-                "[AULA] Aula atribuída, mas não foi possível enviar a notificação:",
+                "[AULA] Aula atribuÃ­da, mas nÃ£o foi possÃ­vel enviar a notificaÃ§Ã£o:",
                 error
             );
 
-            // A aula continua atribuída mesmo se a notificação falhar.
+            // A aula continua atribuÃ­da mesmo se a notificaÃ§Ã£o falhar.
         }
 
         return aulaAtualizada;
@@ -395,3 +412,6 @@ export const LessonService = {
     },
 
 };
+
+
+

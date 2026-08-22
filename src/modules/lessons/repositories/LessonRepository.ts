@@ -4,11 +4,16 @@ import type { Aula } from "../types/Aula";
 import type { Trimestre } from "../types/Trimestre";
 
 export const LessonRepository = {
-    async listarTrimestres(): Promise<Trimestre[]> {
+
+    async listarTrimestres(
+        igrejaId: string
+    ): Promise<Trimestre[]> {
+
         const { data, error } = await supabase
             .schema("ebd")
             .from("trimestres")
             .select("*")
+            .eq("igreja_id", igrejaId)
             .order("ano", {
                 ascending: false,
             })
@@ -23,11 +28,16 @@ export const LessonRepository = {
         return data ?? [];
     },
 
-    async buscarTrimestreAtivo(): Promise<Trimestre | null> {
+
+    async buscarTrimestreAtivo(
+        igrejaId: string
+    ): Promise<Trimestre | null> {
+
         const { data, error } = await supabase
             .schema("ebd")
             .from("trimestres")
             .select("*")
+            .eq("igreja_id", igrejaId)
             .eq("ativo", true)
             .maybeSingle();
 
@@ -38,7 +48,9 @@ export const LessonRepository = {
         return data;
     },
 
+
     async criarTrimestre(
+        igrejaId: string,
         trimestre: {
             numero: number;
             ano: number;
@@ -46,10 +58,14 @@ export const LessonRepository = {
             ativo: boolean;
         }
     ): Promise<Trimestre> {
+
         const { data, error } = await supabase
             .schema("ebd")
             .from("trimestres")
-            .insert(trimestre)
+            .insert({
+                ...trimestre,
+                igreja_id: igrejaId,
+            })
             .select()
             .single();
 
@@ -60,7 +76,9 @@ export const LessonRepository = {
         return data;
     },
 
+
     async atualizarTrimestre(
+        igrejaId: string,
         trimestreId: string,
         dados: Partial<
             Pick<
@@ -69,11 +87,13 @@ export const LessonRepository = {
             >
         >
     ): Promise<Trimestre> {
+
         const { data, error } = await supabase
             .schema("ebd")
             .from("trimestres")
             .update(dados)
             .eq("id", trimestreId)
+            .eq("igreja_id", igrejaId)
             .select()
             .single();
 
@@ -84,9 +104,11 @@ export const LessonRepository = {
         return data;
     },
 
+
     async listarAulasPorTrimestre(
         trimestreId: string
     ): Promise<Aula[]> {
+
         const { data, error } = await supabase
             .schema("ebd")
             .from("aulas")
@@ -109,12 +131,14 @@ export const LessonRepository = {
         return data ?? [];
     },
 
+
     async criarAula(
         aula: Omit<
             Aula,
             "id" | "created_at" | "updated_at"
         >
     ): Promise<Aula> {
+
         const { data, error } = await supabase
             .schema("ebd")
             .from("aulas")
@@ -129,6 +153,7 @@ export const LessonRepository = {
         return data;
     },
 
+
     async atualizarAula(
         aulaId: string,
         dados: Partial<
@@ -138,6 +163,7 @@ export const LessonRepository = {
             >
         >
     ): Promise<Aula> {
+
         const { data, error } = await supabase
             .schema("ebd")
             .from("aulas")
@@ -153,9 +179,11 @@ export const LessonRepository = {
         return data;
     },
 
+
     async excluirAula(
         aulaId: string
     ): Promise<void> {
+
         const { error } = await supabase
             .schema("ebd")
             .from("aulas")

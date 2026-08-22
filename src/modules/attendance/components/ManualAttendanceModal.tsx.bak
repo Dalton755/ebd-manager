@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Check,
   Search,
@@ -54,13 +54,13 @@ export function ManualAttendanceModal({
 
         if (!pessoa?.igreja_id) {
           throw new Error(
-            "NÃ£o foi possÃ­vel identificar a igreja do usuÃ¡rio."
+            "Não foi possível identificar a igreja do usuário."
           );
         }
 
         const pessoas =
           await PeopleService.listar(
-            igrejaId
+            pessoa.igreja_id
           );
 
         setAlunos(
@@ -168,7 +168,7 @@ export function ManualAttendanceModal({
 
       <div className="flex w-full max-w-lg flex-col rounded-2xl bg-white shadow-xl">
 
-        {/* CabeÃ§alho */}
+        {/* Cabeçalho */}
 
         <div className="flex items-center justify-between border-b p-5">
 
@@ -194,7 +194,7 @@ export function ManualAttendanceModal({
 
         </div>
 
-        {/* ConteÃºdo */}
+        {/* Conteúdo */}
 
         <div className="space-y-4 p-5">
 
@@ -310,8 +310,8 @@ export function ManualAttendanceModal({
                           {salvandoAluno
                             ? "Salvando..."
                             : adicionado
-                              ? "PresenÃ§a adicionada"
-                              : "Adicionar presenÃ§a"}
+                              ? "Presença adicionada"
+                              : "Adicionar presença"}
                         </p>
 
                       </div>
@@ -346,7 +346,7 @@ export function ManualAttendanceModal({
 
         </div>
 
-        {/* RodapÃ© */}
+        {/* Rodapé */}
 
         <div className="border-t bg-slate-50 p-4">
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
     AlertTriangle,
+    ArrowUpCircle,
     BookOpen,
     CheckCircle2,
     CreditCard,
@@ -9,6 +10,7 @@ import {
     Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
 
 import { PageHeader } from "@/shared/components/ui/PageHeader";
 import {
@@ -212,6 +214,10 @@ export function MyPlanPage() {
     const [loading, setLoading] =
         useState(true);
 
+    const podeFazerUpgrade =
+        plano?.plano.nome === "Semente" ||
+        plano?.plano.nome === "Crescimento";
+
     useEffect(() => {
         carregarPlano();
     }, []);
@@ -404,6 +410,21 @@ export function MyPlanPage() {
                         </div>
 
                     </div>
+
+                    {podeFazerUpgrade && (
+                        <div className="mt-6 flex justify-center sm:justify-end">
+
+                            <Link
+                                to="/planos"
+                                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 hover:shadow-md"
+                            >
+                                <ArrowUpCircle size={20} />
+
+                                Fazer upgrade
+                            </Link>
+
+                        </div>
+                    )}
 
                 </CardContent>
 

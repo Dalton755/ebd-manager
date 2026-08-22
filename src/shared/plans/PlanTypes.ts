@@ -13,6 +13,7 @@
   | "PRESENCAS"
   | "PROFESSORES"
   | "RELATORIOS"
+  | "SOLICITACOES_SENHA"
   | "TRIMESTRES";
 
 export type PlanoNome =

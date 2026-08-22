@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
 import { toast } from "sonner";
 
 type ListFunction<T> = () => Promise<T[]>;
@@ -15,9 +20,11 @@ export function useCrud<T>(
 
     try {
       const result = await listFunction();
+
       setData(result ?? []);
     } catch (error) {
       console.error(error);
+
       toast.error(errorMessage);
     } finally {
       setLoading(false);

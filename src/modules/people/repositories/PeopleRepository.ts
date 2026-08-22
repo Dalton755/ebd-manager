@@ -1,20 +1,21 @@
-import { supabase } from "@/shared/lib/supabase/client";
+﻿import { supabase } from "@/shared/lib/supabase/client";
 import type { Pessoa } from "../types/Pessoa";
 
 export class PeopleRepository {
-  static async listar() {
-    const { data, error } = await supabase
-      .from("pessoas")
-      .select("*")
-      .eq("ativo", true)
-      .order("nome");
+  static async listar(igrejaId: string) {
+  const { data, error } = await supabase
+    .schema("ebd").from("pessoas")
+    .select("*")
+    .eq("igreja_id", igrejaId)
+    .eq("ativo", true)
+    .order("nome");
 
-    if (error) {
-      throw error;
-    }
-
-    return data;
+  if (error) {
+    throw error;
   }
+
+  return data;
+}
 
   static async criar(pessoa: Pessoa) {
     const {
@@ -59,7 +60,7 @@ export class PeopleRepository {
 
           const erroComDados = new Error(
             resposta?.error ??
-            "Não foi possível cadastrar o usuário."
+            "NÃ£o foi possÃ­vel cadastrar o usuÃ¡rio."
           ) as Error & {
             codigo?: string;
             utilizado?: number;
@@ -85,25 +86,25 @@ export class PeopleRepository {
         }
 
         console.error(
-          "Não foi possível interpretar a resposta da Edge Function:",
+          "NÃ£o foi possÃ­vel interpretar a resposta da Edge Function:",
           erroLeitura
         );
       }
 
       throw new Error(
-        "Não foi possível cadastrar o usuário."
+        "NÃ£o foi possÃ­vel cadastrar o usuÃ¡rio."
       );
     }
 
     // =====================================================
-    // RESPOSTA INVÁLIDA
+    // RESPOSTA INVÃLIDA
     // =====================================================
 
     if (!data?.success) {
 
       throw new Error(
         data?.error ??
-        "Não foi possível cadastrar o usuário."
+        "NÃ£o foi possÃ­vel cadastrar o usuÃ¡rio."
       );
     }
 
@@ -119,7 +120,7 @@ export class PeopleRepository {
     pessoa: Partial<Pessoa>
   ) {
     const { data, error } = await supabase
-      .from("pessoas")
+      .schema("ebd").from("pessoas")
       .update(pessoa)
       .eq("id", id)
       .select()
@@ -134,7 +135,7 @@ export class PeopleRepository {
 
   static async inativar(id: string) {
     const { data, error } = await supabase
-      .from("pessoas")
+      .schema("ebd").from("pessoas")
       .update({
         ativo: false,
       })
@@ -190,7 +191,7 @@ export class PeopleRepository {
 
           const erroComDados = new Error(
             resposta?.error ??
-            "Não foi possível atualizar o perfil."
+            "NÃ£o foi possÃ­vel atualizar o perfil."
           ) as Error & {
             codigo?: string;
             utilizado?: number;
@@ -214,24 +215,24 @@ export class PeopleRepository {
         }
 
         console.error(
-          "Não foi possível interpretar a resposta da Edge Function:",
+          "NÃ£o foi possÃ­vel interpretar a resposta da Edge Function:",
           erroLeitura
         );
       }
 
       throw new Error(
-        "Não foi possível atualizar o perfil."
+        "NÃ£o foi possÃ­vel atualizar o perfil."
       );
     }
 
     // =====================================================
-    // RESPOSTA INVÁLIDA
+    // RESPOSTA INVÃLIDA
     // =====================================================
 
     if (!data?.success) {
       const erroComDados = new Error(
         data?.error ??
-        "Não foi possível atualizar o perfil."
+        "NÃ£o foi possÃ­vel atualizar o perfil."
       ) as Error & {
         codigo?: string;
         utilizado?: number;

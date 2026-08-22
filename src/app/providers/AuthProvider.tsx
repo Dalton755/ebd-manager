@@ -40,7 +40,9 @@ type AuthContextType = {
     user: User | null;
     session: Session | null;
     pessoa: Pessoa | null;
+    igrejaId: string | null;
     plano: PlanoCompleto | null;
+    isSuperAdmin: boolean;
     senhaTemporaria: boolean;
     loading: boolean;
     logout: () => Promise<void>;
@@ -73,11 +75,17 @@ export function AuthProvider({
     const [pessoa, setPessoa] =
         useState<Pessoa | null>(null);
 
+    const [igrejaId, setIgrejaId] =
+        useState<string | null>(null);
+
     const [senhaTemporaria, setSenhaTemporaria] =
         useState(false);
 
     const [plano, setPlano] =
         useState<PlanoCompleto | null>(null);
+
+    const [isSuperAdmin, setIsSuperAdmin] =
+        useState(false);
 
 
     // =====================================================
@@ -195,6 +203,33 @@ export function AuthProvider({
 
         setUser(usuario);
 
+        let superAdmin = false;
+
+        if (usuario) {
+            const {
+                data,
+                error,
+            } = await supabase
+                .schema("ebd")
+                .rpc("usuario_e_superadmin");
+
+            if (error) {
+                console.error(
+                    "Erro ao verificar SUPERADMIN:",
+                    error
+                );
+            } else {
+
+                console.log(
+        "VERIFICAÇÃO SUPERADMIN:",
+        data
+    );
+                superAdmin = data === true;
+            }
+        }
+
+        setIsSuperAdmin(superAdmin);
+
 
         // =================================================
         // USUÃRIO DESLOGADO
@@ -204,11 +239,15 @@ export function AuthProvider({
 
             setPessoa(null);
 
+            setIgrejaId(null);
+
             setPlano(null);
 
             setSenhaTemporaria(false);
 
             setLoading(false);
+
+            setIsSuperAdmin(false);
 
             return;
         }
@@ -223,6 +262,10 @@ export function AuthProvider({
 
 
         setPessoa(pessoaEncontrada);
+
+        setIgrejaId(
+            pessoaEncontrada?.igreja_id ?? null
+        );
 
 
         setSenhaTemporaria(
@@ -358,6 +401,8 @@ export function AuthProvider({
 
                     setPessoa(null);
 
+                    setIgrejaId(null);
+
                     setSenhaTemporaria(false);
 
                     setLoading(false);
@@ -450,9 +495,13 @@ export function AuthProvider({
 
         setPessoa(null);
 
+        setIgrejaId(null);
+
         setPlano(null);
 
         setSenhaTemporaria(false);
+
+        setIsSuperAdmin(false);
     }
 
 
@@ -466,7 +515,9 @@ export function AuthProvider({
                 user,
                 session,
                 pessoa,
+                igrejaId,
                 plano,
+                isSuperAdmin,
                 senhaTemporaria,
                 loading,
                 logout,

@@ -2,9 +2,9 @@ import { PeopleRepository } from "../repositories/PeopleRepository";
 import type { Pessoa } from "../types/Pessoa";
 
 export class PeopleService {
-  static async listar() {
-    return await PeopleRepository.listar();
-  }
+  static async listar(igrejaId: string) {
+  return await PeopleRepository.listar(igrejaId);
+}
 
   static async criar(pessoa: Pessoa) {
     return await PeopleRepository.criar(pessoa);

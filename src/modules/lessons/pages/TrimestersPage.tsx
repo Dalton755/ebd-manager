@@ -30,7 +30,7 @@ export function TrimestersPage() {
     } = usePlan();
 
     const maxTrimestresCadastrados =
-    obterLimite("max_trimestres");
+        obterLimite("max_trimestres");
 
     const perfilUsuario =
         pessoa?.perfil === "PENDENTE"
@@ -90,8 +90,18 @@ export function TrimestersPage() {
 
             setLoading(true);
 
+            const igrejaId = pessoa?.igreja_id;
+
+            if (!igrejaId) {
+                throw new Error(
+                    "Não foi possível identificar a igreja do usuário."
+                );
+            }
+
             const data =
-                await LessonService.listarTrimestres();
+                await LessonService.listarTrimestres(
+                    igrejaId
+                );
 
             setTrimestres(data);
 
@@ -112,9 +122,13 @@ export function TrimestersPage() {
 
     useEffect(() => {
 
+        if (!pessoa?.igreja_id) {
+            return;
+        }
+
         carregarTrimestres();
 
-    }, []);
+    }, [pessoa?.igreja_id]);
 
     async function handleSubmit(
         event: React.FormEvent<HTMLFormElement>
@@ -142,7 +156,14 @@ export function TrimestersPage() {
 
             if (trimestreSelecionado) {
 
+                if (!pessoa?.igreja_id) {
+                    throw new Error(
+                        "Não foi possível identificar a igreja do usuário."
+                    );
+                }
+
                 await LessonService.atualizarTrimestre(
+                    pessoa.igreja_id,
                     trimestreSelecionado.id,
                     {
                         numero: Number(numero),
@@ -157,7 +178,15 @@ export function TrimestersPage() {
 
             } else {
 
+                
+                if (!pessoa?.igreja_id) {
+                    throw new Error(
+                        "Não foi possível identificar a igreja do usuário."
+                    );
+                }
+
                 await LessonService.criarTrimestre(
+                    pessoa.igreja_id,
                     Number(numero),
                     Number(ano),
                     tema,
@@ -204,7 +233,16 @@ export function TrimestersPage() {
 
         try {
 
+            const igrejaId = pessoa?.igreja_id;
+
+            if (!igrejaId) {
+                throw new Error(
+                    "Não foi possível identificar a igreja do usuário."
+                );
+            }
+
             await LessonService.ativarTrimestre(
+                igrejaId,
                 trimestreId
             );
 
@@ -535,7 +573,7 @@ export function TrimestersPage() {
                 onClose={() =>
                     setMostrarModalLimite(false)
                 }
-            />  
+            />
 
         </div>
 
@@ -543,3 +581,4 @@ export function TrimestersPage() {
 
     );
 }
+

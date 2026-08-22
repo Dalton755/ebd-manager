@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 
 import { PeopleService } from "../services/PeopleService";
 import type { Pessoa } from "../types/Pessoa";
@@ -44,8 +44,12 @@ export function PeoplePage() {
     "GERENCIAR_PERFIS"
   );
 
- const carregarPessoasCallback =
-  useCallback(async () => {
+  const {
+  data: pessoas,
+  loading,
+  refresh: carregarPessoas,
+} = useCrud<Pessoa>(
+  async () => {
     if (!usuarioLogado?.igreja_id) {
       return [];
     }
@@ -53,23 +57,9 @@ export function PeoplePage() {
     return await PeopleService.listar(
       usuarioLogado.igreja_id
     );
-  }, [usuarioLogado?.igreja_id]);
-
-const {
-  data: pessoas,
-  loading,
-  refresh: carregarPessoas,
-} = useCrud<Pessoa>(
-  carregarPessoasCallback,
+  },
   "Erro ao carregar pessoas."
 );
-
-useEffect(() => {
-  if (usuarioLogado?.igreja_id) {
-    carregarPessoas();
-  }
-}, [usuarioLogado?.igreja_id]);
-
   const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | undefined>();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pessoaParaInativar, setPessoaParaInativar] = useState<Pessoa | undefined>();
