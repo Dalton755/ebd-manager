@@ -66,8 +66,8 @@ export function ManualAttendanceModal({
         setAlunos(
           (pessoas ?? []).filter(
             (pessoa) =>
-              pessoa.perfil === "ALUNO" &&
-              pessoa.ativo
+              pessoa.ativo &&
+              pessoa.status === "ATIVO"
           )
         );
 

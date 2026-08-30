@@ -198,10 +198,10 @@ export function AttendancePage() {
      */
     const {
         valores:
-            filtros,
+        filtros,
 
         setValores:
-            setFiltros,
+        setFiltros,
     } =
         useFormDraft(
             `filtros-chamada-${pessoa?.igreja_id ?? "sem-igreja"}`,
@@ -689,14 +689,10 @@ export function AttendancePage() {
                         (
                             item
                         ) =>
-                            item.perfil ===
-                                "ALUNO" &&
                             item.ativo ===
-                                true &&
+                            true &&
                             item.status ===
-                                "ATIVO" &&
-                            item.classe_id ===
-                                filtros.classeId
+                            "ATIVO"
                     )
                     .sort(
                         (
@@ -1052,11 +1048,11 @@ export function AttendancePage() {
                             {classesDisponiveis.length ===
                                 0 && (
 
-                                <option value="">
-                                    Nenhuma classe disponível
-                                </option>
+                                    <option value="">
+                                        Nenhuma classe disponível
+                                    </option>
 
-                            )}
+                                )}
 
 
                             {classesDisponiveis.map(
@@ -1130,11 +1126,11 @@ export function AttendancePage() {
                             {aulas.length ===
                                 0 && (
 
-                                <option value="">
-                                    Nenhuma aula cadastrada
-                                </option>
+                                    <option value="">
+                                        Nenhuma aula cadastrada
+                                    </option>
 
-                            )}
+                                )}
 
 
                             {aulas.map(
@@ -1399,19 +1395,17 @@ export function AttendancePage() {
                                                     aluno.id
                                                 }
 
-                                                className={`flex items-center gap-3 rounded-xl border p-3 transition ${
-                                                    aluno.presente
+                                                className={`flex items-center gap-3 rounded-xl border p-3 transition ${aluno.presente
                                                         ? "border-green-200 bg-green-50/40"
                                                         : "border-slate-200 bg-white"
-                                                }`}
+                                                    }`}
                                             >
 
                                                 <div
-                                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold ${
-                                                        aluno.presente
+                                                    className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-semibold ${aluno.presente
                                                             ? "bg-green-100 text-green-700"
                                                             : "bg-slate-100 text-slate-600"
-                                                    }`}
+                                                        }`}
                                                 >
 
                                                     {aluno.nome
@@ -1431,11 +1425,10 @@ export function AttendancePage() {
 
 
                                                     <p
-                                                        className={`text-sm ${
-                                                            aluno.presente
+                                                        className={`text-sm ${aluno.presente
                                                                 ? "text-green-600"
                                                                 : "text-slate-400"
-                                                        }`}
+                                                            }`}
                                                     >
 
                                                         {aluno.presente
@@ -1467,11 +1460,10 @@ export function AttendancePage() {
                                                             : "Registrar presença"
                                                     }
 
-                                                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition disabled:opacity-50 ${
-                                                        aluno.presente
+                                                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition disabled:opacity-50 ${aluno.presente
                                                             ? "bg-green-600 text-white hover:bg-green-700"
                                                             : "bg-blue-100 text-blue-600 hover:bg-blue-200"
-                                                    }`}
+                                                        }`}
                                                 >
 
                                                     {processando ? (
