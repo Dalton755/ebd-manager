@@ -2246,6 +2246,363 @@ export function DashboardIgrejaPage({
             </div>
 
             {/* ================================================= */}
+            {/* RANKING DE ASSIDUIDADE */}
+            {/* ================================================= */}
+
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+
+                    <div className="flex items-center gap-3">
+
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                            <TrendingUp size={20} />
+                        </div>
+
+                        <div>
+                            <h2 className="font-bold text-slate-900">
+                                Ranking de assiduidade
+                            </h2>
+
+                            <p className="text-xs text-slate-500">
+                                Alunos com maior frequência no período selecionado
+                            </p>
+                        </div>
+
+                    </div>
+
+                    <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        Top 10
+                    </div>
+
+                </div>
+
+
+                <div className="p-5">
+
+                    {(analise?.rankingAssiduidade.length ?? 0) > 0 ? (
+
+                        <div className="space-y-2">
+
+                            {analise?.rankingAssiduidade.map(
+                                (aluno, index) => (
+
+                                    <div
+                                        key={aluno.id}
+                                        className="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 transition hover:border-slate-200 hover:bg-white"
+                                    >
+
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold text-slate-700 shadow-sm">
+
+                                            {index === 0
+                                                ? "🥇"
+                                                : index === 1
+                                                    ? "🥈"
+                                                    : index === 2
+                                                        ? "🥉"
+                                                        : `${index + 1}º`}
+
+                                        </div>
+
+
+                                        <div className="min-w-0 flex-1">
+
+                                            <p className="truncate text-sm font-semibold text-slate-900">
+                                                {aluno.nome}
+                                            </p>
+
+                                            <p className="mt-0.5 text-xs text-slate-500">
+                                                {aluno.presencas} de{" "}
+                                                {aluno.aulasEsperadas} aulas
+                                            </p>
+
+                                        </div>
+
+
+                                        <div className="hidden w-32 sm:block">
+
+                                            <div className="h-2 overflow-hidden rounded-full bg-slate-200">
+
+                                                <div
+                                                    className={[
+                                                        "h-full rounded-full",
+
+                                                        aluno.frequencia >= 90
+                                                            ? "bg-emerald-500"
+                                                            : aluno.frequencia >= 75
+                                                                ? "bg-blue-500"
+                                                                : aluno.frequencia >= 50
+                                                                    ? "bg-amber-500"
+                                                                    : "bg-rose-500",
+
+                                                    ].join(" ")}
+                                                    style={{
+                                                        width: `${Math.min(
+                                                            100,
+                                                            Math.max(
+                                                                0,
+                                                                aluno.frequencia
+                                                            )
+                                                        )}%`,
+                                                    }}
+                                                />
+
+                                            </div>
+
+                                        </div>
+
+
+                                        <div
+                                            className={[
+                                                "min-w-14 text-right text-sm font-bold",
+
+                                                aluno.frequencia >= 90
+                                                    ? "text-emerald-700"
+                                                    : aluno.frequencia >= 75
+                                                        ? "text-blue-700"
+                                                        : aluno.frequencia >= 50
+                                                            ? "text-amber-700"
+                                                            : "text-rose-700",
+
+                                            ].join(" ")}
+                                        >
+                                            {aluno.frequencia}%
+                                        </div>
+
+                                    </div>
+
+                                )
+                            )}
+
+                        </div>
+
+                    ) : (
+
+                        <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center">
+
+                            <Users
+                                size={28}
+                                className="mx-auto text-slate-300"
+                            />
+
+                            <p className="mt-3 text-sm font-medium text-slate-600">
+                                Ainda não há dados suficientes
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-400">
+                                O ranking aparecerá após o registro das presenças.
+                            </p>
+
+                        </div>
+
+                    )}
+
+                </div>
+
+            </div>
+
+
+            {/* ================================================= */}
+            {/* EVOLUÇÃO INDIVIDUAL ENTRE TRIMESTRES */}
+            {/* ================================================= */}
+
+            {trimestreSelecionado &&
+                analise?.trimestreAnterior && (
+
+                    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                        <div className="flex flex-col gap-3 border-b border-slate-100 px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+
+                            <div className="flex items-center gap-3">
+
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                                    <Activity size={20} />
+                                </div>
+
+                                <div>
+
+                                    <h2 className="font-bold text-slate-900">
+                                        Evolução da frequência dos alunos
+                                    </h2>
+
+                                    <p className="text-xs text-slate-500">
+
+                                        Comparação individual com o{" "}
+                                        {analise.trimestreAnterior.numero}º trimestre de{" "}
+                                        {analise.trimestreAnterior.ano}
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <div className="text-xs text-slate-400">
+                                Variação em pontos percentuais
+                            </div>
+
+                        </div>
+
+
+                        {analise.comparativoAlunos.length > 0 ? (
+
+                            <div className="overflow-x-auto">
+
+                                <table className="min-w-full">
+
+                                    <thead className="bg-slate-50">
+
+                                        <tr className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+
+                                            <th className="px-5 py-3">
+                                                Aluno
+                                            </th>
+
+                                            <th className="whitespace-nowrap px-5 py-3 text-center">
+                                                Trimestre anterior
+                                            </th>
+
+                                            <th className="whitespace-nowrap px-5 py-3 text-center">
+                                                Atual
+                                            </th>
+
+                                            <th className="whitespace-nowrap px-5 py-3 text-center">
+                                                Variação
+                                            </th>
+
+                                            <th className="whitespace-nowrap px-5 py-3">
+                                                Evolução
+                                            </th>
+
+                                        </tr>
+
+                                    </thead>
+
+
+                                    <tbody className="divide-y divide-slate-100">
+
+                                        {analise.comparativoAlunos.map(
+                                            (aluno) => (
+
+                                                <tr
+                                                    key={aluno.id}
+                                                    className="transition hover:bg-slate-50"
+                                                >
+
+                                                    <td className="px-5 py-4">
+                                                        <p className="whitespace-nowrap text-sm font-semibold text-slate-900">
+                                                            {aluno.nome}
+                                                        </p>
+                                                    </td>
+
+
+                                                    <td className="px-5 py-4 text-center">
+
+                                                        {aluno.frequenciaAnterior !== null ? (
+
+                                                            <p className="text-sm font-semibold text-slate-700">
+                                                                {aluno.frequenciaAnterior}%
+                                                            </p>
+
+                                                        ) : (
+
+                                                            <span className="text-sm text-slate-400">
+                                                                —
+                                                            </span>
+
+                                                        )}
+
+                                                    </td>
+
+
+                                                    <td className="px-5 py-4 text-center">
+
+                                                        <p className="text-sm font-bold text-slate-900">
+                                                            {aluno.frequenciaAtual}%
+                                                        </p>
+
+                                                    </td>
+
+
+                                                    <td
+                                                        className={[
+                                                            "whitespace-nowrap px-5 py-4 text-center text-sm font-bold",
+
+                                                            aluno.variacao === null
+                                                                ? "text-slate-400"
+                                                                : aluno.variacao > 0
+                                                                    ? "text-emerald-600"
+                                                                    : aluno.variacao < 0
+                                                                        ? "text-rose-600"
+                                                                        : "text-slate-500",
+
+                                                        ].join(" ")}
+                                                    >
+
+                                                        {aluno.variacao === null
+                                                            ? "—"
+                                                            : aluno.variacao > 0
+                                                                ? `+${aluno.variacao} p.p.`
+                                                                : `${aluno.variacao} p.p.`}
+
+                                                    </td>
+
+
+                                                    <td className="px-5 py-4">
+
+                                                        {aluno.situacao === "MELHOROU" && (
+                                                            <span className="inline-flex whitespace-nowrap rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                                                                ↑ Melhorou
+                                                            </span>
+                                                        )}
+
+                                                        {aluno.situacao === "PIOROU" && (
+                                                            <span className="inline-flex whitespace-nowrap rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+                                                                ↓ Piorou
+                                                            </span>
+                                                        )}
+
+                                                        {aluno.situacao === "MANTEVE" && (
+                                                            <span className="inline-flex whitespace-nowrap rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                                                                → Manteve
+                                                            </span>
+                                                        )}
+
+                                                        {aluno.situacao === "SEM_HISTORICO" && (
+                                                            <span className="inline-flex whitespace-nowrap rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                                                                Novo no período
+                                                            </span>
+                                                        )}
+
+                                                    </td>
+
+                                                </tr>
+
+                                            )
+                                        )}
+
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        ) : (
+
+                            <div className="p-8 text-center">
+                                <p className="text-sm text-slate-500">
+                                    Não há dados suficientes para comparar os alunos.
+                                </p>
+                            </div>
+
+                        )}
+
+                    </div>
+
+                )}
+
+            {/* ================================================= */}
             {/* ALUNOS QUE PRECISAM DE ATENÇÃO */}
             {/* ================================================= */}
 
