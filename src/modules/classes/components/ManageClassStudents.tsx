@@ -159,7 +159,7 @@ export function ManageClassStudents({
 
 
   return (
-    <div className="space-y-6">
+    <div className="max-h-[85vh] space-y-6 overflow-hidden">
 
       {/* CABEÇALHO */}
 
@@ -306,7 +306,7 @@ export function ManageClassStudents({
 
         ) : (
 
-          <div className="space-y-2">
+          <div className="max-h-[55vh] space-y-2 overflow-y-auto pr-2">
 
             {alunos.map((aluno) => (
 
