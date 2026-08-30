@@ -46,6 +46,19 @@ export type DashboardAlunoAtencao = {
   aulasEsperadas: number;
 };
 
+export type DashboardComparativoAluno = {
+  id: string;
+  nome: string;
+  frequenciaAtual: number;
+  frequenciaAnterior: number | null;
+  variacao: number | null;
+  situacao:
+  | "MELHOROU"
+  | "PIOROU"
+  | "MANTEVE"
+  | "SEM_HISTORICO";
+};
+
 export type DashboardAnalise = {
   aulasRealizadas: number;
   frequenciaMedia: number;
@@ -65,6 +78,10 @@ export type DashboardAnalise = {
   } | null;
 
   alunosCriticos: DashboardAlunoAtencao[];
+
+  rankingAssiduidade: DashboardAlunoAtencao[];
+
+  comparativoAlunos: DashboardComparativoAluno[];
 };
 
 export type DashboardEvolucaoTrimestre = {
@@ -739,14 +756,14 @@ export class DashboardService {
     const frequencia =
       totalEsperado > 0
         ? Math.min(
-            100,
-            Math.round(
-              (
-                totalPresencas /
-                totalEsperado
-              ) * 100
-            )
+          100,
+          Math.round(
+            (
+              totalPresencas /
+              totalEsperado
+            ) * 100
           )
+        )
         : 0;
 
     const aulasSemProfessor =
@@ -875,9 +892,9 @@ export class DashboardService {
             pessoa:
               registro.pessoa_id
                 ? pessoasMap.get(
-                    registro.pessoa_id
-                  ) ??
-                  "Pessoa não identificada"
+                  registro.pessoa_id
+                ) ??
+                "Pessoa não identificada"
                 : "Pessoa não identificada",
 
             tipo:
@@ -894,9 +911,9 @@ export class DashboardService {
       const professor =
         proximaAulaData.professor_id
           ? pessoasMap.get(
-              proximaAulaData.professor_id
-            ) ??
-            "Professor não informado"
+            proximaAulaData.professor_id
+          ) ??
+          "Professor não informado"
           : "Professor não informado";
 
       proximaAula = {
@@ -1004,94 +1021,94 @@ export class DashboardService {
     igrejaId: string,
     trimestreId: string | null = null
   ): Promise<DashboardAnalise> {
-    const base =
-      await DashboardService
-        .carregarBase(
-          igrejaId,
-          trimestreId
-        );
 
-    const aulasRealizadas =
-      DashboardService
-        .aulasRealizadas(base);
+    const calcularDesempenhos = (
+      baseAnalise: BaseDashboard
+    ): DashboardAlunoAtencao[] => {
 
-    const desempenho =
-      new Map<
-        string,
-        {
-          id: string;
-          nome: string;
-          esperado: number;
-          presencas: number;
-        }
-      >();
-
-    for (
-      const aula of
-      aulasRealizadas
-    ) {
-      for (
-        const pessoa of
-        base.pessoas
-      ) {
-        if (
-          !DashboardService
-            .pessoaPertenceAula(
-              pessoa,
-              aula,
-              base
-            )
-        ) {
-          continue;
-        }
-
-        if (
-          !desempenho.has(
-            pessoa.id
-          )
-        ) {
-          desempenho.set(
-            pessoa.id,
-            {
-              id:
-                pessoa.id,
-
-              nome:
-                pessoa.nome,
-
-              esperado:
-                0,
-
-              presencas:
-                0,
-            }
+      const aulasRealizadasAnalise =
+        DashboardService
+          .aulasRealizadas(
+            baseAnalise
           );
-        }
 
-        const item =
-          desempenho.get(
-            pessoa.id
-          )!;
+      const desempenho =
+        new Map<
+          string,
+          {
+            id: string;
+            nome: string;
+            esperado: number;
+            presencas: number;
+          }
+        >();
 
-        item.esperado++;
+      for (
+        const aula of
+        aulasRealizadasAnalise
+      ) {
 
-        if (
-          DashboardService
-            .presencaValidaParaAula(
-              pessoa,
-              aula,
-              base
-            )
+        for (
+          const pessoa of
+          baseAnalise.pessoas
         ) {
-          item.presencas++;
+
+          if (
+            pessoa.perfil !== "ALUNO"
+          ) {
+            continue;
+          }
+
+          if (
+            !DashboardService
+              .pessoaPertenceAula(
+                pessoa,
+                aula,
+                baseAnalise
+              )
+          ) {
+            continue;
+          }
+
+          if (
+            !desempenho.has(
+              pessoa.id
+            )
+          ) {
+
+            desempenho.set(
+              pessoa.id,
+              {
+                id: pessoa.id,
+                nome: pessoa.nome,
+                esperado: 0,
+                presencas: 0,
+              }
+            );
+          }
+
+          const item =
+            desempenho.get(
+              pessoa.id
+            )!;
+
+          item.esperado++;
+
+          if (
+            DashboardService
+              .presencaValidaParaAula(
+                pessoa,
+                aula,
+                baseAnalise
+              )
+          ) {
+            item.presencas++;
+          }
         }
       }
-    }
 
-    const desempenhos =
-      [
-        ...desempenho
-          .values(),
+      return [
+        ...desempenho.values(),
       ]
         .filter(
           (item) =>
@@ -1099,6 +1116,7 @@ export class DashboardService {
         )
         .map(
           (item) => {
+
             const frequencia =
               Math.min(
                 100,
@@ -1111,22 +1129,60 @@ export class DashboardService {
               );
 
             return {
-              id:
-                item.id,
-
-              nome:
-                item.nome,
-
+              id: item.id,
+              nome: item.nome,
               frequencia,
-
               presencas:
                 item.presencas,
-
               aulasEsperadas:
                 item.esperado,
             };
           }
         );
+    };
+
+
+    const base =
+      await DashboardService
+        .carregarBase(
+          igrejaId,
+          trimestreId
+        );
+
+
+    const aulasRealizadas =
+      DashboardService
+        .aulasRealizadas(
+          base
+        );
+
+
+    const desempenhos =
+      calcularDesempenhos(
+        base
+      );
+
+
+    const rankingAssiduidade =
+      [...desempenhos]
+        .sort(
+          (a, b) =>
+            b.frequencia -
+            a.frequencia ||
+
+            b.presencas -
+            a.presencas ||
+
+            a.nome.localeCompare(
+              b.nome,
+              "pt-BR"
+            )
+        )
+        .slice(
+          0,
+          10
+        );
+
 
     const alunosAssiduos =
       desempenhos.filter(
@@ -1134,11 +1190,13 @@ export class DashboardService {
           item.frequencia >= 75
       ).length;
 
+
     const alunosSemParticipacao =
       desempenhos.filter(
         (item) =>
           item.presencas === 0
       ).length;
+
 
     const alunosAtencao =
       desempenhos.filter(
@@ -1147,8 +1205,9 @@ export class DashboardService {
           item.frequencia < 50
       ).length;
 
+
     const alunosCriticos =
-      desempenhos
+      [...desempenhos]
         .filter(
           (item) =>
             item.frequencia < 50
@@ -1158,7 +1217,11 @@ export class DashboardService {
             a.frequencia -
             b.frequencia
         )
-        .slice(0, 10);
+        .slice(
+          0,
+          10
+        );
+
 
     const totalEsperado =
       desempenhos.reduce(
@@ -1171,6 +1234,7 @@ export class DashboardService {
         0
       );
 
+
     const totalPresencas =
       desempenhos.reduce(
         (
@@ -1182,31 +1246,35 @@ export class DashboardService {
         0
       );
 
+
     const frequenciaMedia =
       totalEsperado > 0
         ? Math.min(
-            100,
-            Math.round(
-              (
-                totalPresencas /
-                totalEsperado
-              ) * 100
-            )
+          100,
+          Math.round(
+            (
+              totalPresencas /
+              totalEsperado
+            ) * 100
           )
+        )
         : 0;
+
 
     const mediaAlunosPorAula =
       aulasRealizadas.length > 0
         ? Math.round(
-            (
-              totalPresencas /
-              aulasRealizadas.length
-            ) * 10
-          ) / 10
+          (
+            totalPresencas /
+            aulasRealizadas.length
+          ) * 10
+        ) / 10
         : 0;
+
 
     const totalAulasPeriodo =
       base.aulas.length;
+
 
     const aulasComProfessor =
       base.aulas.filter(
@@ -1214,25 +1282,35 @@ export class DashboardService {
           !!aula.professor_id
       ).length;
 
+
     const coberturaProfessores =
       totalAulasPeriodo > 0
         ? Math.round(
-            (
-              aulasComProfessor /
-              totalAulasPeriodo
-            ) * 100
-          )
+          (
+            aulasComProfessor /
+            totalAulasPeriodo
+          ) * 100
+        )
         : 0;
+
 
     let trimestreAnterior:
       DashboardAnalise["trimestreAnterior"] =
       null;
 
+
     let evolucaoPontosPercentuais:
       number | null =
       null;
 
+
+    let comparativoAlunos:
+      DashboardComparativoAluno[] =
+      [];
+
+
     if (trimestreId) {
+
       const trimestres =
         [
           ...await DashboardService
@@ -1246,6 +1324,7 @@ export class DashboardService {
               a.numero - b.numero
           );
 
+
       const indiceAtual =
         trimestres.findIndex(
           (item) =>
@@ -1253,11 +1332,16 @@ export class DashboardService {
             trimestreId
         );
 
-      if (indiceAtual > 0) {
+
+      if (
+        indiceAtual > 0
+      ) {
+
         const anterior =
           trimestres[
-            indiceAtual - 1
+          indiceAtual - 1
           ];
+
 
         const resumoAnterior =
           await DashboardService
@@ -1265,6 +1349,7 @@ export class DashboardService {
               igrejaId,
               anterior.id
             );
+
 
         trimestreAnterior = {
           id:
@@ -1283,11 +1368,166 @@ export class DashboardService {
             resumoAnterior.frequencia,
         };
 
+
         evolucaoPontosPercentuais =
           frequenciaMedia -
           resumoAnterior.frequencia;
+
+
+        const baseAnterior =
+          await DashboardService
+            .carregarBase(
+              igrejaId,
+              anterior.id
+            );
+
+
+        const desempenhosAnteriores =
+          calcularDesempenhos(
+            baseAnterior
+          );
+
+
+        const desempenhoAnteriorPorAluno =
+          new Map(
+            desempenhosAnteriores.map(
+              (item) => [
+                item.id,
+                item,
+              ]
+            )
+          );
+
+
+        comparativoAlunos =
+          desempenhos
+            .map(
+              (
+                atual
+              ): DashboardComparativoAluno => {
+
+                const anteriorAluno =
+                  desempenhoAnteriorPorAluno
+                    .get(
+                      atual.id
+                    );
+
+
+                if (
+                  !anteriorAluno
+                ) {
+
+                  return {
+                    id:
+                      atual.id,
+
+                    nome:
+                      atual.nome,
+
+                    frequenciaAtual:
+                      atual.frequencia,
+
+                    frequenciaAnterior:
+                      null,
+
+                    variacao:
+                      null,
+
+                    situacao:
+                      "SEM_HISTORICO",
+                  };
+                }
+
+
+                const variacao =
+                  atual.frequencia -
+                  anteriorAluno.frequencia;
+
+
+                let situacao:
+                  DashboardComparativoAluno["situacao"];
+
+
+                if (
+                  variacao > 0
+                ) {
+
+                  situacao =
+                    "MELHOROU";
+
+                } else if (
+                  variacao < 0
+                ) {
+
+                  situacao =
+                    "PIOROU";
+
+                } else {
+
+                  situacao =
+                    "MANTEVE";
+
+                }
+
+
+                return {
+                  id:
+                    atual.id,
+
+                  nome:
+                    atual.nome,
+
+                  frequenciaAtual:
+                    atual.frequencia,
+
+                  frequenciaAnterior:
+                    anteriorAluno.frequencia,
+
+                  variacao,
+
+                  situacao,
+                };
+
+              }
+            )
+            .sort(
+              (a, b) => {
+
+                if (
+                  a.variacao === null &&
+                  b.variacao !== null
+                ) {
+                  return 1;
+                }
+
+                if (
+                  a.variacao !== null &&
+                  b.variacao === null
+                ) {
+                  return -1;
+                }
+
+                if (
+                  a.variacao !== null &&
+                  b.variacao !== null &&
+                  a.variacao !==
+                  b.variacao
+                ) {
+                  return (
+                    b.variacao -
+                    a.variacao
+                  );
+                }
+
+                return a.nome.localeCompare(
+                  b.nome,
+                  "pt-BR"
+                );
+              }
+            );
       }
     }
+
 
     return {
       aulasRealizadas:
@@ -1310,6 +1550,10 @@ export class DashboardService {
       trimestreAnterior,
 
       alunosCriticos,
+
+      rankingAssiduidade,
+
+      comparativoAlunos,
     };
   }
 
@@ -1534,24 +1778,24 @@ export class DashboardService {
         const frequencia =
           totalEsperado > 0
             ? Math.min(
-                100,
-                Math.round(
-                  (
-                    totalPresencas /
-                    totalEsperado
-                  ) * 100
-                )
+              100,
+              Math.round(
+                (
+                  totalPresencas /
+                  totalEsperado
+                ) * 100
               )
+            )
             : 0;
 
         const mediaAlunosPorAula =
           aulasClasse.length > 0
             ? Math.round(
-                (
-                  totalPresencas /
-                  aulasClasse.length
-                ) * 10
-              ) / 10
+              (
+                totalPresencas /
+                aulasClasse.length
+              ) * 10
+            ) / 10
             : 0;
 
         return {
@@ -1699,9 +1943,9 @@ export class DashboardService {
         classeNome:
           aluno.classe_id
             ? classesMap.get(
-                aluno.classe_id
-              ) ??
-              "Classe não identificada"
+              aluno.classe_id
+            ) ??
+            "Classe não identificada"
             : "Sem classe",
       })
     );
@@ -1759,9 +2003,9 @@ export class DashboardService {
     let classeNome =
       aluno.classe_id
         ? classesMap.get(
-            aluno.classe_id
-          ) ??
-          "Classe não identificada"
+          aluno.classe_id
+        ) ??
+        "Classe não identificada"
         : "Sem classe";
 
     /*
@@ -1802,8 +2046,8 @@ export class DashboardService {
 
         classeIdExibicao =
           idsClassesHistoricas[
-            idsClassesHistoricas.length -
-            1
+          idsClassesHistoricas.length -
+          1
           ] ?? null;
 
         const nomes =
@@ -1888,14 +2132,14 @@ export class DashboardService {
     const frequencia =
       aulasEsperadas > 0
         ? Math.min(
-            100,
-            Math.round(
-              (
-                totalPresencas /
-                aulasEsperadas
-              ) * 100
-            )
+          100,
+          Math.round(
+            (
+              totalPresencas /
+              aulasEsperadas
+            ) * 100
           )
+        )
         : 0;
 
     /*
@@ -1948,20 +2192,20 @@ export class DashboardService {
     const mediaClasse =
       totalEsperadoClasse > 0
         ? Math.min(
-            100,
-            Math.round(
-              (
-                totalPresencasClasse /
-                totalEsperadoClasse
-              ) * 100
-            )
+          100,
+          Math.round(
+            (
+              totalPresencasClasse /
+              totalEsperadoClasse
+            ) * 100
           )
+        )
         : 0;
 
     const diferencaMediaClasse =
       aulasEsperadas > 0
         ? frequencia -
-          mediaClasse
+        mediaClasse
         : null;
 
     let sequenciaAtual =
