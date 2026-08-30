@@ -1,7 +1,14 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/reconciliar-cancelamentos",
+      "schedule": "0 9 * * *"
+    }
+  ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!api(?:/|$)|@vite(?:/|$)|@react-refresh(?:/|$)|src(?:/|$)|assets(?:/|$)|node_modules(?:/|$)).*)",
       "destination": "/index.html"
     }
   ]

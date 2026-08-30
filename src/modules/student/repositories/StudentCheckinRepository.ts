@@ -3,7 +3,11 @@ import type { StudentCheckin } from "../types/StudentCheckin";
 
 export class StudentCheckinRepository {
 
-    static async buscarAulaDeHoje(data: string) {
+    static async buscarAulaDeHoje(
+        data: string,
+        igrejaId: string,
+        classeId: string
+    ) {
 
         const { data: aulas, error } = await supabase
             .schema("ebd")
@@ -13,16 +17,33 @@ export class StudentCheckinRepository {
                 numero,
                 titulo,
                 data,
+                hora_inicio,
+                hora_fim,
+                classe_id,
+                professor_id,
                 link_drive,
-                trimestre:trimestres!aulas_trimestre_id_fkey (
+
+                professor:pessoas!aulas_professor_id_fkey (
+                    id,
+                    nome
+                ),
+
+                trimestre:trimestres!aulas_trimestre_id_fkey!inner (
                     numero,
                     ano,
                     tema,
-                    ativo
+                    ativo,
+                    igreja_id
                 )
             `)
             .eq("data", data)
-            .eq("trimestre.ativo", true);
+            .eq("classe_id", classeId)
+            .eq("cancelada", false)
+            .eq("trimestre.ativo", true)
+            .eq("trimestre.igreja_id", igrejaId)
+            .order("numero", {
+                ascending: true,
+            });
 
         if (error) {
             throw error;
@@ -51,18 +72,21 @@ export class StudentCheckinRepository {
         return presenca;
     }
 
-    static async buscarConfiguracaoCheckin() {
+    static async buscarConfiguracaoCheckin(
+        igrejaId: string
+    ) {
 
         const { data, error } = await supabase
             .schema("ebd")
             .from("configuracoes_checkin")
             .select(`
-                latitude,
-                longitude,
-                raio_metros
-            `)
+            latitude,
+            longitude,
+            raio_metros
+        `)
+            .eq("igreja_id", igrejaId)
             .eq("ativo", true)
-            .single();
+            .maybeSingle();
 
         if (error) {
             throw error;

@@ -133,4 +133,68 @@ export class PlansCatalogService {
 
         return resultado;
     }
+
+    static async listarOfertasAtivas() {
+
+        const {
+            data,
+            error,
+        } = await supabase
+            .schema("ebd")
+            .from("ofertas_planos")
+            .select(`
+                id,
+                plano_id,
+                preco_recorrente,
+                gratuito,
+                duracao_gratuita_dias,
+                periodo_recorrente,
+                ativa,
+                planos (
+                    id,
+                    nome,
+                    descricao,
+                    ordem,
+                    ativo
+                )
+            `)
+            .eq("ativa", true)
+            .order("plano_id");
+
+        if (error) {
+            throw error;
+        }
+
+        return (data ?? []).map((item) => {
+
+            const plano = Array.isArray(item.planos)
+                ? item.planos[0]
+                : item.planos;
+
+            return {
+                id: item.id,
+                plano_id: item.plano_id,
+
+                preco_recorrente:
+                    Number(item.preco_recorrente ?? 0),
+
+                gratuito:
+                    Boolean(item.gratuito),
+
+                duracao_gratuita_dias:
+                    Number(
+                        item.duracao_gratuita_dias ?? 0
+                    ),
+
+                periodo_recorrente:
+                    item.periodo_recorrente,
+
+                ativa:
+                    Boolean(item.ativa),
+
+                plano:
+                    plano ?? null,
+            };
+        });
+    }
 }

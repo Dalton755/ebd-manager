@@ -2,44 +2,139 @@ import { StudentCheckinRepository } from "../repositories/StudentCheckinReposito
 
 export class StudentCheckinService {
 
-    static async buscarAulaDeHoje() {
+    static async buscarAulaDeHoje(
+        igrejaId: string,
+        classeId: string
+    ) {
 
-        const data = this.obterDataLocal();
+        const data =
+            this.obterDataLocal();
 
-        return await StudentCheckinRepository.buscarAulaDeHoje(
-            data
-        );
+        return await StudentCheckinRepository
+            .buscarAulaDeHoje(
+                data,
+                igrejaId,
+                classeId
+            );
     }
 
-    static verificarJanelaCheckin() {
+    static async buscarSituacaoAulaHoje(
+        pessoaId: string,
+        igrejaId: string,
+        classeId: string
+    ) {
 
-        const agora = new Date();
+        const aula =
+            await this.buscarAulaDeHoje(
+                igrejaId,
+                classeId
+            );
 
-        const hora = agora.getHours();
-        const minutos = agora.getMinutes();
 
-        const minutosAtuais =
-            hora * 60 + minutos;
+        if (!aula) {
 
-        const inicio =
-            9 * 60; // 09:00
+            return {
+                aula: null,
+                checkinDisponivel: false,
+                presencaRegistrada: false,
+                mensagem:
+                    "Não há aula agendada para hoje.",
+            };
 
-        const fim =
-            10 * 60 + 45; // 10:45
+        }
 
-        if (minutosAtuais < inicio) {
+
+        const janela =
+            this.verificarJanelaCheckin(
+                aula
+            );
+
+
+        const presenca =
+            await StudentCheckinRepository
+                .verificarCheckinDaAula(
+                    pessoaId,
+                    aula.id
+                );
+
+
+        return {
+            aula,
+
+            checkinDisponivel:
+                janela.permitido,
+
+            presencaRegistrada:
+                !!presenca,
+
+            mensagem:
+                janela.permitido
+                    ? "Check-in disponível."
+                    : janela.mensagem,
+        };
+    }
+
+    static verificarJanelaCheckin(
+        aula: {
+            hora_inicio: string | null;
+            hora_fim: string | null;
+        }
+    ) {
+
+        if (
+            !aula.hora_inicio ||
+            !aula.hora_fim
+        ) {
             return {
                 permitido: false,
                 mensagem:
-                    "O check-in estará disponível a partir das 09:00.",
+                    "O horário desta aula ainda não foi definido.",
             };
         }
 
-        if (minutosAtuais > fim) {
+        const inicioAula =
+            this.converterHoraParaMinutos(
+                aula.hora_inicio
+            );
+
+        const fimAula =
+            this.converterHoraParaMinutos(
+                aula.hora_fim
+            );
+
+        // Check-in abre 30 minutos antes
+        const aberturaCheckin =
+            inicioAula - 30;
+
+        // Check-in fecha 30 minutos depois
+        const fechamentoCheckin =
+            fimAula + 30;
+
+        const agora = new Date();
+
+        const minutosAtuais =
+            agora.getHours() * 60 +
+            agora.getMinutes();
+
+        if (
+            minutosAtuais <
+            aberturaCheckin
+        ) {
             return {
                 permitido: false,
                 mensagem:
-                    "O período de check-in foi encerrado às 10:45.",
+                    `O check-in estará disponível a partir das ${this.formatarMinutos(aberturaCheckin)}.`,
+            };
+        }
+
+        if (
+            minutosAtuais >
+            fechamentoCheckin
+        ) {
+            return {
+                permitido: false,
+                mensagem:
+                    `O período de check-in foi encerrado às ${this.formatarMinutos(fechamentoCheckin)}.`,
             };
         }
 
@@ -51,29 +146,41 @@ export class StudentCheckinService {
 
     static async realizarCheckin(
         pessoaId: string,
+        igrejaId: string,
+        classeId: string,
         latitude: number,
         longitude: number,
         precisao?: number
     ) {
 
-        const janela =
-            this.verificarJanelaCheckin();
+        const data =
+            this.obterDataLocal();
 
-        if (!janela.permitido) {
-            throw new Error(janela.mensagem);
-        }
-
-        const data = this.obterDataLocal();
-
-        // Busca a aula de hoje
+        // Primeiro busca a aula de hoje
         const aula =
-            await StudentCheckinRepository.buscarAulaDeHoje(
-                data
-            );
+            await StudentCheckinRepository
+                .buscarAulaDeHoje(
+                    data,
+                    igrejaId,
+                    classeId
+                );
 
         if (!aula) {
             throw new Error(
                 "Não existe uma aula agendada para hoje."
+            );
+        }
+
+        // Depois valida a janela usando
+        // o horário definido para essa aula
+        const janela =
+            this.verificarJanelaCheckin(
+                aula
+            );
+
+        if (!janela.permitido) {
+            throw new Error(
+                janela.mensagem
             );
         }
 
@@ -87,14 +194,16 @@ export class StudentCheckinService {
 
         if (checkinExistente) {
             throw new Error(
-                "Você já realizou o check-in desta aula."
+                "Sua presença nesta aula já foi registrada."
             );
         }
 
         // Busca a configuração da igreja
         const configuracao =
             await StudentCheckinRepository
-                .buscarConfiguracaoCheckin();
+                .buscarConfiguracaoCheckin(
+                    igrejaId
+                );
 
         if (!configuracao) {
             throw new Error(
@@ -130,6 +239,44 @@ export class StudentCheckinService {
             ),
             localizacao_status: localizacaoStatus,
         });
+    }
+
+    private static converterHoraParaMinutos(
+        horario: string
+    ): number {
+
+        const [hora, minuto] =
+            horario
+                .slice(0, 5)
+                .split(":")
+                .map(Number);
+
+        return hora * 60 + minuto;
+    }
+
+    private static formatarMinutos(
+        totalMinutos: number
+    ): string {
+
+        const minutosDoDia =
+            ((totalMinutos % 1440) + 1440) %
+            1440;
+
+        const hora =
+            Math.floor(
+                minutosDoDia / 60
+            );
+
+        const minuto =
+            minutosDoDia % 60;
+
+        return `${String(hora).padStart(
+            2,
+            "0"
+        )}:${String(minuto).padStart(
+            2,
+            "0"
+        )}`;
     }
 
     private static obterDataLocal() {

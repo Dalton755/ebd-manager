@@ -198,8 +198,29 @@ export const PushNotificationService = {
 
         try {
 
+            const serviceWorkerReady =
+                navigator.serviceWorker.ready;
+
+            const timeout =
+                new Promise<never>((_, reject) => {
+
+                    setTimeout(() => {
+
+                        reject(
+                            new Error(
+                                "Service Worker não ficou pronto em 5 segundos."
+                            )
+                        );
+
+                    }, 5000);
+
+                });
+
             registration =
-                await navigator.serviceWorker.ready;
+                await Promise.race([
+                    serviceWorkerReady,
+                    timeout,
+                ]);
 
             console.log(
                 "[PUSH] Service Worker pronto:",
@@ -378,30 +399,20 @@ export const PushNotificationService = {
             } =
                 await supabase
                     .schema("ebd")
-                    .from("push_subscriptions")
-                    .upsert(
+                    .rpc(
+                        "registrar_push_subscription",
                         {
-                            pessoa_id:
-                                pessoaId,
-
-                            endpoint:
+                            p_endpoint:
                                 pushData.endpoint,
 
-                            p256dh:
+                            p_p256dh:
                                 pushData.p256dh,
 
-                            auth:
+                            p_auth:
                                 pushData.auth,
 
-                            user_agent:
+                            p_user_agent:
                                 navigator.userAgent,
-
-                            updated_at:
-                                new Date().toISOString(),
-                        },
-                        {
-                            onConflict:
-                                "pessoa_id,endpoint",
                         }
                     );
 

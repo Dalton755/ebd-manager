@@ -135,13 +135,16 @@ Deno.serve(async (req: Request) => {
             throw adminError;
         }
 
-        const ehAdmin =
+        const podeGerenciarClasses =
             admin &&
-            admin.perfil === "ADMIN" &&
+            (
+                admin.perfil === "ADMIN" ||
+                admin.perfil === "SUPERINTENDENTE"
+            ) &&
             admin.ativo === true &&
             admin.status === "ATIVO";
 
-        if (!ehAdmin) {
+        if (!podeGerenciarClasses) {
             return resposta(
                 {
                     error:

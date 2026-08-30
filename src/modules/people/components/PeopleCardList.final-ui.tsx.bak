@@ -1,0 +1,291 @@
+import {
+  GraduationCap,
+  Mail,
+  Pencil,
+  Phone,
+  Trash2,
+  Users,
+} from "lucide-react";
+
+import type {
+  Pessoa,
+} from "../types/Pessoa";
+
+import {
+  EmptyState,
+} from "@/shared/components/ui/EmptyState";
+
+
+type Props = {
+  pessoas: Pessoa[];
+  onEditar: (pessoa: Pessoa) => void;
+  onInativar: (pessoa: Pessoa) => void;
+
+  onAtualizarPerfil: (
+    pessoa: Pessoa,
+    perfil: Pessoa["perfil"]
+  ) => void;
+
+  podeGerenciar: boolean;
+  podeGerenciarPerfis: boolean;
+};
+
+
+function obterClassePerfil(
+  perfil: Pessoa["perfil"]
+) {
+
+  switch (perfil) {
+
+    case "ADMIN":
+      return "border-violet-200 bg-violet-50 text-violet-700";
+
+    case "PASTOR":
+      return "border-amber-200 bg-amber-50 text-amber-700";
+
+    case "SUPERINTENDENTE":
+      return "border-indigo-200 bg-indigo-50 text-indigo-700";
+
+    case "SECRETARIO":
+      return "border-cyan-200 bg-cyan-50 text-cyan-700";
+
+    case "PROFESSOR":
+      return "border-emerald-200 bg-emerald-50 text-emerald-700";
+
+    case "ALUNO":
+      return "border-blue-200 bg-blue-50 text-blue-700";
+
+    default:
+      return "border-slate-200 bg-slate-50 text-slate-600";
+  }
+}
+
+
+export function PeopleCardList({
+  pessoas,
+  onEditar,
+  onInativar,
+  onAtualizarPerfil,
+  podeGerenciar,
+  podeGerenciarPerfis,
+}: Props) {
+
+  if (
+    pessoas.length === 0
+  ) {
+
+    return (
+
+      <EmptyState
+        icon={Users}
+        title="Nenhuma pessoa encontrada"
+        description="Cadastre uma nova pessoa."
+      />
+
+    );
+  }
+
+
+  return (
+
+    <div className="space-y-3">
+
+      {pessoas.map(
+        (
+          pessoa
+        ) => (
+
+          <article
+            key={
+              pessoa.id
+            }
+
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+
+            {/* PESSOA */}
+
+            <div className="flex items-start gap-3">
+
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-blue-100 text-lg font-bold text-blue-700">
+
+                {pessoa.nome
+                  .charAt(0)
+                  .toUpperCase()}
+
+              </div>
+
+
+              <div className="min-w-0 flex-1">
+
+                <h3 className="truncate text-base font-bold text-slate-900">
+                  {pessoa.nome}
+                </h3>
+
+
+                <div className="mt-2 space-y-1.5 text-sm text-slate-500">
+
+                  <div className="flex items-center gap-2">
+
+                    <Mail
+                      size={15}
+                      className="shrink-0"
+                    />
+
+                    <span className="truncate">
+                      {pessoa.email}
+                    </span>
+
+                  </div>
+
+
+                  <div className="flex items-center gap-2">
+
+                    <Phone
+                      size={15}
+                      className="shrink-0"
+                    />
+
+                    <span>
+                      {pessoa.telefone || "Não informado"}
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+
+            {/* PERFIL */}
+
+            <div className="mt-4">
+
+              <div className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+
+                <GraduationCap size={14} />
+
+                Perfil
+
+              </div>
+
+
+              {podeGerenciarPerfis ? (
+
+                <select
+                  value={
+                    pessoa.perfil
+                  }
+
+                  onChange={(
+                    event
+                  ) =>
+                    onAtualizarPerfil(
+                      pessoa,
+                      event.target.value as Pessoa["perfil"]
+                    )
+                  }
+
+                  className={`w-full rounded-xl border px-3 py-2.5 text-sm font-semibold outline-none ${obterClassePerfil(
+                    pessoa.perfil
+                  )}`}
+                >
+
+                  <option value="ALUNO">
+                    Aluno
+                  </option>
+
+                  <option value="PROFESSOR">
+                    Professor
+                  </option>
+
+                  <option value="SUPERINTENDENTE">
+                    Superintendente
+                  </option>
+
+                  <option value="SECRETARIO">
+                    Secretário
+                  </option>
+
+                  <option value="PASTOR">
+                    Pastor
+                  </option>
+
+                  <option value="ADMIN">
+                    Administrador
+                  </option>
+
+                </select>
+
+              ) : (
+
+                <div
+                  className={`rounded-xl border px-3 py-2 text-sm font-semibold ${obterClassePerfil(
+                    pessoa.perfil
+                  )}`}
+                >
+                  {pessoa.perfil}
+                </div>
+
+              )}
+
+            </div>
+
+
+            {/* AÇÕES */}
+
+            {podeGerenciar && (
+
+              <div className="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
+
+                <button
+                  type="button"
+
+                  onClick={() =>
+                    onEditar(
+                      pessoa
+                    )
+                  }
+
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                >
+
+                  <Pencil size={16} />
+
+                  Editar
+
+                </button>
+
+
+                <button
+                  type="button"
+
+                  onClick={() =>
+                    onInativar(
+                      pessoa
+                    )
+                  }
+
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm font-semibold text-red-600 transition hover:bg-red-100"
+                >
+
+                  <Trash2 size={16} />
+
+                  Inativar
+
+                </button>
+
+              </div>
+
+            )}
+
+          </article>
+
+        )
+      )}
+
+    </div>
+  );
+}

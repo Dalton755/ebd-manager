@@ -41,9 +41,12 @@ type AuthContextType = {
     session: Session | null;
     pessoa: Pessoa | null;
     igrejaId: string | null;
+    igrejaNome: string | null;
+    igrejaLogoUrl: string | null;
     plano: PlanoCompleto | null;
     isSuperAdmin: boolean;
     senhaTemporaria: boolean;
+    assinaturaExpirada: boolean;
     loading: boolean;
     logout: () => Promise<void>;
 };
@@ -57,6 +60,226 @@ const AuthContext = createContext(
 type Props = {
     children: ReactNode;
 };
+
+
+// =========================================================
+// CALCULA A DATA DE EXPIRAÇÃO DO TESTE GRATUITO
+// =========================================================
+
+function calcularFimTeste(
+    inicioEm: string,
+    duracaoDias: number
+): Date {
+
+    const inicio =
+        new Date(inicioEm);
+
+    const fim =
+        new Date(inicio);
+
+    fim.setDate(
+        fim.getDate() + duracaoDias
+    );
+
+    return fim;
+}
+
+
+// =========================================================
+// VERIFICA SE A ASSINATURA DA IGREJA ESTÁ EXPIRADA
+// =========================================================
+
+async function verificarAssinaturaExpirada(
+    igrejaId: string
+): Promise<boolean> {
+
+    try {
+
+        const {
+            data: assinatura,
+            error,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("assinaturas")
+                .select(`
+                    id,
+                    status,
+                    inicio_em,
+                    fim_em,
+                    carencia_ate,
+                    gratuito_contratado,
+                    duracao_gratuita_contratada_dias,
+                    preco_recorrente_contratado,
+                    periodo_recorrente_contratado
+                `)
+                .eq(
+                    "igreja_id",
+                    igrejaId
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: false,
+                    }
+                )
+                .limit(1)
+                .maybeSingle();
+
+
+        if (error) {
+
+            console.error(
+                "Erro ao verificar assinatura:",
+                error
+            );
+
+            // Em caso de erro de consulta,
+            // não bloqueamos a igreja.
+            return false;
+        }
+
+
+        // -------------------------------------------------
+        // NÃO EXISTE ASSINATURA
+        // -------------------------------------------------
+
+        if (!assinatura) {
+
+            return false;
+        }
+
+
+        // -------------------------------------------------
+        // ASSINATURA NÃO ESTÁ ATIVA
+        // -------------------------------------------------
+
+        if (
+            assinatura.status !==
+            "ATIVA"
+        ) {
+
+            return true;
+        }
+
+
+        // -------------------------------------------------
+        // ASSINATURA COM VENCIMENTO
+        // -------------------------------------------------
+
+        if (assinatura.fim_em) {
+
+            const agora =
+                Date.now();
+
+            const fim =
+                new Date(
+                    assinatura.fim_em
+                );
+
+
+            if (
+                fim.getTime() >
+                agora
+            ) {
+
+                return false;
+            }
+
+
+            // ---------------------------------------------
+            // VENCIDA, MAS AINDA DENTRO DA CARÊNCIA
+            // ---------------------------------------------
+
+            if (
+                assinatura.carencia_ate
+            ) {
+
+                const carencia =
+                    new Date(
+                        assinatura.carencia_ate
+                    );
+
+
+                if (
+                    carencia.getTime() >
+                    agora
+                ) {
+
+                    return false;
+                }
+
+            }
+
+
+            return true;
+        }
+
+
+        // -------------------------------------------------
+        // TESTE GRATUITO
+        // -------------------------------------------------
+
+        if (
+            assinatura.gratuito_contratado === true &&
+            assinatura.duracao_gratuita_contratada_dias > 0 &&
+            assinatura.inicio_em
+        ) {
+
+            const fim =
+                calcularFimTeste(
+                    assinatura.inicio_em,
+                    assinatura.duracao_gratuita_contratada_dias
+                );
+
+            return (
+                fim.getTime() <=
+                Date.now()
+            );
+        }
+
+
+        // -------------------------------------------------
+        // IGREJA ISENTA / ACESSO PERMANENTE
+        // -------------------------------------------------
+
+        if (
+            assinatura.gratuito_contratado ===
+            true
+        ) {
+
+            return false;
+        }
+
+
+        // -------------------------------------------------
+        // ASSINATURA RECORRENTE PAGA SEM FIM_EM
+        // -------------------------------------------------
+
+        // Pela regra atual do banco, isso é uma inconsistência.
+        // Bloqueamos por segurança para evitar acesso indefinido.
+        if (
+            assinatura
+                .preco_recorrente_contratado !=
+            null
+        ) {
+
+            return true;
+        }
+
+
+        return false;
+
+    } catch (erro) {
+
+        console.error(
+            "Erro inesperado ao verificar assinatura:",
+            erro
+        );
+
+        return false;
+    }
+}
 
 
 export function AuthProvider({
@@ -78,6 +301,12 @@ export function AuthProvider({
     const [igrejaId, setIgrejaId] =
         useState<string | null>(null);
 
+    const [igrejaNome, setIgrejaNome] =
+        useState<string | null>(null);
+
+    const [igrejaLogoUrl, setIgrejaLogoUrl] =
+        useState<string | null>(null);
+
     const [senhaTemporaria, setSenhaTemporaria] =
         useState(false);
 
@@ -86,6 +315,11 @@ export function AuthProvider({
 
     const [isSuperAdmin, setIsSuperAdmin] =
         useState(false);
+
+    const [
+        assinaturaExpirada,
+        setAssinaturaExpirada,
+    ] = useState(false);
 
 
     // =====================================================
@@ -103,7 +337,10 @@ export function AuthProvider({
             .schema("ebd")
             .from("pessoas")
             .select("*")
-            .eq("user_id", usuario.id)
+            .eq(
+                "user_id",
+                usuario.id
+            )
             .maybeSingle();
 
 
@@ -118,7 +355,7 @@ export function AuthProvider({
         }
 
 
-        // UsuÃ¡rio jÃ¡ possui cadastro
+        // Usuário já possui cadastro
         if (data) {
 
             return data;
@@ -131,7 +368,7 @@ export function AuthProvider({
         // =================================================
 
         console.log(
-            "Novo usuÃ¡rio autenticado. Criando cadastro..."
+            "Novo usuário autenticado. Criando cadastro..."
         );
 
 
@@ -142,23 +379,30 @@ export function AuthProvider({
             .schema("ebd")
             .from("pessoas")
             .insert({
-                user_id: usuario.id,
+
+                user_id:
+                    usuario.id,
 
                 nome:
                     usuario.user_metadata?.full_name ??
                     usuario.user_metadata?.name ??
-                    "UsuÃ¡rio",
+                    "Usuário",
 
                 email:
                     usuario.email ?? "",
 
-                telefone: "",
+                telefone:
+                    "",
 
-                ativo: false,
+                ativo:
+                    false,
 
-                status: "PENDENTE",
+                status:
+                    "PENDENTE",
 
-                perfil: "ALUNO",
+                perfil:
+                    "ALUNO",
+
             })
             .select()
             .single();
@@ -186,7 +430,7 @@ export function AuthProvider({
 
 
     // =====================================================
-    // ATUALIZA ESTADO DA AUTENTICAÃ‡ÃƒO
+    // ATUALIZA ESTADO DA AUTENTICAÇÃO
     // =====================================================
 
     async function atualizarAutenticacao(
@@ -195,44 +439,65 @@ export function AuthProvider({
 
         setLoading(true);
 
-        setSession(novaSession);
+        setSession(
+            novaSession
+        );
 
 
         const usuario =
             novaSession?.user ?? null;
 
-        setUser(usuario);
+        setUser(
+            usuario
+        );
+
 
         let superAdmin = false;
 
+
+        // =================================================
+        // VERIFICA SUPERADMIN
+        // =================================================
+
         if (usuario) {
+
             const {
                 data,
                 error,
             } = await supabase
                 .schema("ebd")
-                .rpc("usuario_e_superadmin");
+                .rpc(
+                    "usuario_e_superadmin"
+                );
+
 
             if (error) {
+
                 console.error(
                     "Erro ao verificar SUPERADMIN:",
                     error
                 );
+
             } else {
 
                 console.log(
-        "VERIFICAÇÃO SUPERADMIN:",
-        data
-    );
-                superAdmin = data === true;
+                    "VERIFICAÇÃO SUPERADMIN:",
+                    data
+                );
+
+                superAdmin =
+                    data === true;
             }
         }
 
-        setIsSuperAdmin(superAdmin);
+
+        setIsSuperAdmin(
+            superAdmin
+        );
 
 
         // =================================================
-        // USUÃRIO DESLOGADO
+        // USUÁRIO DESLOGADO
         // =================================================
 
         if (!usuario) {
@@ -243,7 +508,13 @@ export function AuthProvider({
 
             setPlano(null);
 
+            setAssinaturaExpirada(false);
+
             setSenhaTemporaria(false);
+
+            setIgrejaNome(null);
+
+            setIgrejaLogoUrl(null);
 
             setLoading(false);
 
@@ -258,15 +529,88 @@ export function AuthProvider({
         // =================================================
 
         const pessoaEncontrada =
-            await buscarOuCriarPessoa(usuario);
+            await buscarOuCriarPessoa(
+                usuario
+            );
 
 
-        setPessoa(pessoaEncontrada);
-
-        setIgrejaId(
-            pessoaEncontrada?.igreja_id ?? null
+        setPessoa(
+            pessoaEncontrada
         );
 
+
+        const igrejaDaPessoa =
+            pessoaEncontrada?.igreja_id ??
+            null;
+
+
+        setIgrejaId(
+            igrejaDaPessoa
+        );
+
+
+        // =================================================
+        // CARREGA IDENTIDADE DA IGREJA
+        // =================================================
+
+        if (igrejaDaPessoa) {
+
+            try {
+
+                const {
+                    data: igreja,
+                    error: igrejaError,
+                } = await supabase
+                    .schema("ebd")
+                    .from("igrejas")
+                    .select(
+                        "nome, logo_url"
+                    )
+                    .eq(
+                        "id",
+                        igrejaDaPessoa
+                    )
+                    .single();
+
+
+                if (igrejaError) {
+
+                    throw igrejaError;
+                }
+
+
+                setIgrejaNome(
+                    igreja?.nome ?? null
+                );
+
+
+                setIgrejaLogoUrl(
+                    igreja?.logo_url ?? null
+                );
+
+            } catch (erro) {
+
+                console.error(
+                    "Erro ao carregar identidade da igreja:",
+                    erro
+                );
+
+                setIgrejaNome(null);
+
+                setIgrejaLogoUrl(null);
+            }
+
+        } else {
+
+            setIgrejaNome(null);
+
+            setIgrejaLogoUrl(null);
+        }
+
+
+        // =================================================
+        // SENHA TEMPORÁRIA
+        // =================================================
 
         setSenhaTemporaria(
             pessoaEncontrada?.senha_temporaria === true
@@ -277,16 +621,20 @@ export function AuthProvider({
         // CARREGA PLANO DA IGREJA
         // =================================================
 
-        if (pessoaEncontrada?.igreja_id) {
+        if (igrejaDaPessoa) {
 
             try {
 
                 const planoEncontrado =
                     await PlanService.buscarPlanoDaIgreja(
-                        pessoaEncontrada.igreja_id
+                        igrejaDaPessoa
                     );
 
-                setPlano(planoEncontrado);
+
+                setPlano(
+                    planoEncontrado
+                );
+
 
                 console.log(
                     "Plano da igreja:",
@@ -306,6 +654,36 @@ export function AuthProvider({
         } else {
 
             setPlano(null);
+        }
+
+
+        // =================================================
+        // VERIFICA EXPIRAÇÃO DA ASSINATURA
+        // =================================================
+
+        if (igrejaDaPessoa) {
+
+            const expirada =
+                await verificarAssinaturaExpirada(
+                    igrejaDaPessoa
+                );
+
+
+            setAssinaturaExpirada(
+                expirada
+            );
+
+
+            console.log(
+                "ASSINATURA EXPIRADA:",
+                expirada
+            );
+
+        } else {
+
+            setAssinaturaExpirada(
+                false
+            );
         }
 
 
@@ -343,7 +721,7 @@ export function AuthProvider({
 
 
     // =====================================================
-    // CARREGA USUÃRIO AO INICIAR O APP
+    // CARREGA USUÁRIO AO INICIAR O APP
     // =====================================================
 
     useEffect(() => {
@@ -357,25 +735,29 @@ export function AuthProvider({
                 data: {
                     session,
                 },
-            } = await supabase.auth.getSession();
+            } =
+                await supabase.auth.getSession();
 
 
             if (!ativo) {
+
                 return;
             }
 
 
             // =============================================
-            // CONTROLE DE EXPIRAÃ‡ÃƒO DE 12 HORAS
+            // CONTROLE DE EXPIRAÇÃO DE 12 HORAS
             // =============================================
 
             if (session) {
 
                 const loginAt =
-                    localStorage.getItem("login_at");
+                    localStorage.getItem(
+                        "login_at"
+                    );
 
 
-                // Login Google nÃ£o passa pelo
+                // Login Google não passa pelo
                 // AuthService.login()
                 if (!loginAt) {
 
@@ -391,6 +773,7 @@ export function AuthProvider({
 
 
                     if (!ativo) {
+
                         return;
                     }
 
@@ -409,12 +792,20 @@ export function AuthProvider({
 
                     setPlano(null);
 
+                    setIgrejaNome(null);
+
+                    setIgrejaLogoUrl(null);
+
+                    setAssinaturaExpirada(false);
+
                     return;
                 }
             }
 
 
-            await atualizarAutenticacao(session);
+            await atualizarAutenticacao(
+                session
+            );
         }
 
 
@@ -422,48 +813,49 @@ export function AuthProvider({
 
 
         // =================================================
-        // OBSERVA ALTERAÃ‡Ã•ES DE AUTENTICAÃ‡ÃƒO
+        // OBSERVA ALTERAÇÕES DE AUTENTICAÇÃO
         // =================================================
 
         const {
             data: {
                 subscription,
             },
-        } = supabase.auth.onAuthStateChange(
-            (
-                event,
-                novaSession
-            ) => {
-
-                console.log(
-                    "Evento de autenticaÃ§Ã£o:",
-                    event
-                );
-
-
-                if (
-                    event === "SIGNED_IN" &&
+        } =
+            supabase.auth.onAuthStateChange(
+                (
+                    event,
                     novaSession
-                ) {
+                ) => {
 
-                    AuthService.saveLoginTime();
-                }
+                    console.log(
+                        "Evento de autenticação:",
+                        event
+                    );
 
 
-                // NÃ£o fazemos consultas ao Supabase
-                // diretamente dentro do callback.
-                setTimeout(() => {
+                    if (
+                        event === "SIGNED_IN" &&
+                        novaSession
+                    ) {
 
-                    if (ativo) {
-
-                        void atualizarAutenticacao(
-                            novaSession
-                        );
+                        AuthService.saveLoginTime();
                     }
 
-                }, 0);
-            }
-        );
+
+                    // Não fazemos consultas ao Supabase
+                    // diretamente dentro do callback.
+                    setTimeout(() => {
+
+                        if (ativo) {
+
+                            void atualizarAutenticacao(
+                                novaSession
+                            );
+                        }
+
+                    }, 0);
+                }
+            );
 
 
         // =================================================
@@ -499,7 +891,13 @@ export function AuthProvider({
 
         setPlano(null);
 
+        setIgrejaNome(null);
+
+        setIgrejaLogoUrl(null);
+
         setSenhaTemporaria(false);
+
+        setAssinaturaExpirada(false);
 
         setIsSuperAdmin(false);
     }
@@ -512,15 +910,31 @@ export function AuthProvider({
     return (
         <AuthContext.Provider
             value={{
+
                 user,
+
                 session,
+
                 pessoa,
+
                 igrejaId,
+
+                igrejaNome,
+
+                igrejaLogoUrl,
+
                 plano,
+
                 isSuperAdmin,
+
                 senhaTemporaria,
+
+                assinaturaExpirada,
+
                 loading,
+
                 logout,
+
             }}
         >
             {children}

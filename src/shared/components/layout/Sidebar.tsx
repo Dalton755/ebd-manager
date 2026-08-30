@@ -16,6 +16,7 @@ import {
     CreditCard,
     Crown,
     Settings,
+    Building2,
 } from "lucide-react";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
@@ -47,6 +48,9 @@ export function Sidebar({
     const {
         pessoa,
         isSuperAdmin,
+        igrejaNome,
+        igrejaLogoUrl,
+        plano,
     } = useAuth();
 
     function temAcesso(
@@ -103,6 +107,7 @@ export function Sidebar({
         temAcesso("VER_PESSOAS") ||
         temAcesso("GERENCIAR_CLASSES") ||
         temAcesso("VER_CLASSES") ||
+        temAcesso("VER_SALA_AULA") ||
         temAcesso("GERENCIAR_AULAS") ||
         temAcesso("VER_AULAS");
 
@@ -123,11 +128,21 @@ export function Sidebar({
         <aside className="flex h-full min-h-0 w-full flex-col border-r border-slate-200 bg-white">
 
             <div className="shrink-0 mb-8 flex justify-center px-4">
-                <img
-                    src="/logo-ebd-manager.png"
-                    alt="EBD Manager"
-                    className="h-auto w-full max-w-[180px] object-contain"
-                />
+
+                {plano?.plano?.nome === "Igreja" && igrejaLogoUrl ? (
+                    <img
+                        src={igrejaLogoUrl}
+                        alt={igrejaNome ?? "Igreja"}
+                        className="h-auto w-full max-w-[180px] max-h-[80px] object-contain"
+                    />
+                ) : (
+                    <img
+                        src="/logo-ebd-manager.png"
+                        alt="EBD Manager"
+                        className="h-auto w-full max-w-[180px] object-contain"
+                    />
+                )}
+
             </div>
 
             <nav className="min-h-0 flex-1 overflow-y-auto space-y-2 px-2 pb-4">
@@ -158,6 +173,14 @@ export function Sidebar({
                             icon={GraduationCap}
                             label="Classes"
                             permission="VER_CLASSES"
+                            onNavigate={onNavigate}
+                        />
+
+                        <MenuItem
+                            to="/sala-de-aula"
+                            icon={GraduationCap}
+                            label="Sala de aula"
+                            permission="VER_SALA_AULA"
                             onNavigate={onNavigate}
                         />
 
@@ -227,6 +250,42 @@ export function Sidebar({
                                 permission="APROVAR_USUARIOS"
                                 onNavigate={onNavigate}
                             />
+                        </PlanGuard>
+                    </>
+                )}
+
+                {/* PERSONALIZAÇÃO DA IGREJA */}
+
+                {plano?.plano?.nome === "Igreja" && (
+                    <>
+                        <div className="my-4 border-t border-[#E8DFD1]" />
+
+                        <MenuItem
+                            to="/administracao/personalizacao"
+                            icon={Building2}
+                            label="Personalização"
+                            permission="GERENCIAR_PERSONALIZACAO_IGREJA"
+                            onNavigate={onNavigate}
+                        />
+                    </>
+                )}
+
+                {/* CONFIGURAÇÃO DO CHECK-IN */}
+
+                {temAcesso("GERENCIAR_CONFIGURACAO_CHECKIN") && (
+                    <>
+                        <div className="my-4 border-t border-[#E8DFD1]" />
+
+                        <PlanGuard recurso="CHECKIN_LOCALIZACAO">
+
+                            <MenuItem
+                                to="/administracao/configuracao-checkin"
+                                icon={MapPin}
+                                label="Configuração do check-in"
+                                permission="GERENCIAR_CONFIGURACAO_CHECKIN"
+                                onNavigate={onNavigate}
+                            />
+
                         </PlanGuard>
                     </>
                 )}

@@ -299,6 +299,7 @@ Deno.serve(async (req: Request) => {
             }
         }
 
+        
         // =====================================================
         // DADOS DO NOVO USUÁRIO
         // =====================================================
@@ -307,7 +308,140 @@ Deno.serve(async (req: Request) => {
             nome,
             email,
             telefone,
+            perfil,
+            classe_id,
         } = await req.json();
+
+
+        const perfilNormalizado =
+            String(
+                perfil ?? "ALUNO"
+            )
+                .trim()
+                .toUpperCase();
+
+
+        const classeId =
+            classe_id
+                ? String(
+                    classe_id
+                ).trim()
+                : null;
+
+
+        const perfisPermitidos = [
+            "ADMIN",
+            "PASTOR",
+            "SUPERINTENDENTE",
+            "SECRETARIO",
+            "PROFESSOR",
+            "ALUNO",
+        ];
+
+
+        if (
+            !perfisPermitidos.includes(
+                perfilNormalizado
+            )
+        ) {
+            return resposta(
+                {
+                    error:
+                        "Perfil inválido.",
+                },
+                400
+            );
+        }
+
+        // =====================================================
+        // VERIFICA LIMITE DO PERFIL
+        // =====================================================
+
+        let colunaLimitePerfil:
+            | "max_professores"
+            | "max_secretarios"
+            | "max_pastores"
+            | "max_administradores"
+            | "max_superintendentes"
+            | null = null;
+
+
+        let codigoLimitePerfil:
+            | "LIMITE_PROFESSORES_ATINGIDO"
+            | "LIMITE_SECRETARIOS_ATINGIDO"
+            | "LIMITE_PASTORES_ATINGIDO"
+            | "LIMITE_ADMINISTRADORES_ATINGIDO"
+            | "LIMITE_SUPERINTENDENTES_ATINGIDO"
+            | null = null;
+
+
+        if (
+            perfilNormalizado ===
+            "PROFESSOR"
+        ) {
+
+            colunaLimitePerfil =
+                "max_professores";
+
+            codigoLimitePerfil =
+                "LIMITE_PROFESSORES_ATINGIDO";
+        }
+
+
+        if (
+            perfilNormalizado ===
+            "SECRETARIO"
+        ) {
+
+            colunaLimitePerfil =
+                "max_secretarios";
+
+            codigoLimitePerfil =
+                "LIMITE_SECRETARIOS_ATINGIDO";
+        }
+
+
+        if (
+            perfilNormalizado ===
+            "PASTOR"
+        ) {
+
+            colunaLimitePerfil =
+                "max_pastores";
+
+            codigoLimitePerfil =
+                "LIMITE_PASTORES_ATINGIDO";
+        }
+
+
+        if (
+            perfilNormalizado ===
+            "ADMIN"
+        ) {
+
+            colunaLimitePerfil =
+                "max_administradores";
+
+            codigoLimitePerfil =
+                "LIMITE_ADMINISTRADORES_ATINGIDO";
+        }
+
+
+        if (
+            perfilNormalizado ===
+            "SUPERINTENDENTE"
+        ) {
+
+            colunaLimitePerfil =
+                "max_superintendentes";
+
+            codigoLimitePerfil =
+                "LIMITE_SUPERINTENDENTES_ATINGIDO";
+        }
+
+
+
+
 
         const emailNormalizado =
             String(email ?? "")
@@ -331,6 +465,202 @@ Deno.serve(async (req: Request) => {
                 },
                 400
             );
+        }
+
+        // =====================================================
+        // VALIDA CLASSE INFORMADA
+        // =====================================================
+
+        let classeValidadaId:
+            string | null =
+            null;
+
+
+        if (
+            perfilNormalizado ===
+            "ALUNO" &&
+            classeId
+        ) {
+
+            const {
+                data: classe,
+                error: classeError,
+            } =
+                await supabase
+                    .schema("ebd")
+                    .from("classes")
+                    .select(`
+                id,
+                igreja_id,
+                ativa
+            `)
+                    .eq(
+                        "id",
+                        classeId
+                    )
+                    .maybeSingle();
+
+
+            if (classeError) {
+                throw classeError;
+            }
+
+
+            if (!classe) {
+
+                return resposta(
+                    {
+                        error:
+                            "A classe selecionada não foi encontrada.",
+                    },
+                    400
+                );
+            }
+
+
+            if (
+                classe.igreja_id !==
+                igrejaId
+            ) {
+
+                return resposta(
+                    {
+                        error:
+                            "A classe selecionada não pertence à sua igreja.",
+                    },
+                    403
+                );
+            }
+
+
+            if (
+                classe.ativa !==
+                true
+            ) {
+
+                return resposta(
+                    {
+                        error:
+                            "A classe selecionada está inativa.",
+                    },
+                    400
+                );
+            }
+
+
+            classeValidadaId =
+                classe.id;
+        }
+
+        if (
+            colunaLimitePerfil &&
+            codigoLimitePerfil
+        ) {
+
+            const {
+                data: limitePerfilData,
+                error: limitePerfilError,
+            } =
+                await supabase
+                    .schema("ebd")
+                    .from("plano_limites")
+                    .select(
+                        colunaLimitePerfil
+                    )
+                    .eq(
+                        "plano_id",
+                        assinatura.plano_id
+                    )
+                    .maybeSingle();
+
+
+            if (limitePerfilError) {
+                throw limitePerfilError;
+            }
+
+
+            if (!limitePerfilData) {
+
+                return resposta(
+                    {
+                        error:
+                            "Os limites do perfil não foram encontrados.",
+                    },
+                    500
+                );
+            }
+
+
+            const limitePerfil =
+                limitePerfilData[
+                colunaLimitePerfil
+                ];
+
+
+            if (
+                limitePerfil !== -1
+            ) {
+
+                const {
+                    count,
+                    error: countPerfilError,
+                } =
+                    await supabase
+                        .schema("ebd")
+                        .from("pessoas")
+                        .select(
+                            "id",
+                            {
+                                count: "exact",
+                                head: true,
+                            }
+                        )
+                        .eq(
+                            "igreja_id",
+                            igrejaId
+                        )
+                        .eq(
+                            "perfil",
+                            perfilNormalizado
+                        )
+                        .eq(
+                            "ativo",
+                            true
+                        );
+
+
+                if (countPerfilError) {
+                    throw countPerfilError;
+                }
+
+
+                const utilizadoPerfil =
+                    count ?? 0;
+
+
+                if (
+                    utilizadoPerfil >=
+                    limitePerfil
+                ) {
+
+                    return resposta(
+                        {
+                            error:
+                                `O limite de ${limitePerfil} usuários deste perfil foi atingido.`,
+
+                            codigo:
+                                codigoLimitePerfil,
+
+                            limite:
+                                limitePerfil,
+
+                            utilizado:
+                                utilizadoPerfil,
+                        },
+                        403
+                    );
+                }
+            }
         }
 
         // =====================================================
@@ -438,9 +768,17 @@ Deno.serve(async (req: Request) => {
 
                     status: "ATIVO",
 
-                    perfil: "ALUNO",
+                    perfil:
+                        perfilNormalizado,
 
-                    senha_temporaria: true,
+                    classe_id:
+                        perfilNormalizado ===
+                            "ALUNO"
+                            ? classeValidadaId
+                            : null,
+
+                    senha_temporaria:
+                        true,
 
                     igreja_id:
                         igrejaId,

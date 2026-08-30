@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { BookOpen, Plus, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,12 +36,25 @@ export function ClassesPage() {
             "GERENCIAR_CLASSES"
         );
 
+    const listarClasses = useCallback(() => {
+
+        if (!pessoa?.igreja_id) {
+            return Promise.resolve([]);
+        }
+
+        return ClassService.listar(
+            pessoa.igreja_id
+        );
+
+    }, [pessoa?.igreja_id]);
+
+
     const {
         data: classes,
         loading,
         refresh: carregarClasses,
     } = useCrud<Classe>(
-        ClassService.listar,
+        listarClasses,
         "Erro ao carregar classes."
     );
 
@@ -71,9 +84,7 @@ export function ClassesPage() {
     const [limiteClasses, setLimiteClasses] =
         useState(0);
 
-    useEffect(() => {
-        carregarClasses();
-    }, []);
+
 
     function abrirNovaClasse() {
         if (!podeGerenciar) {

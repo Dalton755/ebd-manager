@@ -3,19 +3,19 @@ import type { Pessoa } from "../types/Pessoa";
 
 export class PeopleRepository {
   static async listar(igrejaId: string) {
-  const { data, error } = await supabase
-    .schema("ebd").from("pessoas")
-    .select("*")
-    .eq("igreja_id", igrejaId)
-    .eq("ativo", true)
-    .order("nome");
+    const { data, error } = await supabase
+      .schema("ebd").from("pessoas")
+      .select("*")
+      .eq("igreja_id", igrejaId)
+      .eq("ativo", true)
+      .order("nome");
 
-  if (error) {
-    throw error;
+    if (error) {
+      throw error;
+    }
+
+    return data;
   }
-
-  return data;
-}
 
   static async criar(pessoa: Pessoa) {
     const {
@@ -25,9 +25,22 @@ export class PeopleRepository {
       "create-user-admin",
       {
         body: {
-          nome: pessoa.nome,
-          email: pessoa.email,
-          telefone: pessoa.telefone,
+          nome:
+            pessoa.nome,
+
+          email:
+            pessoa.email,
+
+          telefone:
+            pessoa.telefone,
+
+          perfil:
+            pessoa.perfil,
+
+          classe_id:
+            pessoa.perfil === "ALUNO"
+              ? pessoa.classe_id ?? null
+              : null,
         },
       }
     );

@@ -1,8 +1,12 @@
 ﻿import type { Aula } from "../types/Aula";
 import type { Trimestre } from "../types/Trimestre";
+import type {
+    TrimestreComClasses,
+} from "../types/TrimestreClasse";
 
 import { LessonRepository } from "../repositories/LessonRepository";
 import { PeopleRepository } from "../../people/repositories/PeopleRepository";
+import { ClassRepository } from "../../classes/repositories/ClassRepository";
 import { NotificationService } from "../../notifications/services/NotificationService";
 
 
@@ -10,12 +14,336 @@ export type AulaComStatus = Aula & {
     statusProfessor: "DEFINIDO" | "PENDENTE";
 };
 
+function validarHorarioAula(
+    horaInicio: string | null | undefined,
+    horaFim: string | null | undefined,
+    obrigatorio = false
+) {
+
+    const inicio =
+        horaInicio?.slice(0, 5) ?? "";
+
+    const fim =
+        horaFim?.slice(0, 5) ?? "";
+
+    if (
+        obrigatorio &&
+        (!inicio || !fim)
+    ) {
+        throw new Error(
+            "Informe a hora de início e a hora de término da aula."
+        );
+    }
+
+    if (
+        (inicio && !fim) ||
+        (!inicio && fim)
+    ) {
+        throw new Error(
+            "Informe a hora de início e a hora de término da aula."
+        );
+    }
+
+    if (
+        inicio &&
+        fim &&
+        fim <= inicio
+    ) {
+        throw new Error(
+            "A hora de término deve ser posterior à hora de início."
+        );
+    }
+}
+
+function formatarDataNotificacao(
+    data: string
+) {
+
+    const [
+        ano,
+        mes,
+        dia,
+    ] = data.split("-");
+
+    if (
+        !ano ||
+        !mes ||
+        !dia
+    ) {
+        return data;
+    }
+
+    return `${dia}/${mes}/${ano}`;
+}
+
+function formatarHoraNotificacao(
+    hora?: string | null
+) {
+
+    if (!hora) {
+        return "";
+    }
+
+    return hora.slice(
+        0,
+        5
+    );
+}
+
+
+function formatarHorarioNotificacao(
+    horaInicio?: string | null,
+    horaFim?: string | null
+) {
+
+    const inicio =
+        formatarHoraNotificacao(
+            horaInicio
+        );
+
+    const fim =
+        formatarHoraNotificacao(
+            horaFim
+        );
+
+    if (
+        inicio &&
+        fim
+    ) {
+        return `${inicio} às ${fim}`;
+    }
+
+    if (inicio) {
+        return inicio;
+    }
+
+    return "";
+}
+
 export const LessonService = {
 
     async listarTrimestres(
         igrejaId: string
     ): Promise<Trimestre[]> {
         return LessonRepository.listarTrimestres(igrejaId);
+    },
+
+    async listarTrimestresComClasses(
+        igrejaId: string
+    ): Promise<TrimestreComClasses[]> {
+
+        const [
+            trimestres,
+            classes,
+            vinculos,
+            aulas,
+        ] =
+            await Promise.all([
+                LessonRepository
+                    .listarTrimestres(
+                        igrejaId
+                    ),
+
+                ClassRepository
+                    .listar(
+                        igrejaId
+                    ),
+
+                LessonRepository
+                    .listarTrimestresClasses(
+                        igrejaId
+                    ),
+
+                LessonRepository
+                    .listarResumoAulasPorIgreja(
+                        igrejaId
+                    ),
+            ]);
+
+
+        const classesAtivas =
+            classes.filter(
+                (classe) =>
+                    classe.ativa !== false &&
+                    Boolean(
+                        classe.id
+                    )
+            );
+
+
+        return trimestres.map(
+            (trimestre) => ({
+
+                id:
+                    trimestre.id,
+
+                numero:
+                    trimestre.numero,
+
+                ano:
+                    trimestre.ano,
+
+                ativo:
+                    trimestre.ativo,
+
+
+                classes:
+                    classesAtivas.map(
+                        (classe) => {
+
+                            const classeId =
+                                classe.id as string;
+
+
+                            const vinculo =
+                                vinculos.find(
+                                    (item) =>
+                                        item.trimestre_id ===
+                                        trimestre.id &&
+                                        item.classe_id ===
+                                        classeId
+                                );
+
+
+                            const totalAulas =
+                                aulas.filter(
+                                    (aula) =>
+                                        aula.trimestre_id ===
+                                        trimestre.id &&
+                                        aula.classe_id ===
+                                        classeId
+                                ).length;
+
+
+                            return {
+
+                                vinculo_id:
+                                    vinculo?.id ??
+                                    null,
+
+                                classe_id:
+                                    classeId,
+
+                                classe_nome:
+                                    classe.nome,
+
+                                classe_cor:
+                                    classe.cor ??
+                                    null,
+
+                                tema:
+                                    vinculo?.tema ??
+                                    null,
+
+                                total_aulas:
+                                    totalAulas,
+                            };
+                        }
+                    ),
+            })
+        );
+    },
+
+    async salvarTemaClasseTrimestre(
+        igrejaId: string,
+        trimestreId: string,
+        classeId: string,
+        tema: string
+    ) {
+
+        const temaNormalizado =
+            tema.trim();
+
+
+        if (!temaNormalizado) {
+            throw new Error(
+                "Informe o tema da classe."
+            );
+        }
+
+
+        /*
+         * Confirma que o trimestre pertence
+         * à igreja logada.
+         */
+        const trimestres =
+            await LessonRepository
+                .listarTrimestres(
+                    igrejaId
+                );
+
+
+        const trimestreValido =
+            trimestres.some(
+                (trimestre) =>
+                    trimestre.id ===
+                    trimestreId
+            );
+
+
+        if (!trimestreValido) {
+            throw new Error(
+                "Trimestre não encontrado."
+            );
+        }
+
+
+        /*
+         * Confirma que a classe pertence
+         * à mesma igreja.
+         */
+        const classes =
+            await ClassRepository.listar(
+                igrejaId
+            );
+
+
+        const classeValida =
+            classes.some(
+                (classe) =>
+                    classe.id ===
+                    classeId
+            );
+
+
+        if (!classeValida) {
+            throw new Error(
+                "Classe não encontrada."
+            );
+        }
+
+
+        return LessonRepository
+            .salvarTemaClasseTrimestre(
+                trimestreId,
+                classeId,
+                temaNormalizado
+            );
+    },
+
+    async listarAulasDaClasseNoTrimestre(
+        trimestreId: string,
+        classeId: string
+    ): Promise<AulaComStatus[]> {
+
+        const aulas =
+            await LessonRepository
+                .listarAulasPorTrimestreEClasse(
+                    trimestreId,
+                    classeId
+                );
+
+
+        return aulas.map(
+            (aula) => ({
+                ...aula,
+
+                statusProfessor:
+                    aula.professor_id
+                        ? "DEFINIDO"
+                        : "PENDENTE",
+            })
+        );
     },
 
     async buscarTrimestreAtivo(
@@ -43,7 +371,7 @@ export const LessonService = {
 
         if (jaExiste) {
             throw new Error(
-                "Este trimestre jÃ¡ estÃ¡ cadastrado."
+                "Este trimestre já está cadastrado."
             );
         }
 
@@ -53,7 +381,7 @@ export const LessonService = {
             trimestres.length >= maxTrimestres
         ) {
             throw new Error(
-                `Seu plano permite no mÃ¡ximo ${maxTrimestres} trimestre${maxTrimestres === 1 ? "" : "s"} cadastrados.`
+                `Seu plano permite no máximo  ${maxTrimestres} trimestre${maxTrimestres === 1 ? "" : "s"} cadastrados.`
             );
         }
 
@@ -134,7 +462,7 @@ export const LessonService = {
                 dados.numero > 4
             ) {
                 throw new Error(
-                    "O nÃºmero do trimestre deve estar entre 1 e 4."
+                    "O número do trimestre deve estar entre 1 e 4."
                 );
             }
         }
@@ -145,7 +473,7 @@ export const LessonService = {
                 dados.ano < 2000)
         ) {
             throw new Error(
-                "Informe um ano vÃ¡lido."
+                "Informe um ano válido."
             );
         }
 
@@ -190,15 +518,21 @@ export const LessonService = {
         igrejaId: string
     ): Promise<Aula> {
 
+        if (!aula.classe_id) {
+            throw new Error(
+                "Selecione a classe da aula."
+            );
+        }
+
         if (!aula.numero || aula.numero < 1) {
             throw new Error(
-                "Informe um nÃºmero de aula vÃ¡lido."
+                "Informe um número de aula válido."
             );
         }
 
         if (!aula.titulo.trim()) {
             throw new Error(
-                "Informe o tÃ­tulo da aula."
+                "Informe o título da aula."
             );
         }
 
@@ -208,12 +542,18 @@ export const LessonService = {
             );
         }
 
+        validarHorarioAula(
+            aula.hora_inicio,
+            aula.hora_fim,
+            true
+        );
+
         // 1. Cria a aula primeiro
         const aulaCriada =
             await LessonRepository.criarAula(aula);
 
         // 2. A partir daqui, qualquer erro de
-        // notificaÃ§Ã£o NÃƒO deve impedir a criaÃ§Ã£o da aula.
+        // Notificação NÃO deve impedir a criação da aula.
         try {
 
             const pessoas =
@@ -224,14 +564,15 @@ export const LessonService = {
                     (pessoa) =>
                         pessoa.perfil === "ALUNO" &&
                         pessoa.ativo === true &&
-                        pessoa.status === "ATIVO"
+                        pessoa.status === "ATIVO" &&
+                        pessoa.classe_id === aula.classe_id
                 );
 
             console.log(
-                `Alunos ativos encontrados para notificaÃ§Ã£o: ${alunos.length}`
+                `Alunos ativos encontrados para Notificação: ${alunos.length}`
             );
 
-            // 3. Cria a notificaÃ§Ã£o e envia Push
+            // 3. Cria a Notificação e envia Push
             // individualmente para cada aluno.
             for (const aluno of alunos) {
 
@@ -246,20 +587,31 @@ export const LessonService = {
                             "NOVA_AULA",
 
                         titulo:
-                            "Nova aula disponÃ­vel",
+                            "Nova aula disponível",
 
                         mensagem:
-                            `Aula ${aulaCriada.numero} â€” ${aulaCriada.titulo}`,
+                            `Aula ${aulaCriada.numero} — ${aulaCriada.titulo} • ${formatarDataNotificacao(
+                                aulaCriada.data
+                            )}${formatarHorarioNotificacao(
+                                aulaCriada.hora_inicio,
+                                aulaCriada.hora_fim
+                            )
+                                ? ` • ${formatarHorarioNotificacao(
+                                    aulaCriada.hora_inicio,
+                                    aulaCriada.hora_fim
+                                )}`
+                                : ""
+                            }`,
 
                         aula_id:
                             aulaCriada.id,
 
                         url:
-                            `/aulas/${aulaCriada.trimestre_id}`,
+                            `/aulas/${aulaCriada.trimestre_id}/classe/${aulaCriada.classe_id}`,
                     });
 
                     console.log(
-                        `NotificaÃ§Ã£o enviada para: ${aluno.nome}`
+                        `Notificação enviada para: ${aluno.nome}`
                     );
 
                 } catch (error) {
@@ -275,7 +627,7 @@ export const LessonService = {
         } catch (error) {
 
             console.error(
-                "Aula criada, mas ocorreu um erro ao buscar os alunos para notificaÃ§Ã£o:",
+                "Aula criada, mas ocorreu um erro ao buscar os alunos para Notificação:",
                 error
             );
 
@@ -331,57 +683,157 @@ export const LessonService = {
         professorId: string | null
     ): Promise<Aula> {
 
-        // 1. Atualiza o professor da aula
+        /*
+         * 1. Busca a aula antes da alteração.
+         *
+         * Precisamos saber quem estava escalado
+         * para decidir quais notificações enviar.
+         */
+        const aulaAnterior =
+            await LessonRepository
+                .buscarAulaPorId(
+                    aulaId
+                );
+
+        if (!aulaAnterior) {
+            throw new Error(
+                "Aula não encontrada."
+            );
+        }
+
+
+        const professorAnteriorId =
+            aulaAnterior.professor_id ??
+            null;
+
+
+        /*
+         * Se nada mudou, não fazemos update
+         * e principalmente não duplicamos
+         * a notificação.
+         */
+        if (
+            professorAnteriorId ===
+            professorId
+        ) {
+            return aulaAnterior;
+        }
+
+
+        /*
+         * 2. Atualiza o professor.
+         */
         const aulaAtualizada =
-            await LessonRepository.atualizarAula(
-                aulaId,
-                {
-                    professor_id: professorId,
-                }
-            );
+            await LessonRepository
+                .atualizarAula(
+                    aulaId,
+                    {
+                        professor_id:
+                            professorId,
+                    }
+                );
 
-        // 2. Se nÃ£o existe professor, nÃ£o hÃ¡ ninguÃ©m para notificar
-        if (!professorId) {
-            return aulaAtualizada;
+
+        const descricaoAula =
+            `Aula ${aulaAtualizada.numero} — ${aulaAtualizada.titulo} • ${formatarDataNotificacao(
+                aulaAtualizada.data
+            )}${formatarHorarioNotificacao(
+                aulaAtualizada.hora_inicio,
+                aulaAtualizada.hora_fim
+            )
+                ? ` • ${formatarHorarioNotificacao(
+                    aulaAtualizada.hora_inicio,
+                    aulaAtualizada.hora_fim
+                )}`
+                : ""
+            }`;
+
+
+        /*
+         * 3. Se havia um professor anteriormente,
+         * avisa que ele não está mais escalado.
+         */
+        if (
+            professorAnteriorId &&
+            professorAnteriorId !==
+            professorId
+        ) {
+
+            try {
+
+                await NotificationService.criar({
+
+                    pessoa_id:
+                        professorAnteriorId,
+
+                    tipo:
+                        "AULA_REMOVIDA_PROFESSOR",
+
+                    titulo:
+                        "Alteração na sua escala",
+
+                    mensagem:
+                        `Você não está mais escalado para: ${descricaoAula}`,
+
+                    aula_id:
+                        aulaAtualizada.id,
+
+                    url:
+                        "/minhas-aulas",
+                });
+
+            } catch (error) {
+
+                console.error(
+                    "[AULA] Professor anterior removido da escala, mas não foi possível enviar a notificação:",
+                    error
+                );
+            }
         }
 
-        // 3. Cria a notificaÃ§Ã£o para o novo professor
-        try {
 
-            await NotificationService.criar({
+        /*
+         * 4. Se existe um novo professor,
+         * envia a nova atribuição.
+         */
+        if (professorId) {
 
-                pessoa_id:
-                    professorId,
+            try {
 
-                tipo:
-                    "NOVA_AULA_PROFESSOR",
+                await NotificationService.criar({
 
-                titulo:
-                    "Nova aula atribuÃ­da a vocÃª",
+                    pessoa_id:
+                        professorId,
 
-                mensagem:
-                    `VocÃª foi escalado para ministrar a aula ${aulaAtualizada.numero} â€” ${aulaAtualizada.titulo} em ${aulaAtualizada.data}.`,
+                    tipo:
+                        "NOVA_AULA_PROFESSOR",
 
-                aula_id:
-                    aulaAtualizada.id,
+                    titulo:
+                        "Nova aula atribuída a você",
 
-                url:
-                    "/minhas-aulas",
-            });
+                    mensagem:
+                        descricaoAula,
 
-            console.log(
-                `[AULA] Professor ${professorId} notificado com sucesso.`
-            );
+                    aula_id:
+                        aulaAtualizada.id,
 
-        } catch (error) {
+                    url:
+                        "/minhas-aulas",
+                });
 
-            console.error(
-                "[AULA] Aula atribuÃ­da, mas nÃ£o foi possÃ­vel enviar a notificaÃ§Ã£o:",
-                error
-            );
+                console.log(
+                    `[AULA] Professor ${professorId} notificado com sucesso.`
+                );
 
-            // A aula continua atribuÃ­da mesmo se a notificaÃ§Ã£o falhar.
+            } catch (error) {
+
+                console.error(
+                    "[AULA] Aula atribuída, mas não foi possível enviar a notificação:",
+                    error
+                );
+            }
         }
+
 
         return aulaAtualizada;
     },
@@ -396,20 +848,429 @@ export const LessonService = {
         >
     ): Promise<Aula> {
 
-        return LessonRepository.atualizarAula(
-            aulaId,
-            dados
-        );
+        if (
+            "hora_inicio" in dados ||
+            "hora_fim" in dados
+        ) {
+            validarHorarioAula(
+                dados.hora_inicio,
+                dados.hora_fim,
+                true
+            );
+        }
+
+
+        /*
+         * 1. Guarda o estado anterior.
+         */
+        const aulaAnterior =
+            await LessonRepository
+                .buscarAulaPorId(
+                    aulaId
+                );
+
+        if (!aulaAnterior) {
+            throw new Error(
+                "Aula não encontrada."
+            );
+        }
+
+
+        /*
+         * 2. Atualiza normalmente.
+         */
+        const aulaAtualizada =
+            await LessonRepository
+                .atualizarAula(
+                    aulaId,
+                    dados
+                );
+
+
+        /*
+         * 3. Verifica apenas mudanças que
+         * afetam o agendamento.
+         */
+        const mudouData =
+            aulaAnterior.data !==
+            aulaAtualizada.data;
+
+        const mudouInicio =
+            aulaAnterior.hora_inicio !==
+            aulaAtualizada.hora_inicio;
+
+        const mudouFim =
+            aulaAnterior.hora_fim !==
+            aulaAtualizada.hora_fim;
+
+
+        if (
+            !mudouData &&
+            !mudouInicio &&
+            !mudouFim
+        ) {
+            return aulaAtualizada;
+        }
+
+
+        /*
+         * A atualização da aula já foi concluída.
+         * Uma falha de notificação não deve
+         * desfazer a alteração.
+         */
+        try {
+
+            const igrejaId =
+                await LessonRepository
+                    .buscarIgrejaIdDaAula(
+                        aulaId
+                    );
+
+            if (!igrejaId) {
+                return aulaAtualizada;
+            }
+
+
+            const descricaoAula =
+                `Aula ${aulaAtualizada.numero} — ${aulaAtualizada.titulo} • ${formatarDataNotificacao(
+                    aulaAtualizada.data
+                )}${formatarHorarioNotificacao(
+                    aulaAtualizada.hora_inicio,
+                    aulaAtualizada.hora_fim
+                )
+                    ? ` • ${formatarHorarioNotificacao(
+                        aulaAtualizada.hora_inicio,
+                        aulaAtualizada.hora_fim
+                    )}`
+                    : ""
+                }`;
+
+
+            /*
+             * 4. Notifica os alunos da classe.
+             */
+            if (aulaAtualizada.classe_id) {
+
+                const pessoas =
+                    await PeopleRepository
+                        .listar(
+                            igrejaId
+                        );
+
+                const alunos =
+                    pessoas.filter(
+                        (pessoa) =>
+                            pessoa.perfil ===
+                            "ALUNO" &&
+                            pessoa.ativo ===
+                            true &&
+                            pessoa.status ===
+                            "ATIVO" &&
+                            pessoa.classe_id ===
+                            aulaAtualizada.classe_id
+                    );
+
+
+                for (const aluno of alunos) {
+
+                    try {
+
+                        await NotificationService
+                            .criar({
+
+                                pessoa_id:
+                                    aluno.id,
+
+                                tipo:
+                                    "AULA_REAGENDADA",
+
+                                titulo:
+                                    "Horário da aula alterado",
+
+                                mensagem:
+                                    descricaoAula,
+
+                                aula_id:
+                                    aulaAtualizada.id,
+
+                                url:
+                                    `/aulas/${aulaAtualizada.trimestre_id}/classe/${aulaAtualizada.classe_id}`,
+                            });
+
+                    } catch (error) {
+
+                        console.error(
+                            `[AULA] Não foi possível notificar o aluno ${aluno.nome} sobre a alteração:`,
+                            error
+                        );
+                    }
+                }
+            }
+
+
+            /*
+             * 5. Notifica também o professor
+             * atualmente escalado.
+             */
+            if (
+                aulaAtualizada.professor_id
+            ) {
+
+                try {
+
+                    await NotificationService
+                        .criar({
+
+                            pessoa_id:
+                                aulaAtualizada.professor_id,
+
+                            tipo:
+                                "AULA_REAGENDADA_PROFESSOR",
+
+                            titulo:
+                                "Alteração na sua aula",
+
+                            mensagem:
+                                descricaoAula,
+
+                            aula_id:
+                                aulaAtualizada.id,
+
+                            url:
+                                "/minhas-aulas",
+                        });
+
+                } catch (error) {
+
+                    console.error(
+                        "[AULA] Aula atualizada, mas não foi possível notificar o professor:",
+                        error
+                    );
+                }
+            }
+
+        } catch (error) {
+
+            console.error(
+                "[AULA] Aula atualizada, mas ocorreu um erro ao enviar as notificações de alteração:",
+                error
+            );
+        }
+
+
+        return aulaAtualizada;
     },
 
-    async excluirAula(
-        aulaId: string
-    ): Promise<void> {
+    async cancelarAula(
+        aulaId: string,
+        pessoaId: string,
+        motivo?: string | null
+    ): Promise<Aula> {
 
-        return LessonRepository.excluirAula(
-            aulaId
-        );
+        /*
+         * 1. Localiza a aula antes da alteração.
+         */
+        const aulaAnterior =
+            await LessonRepository
+                .buscarAulaPorId(
+                    aulaId
+                );
+
+
+        if (!aulaAnterior) {
+
+            throw new Error(
+                "Aula não encontrada."
+            );
+        }
+
+
+        /*
+         * Evita cancelamento duplicado
+         * e notificações repetidas.
+         */
+        if (aulaAnterior.cancelada) {
+
+            return aulaAnterior;
+        }
+
+
+        /*
+         * 2. Descobre a igreja antes
+         * do cancelamento.
+         */
+        const igrejaId =
+            await LessonRepository
+                .buscarIgrejaIdDaAula(
+                    aulaId
+                );
+
+
+        /*
+         * 3. Marca a aula como cancelada.
+         */
+        const aulaCancelada =
+            await LessonRepository
+                .cancelarAula(
+                    aulaId,
+                    pessoaId,
+                    motivo
+                );
+
+
+        /*
+         * 4. Monta a mensagem.
+         */
+        const horario =
+            formatarHorarioNotificacao(
+                aulaCancelada.hora_inicio,
+                aulaCancelada.hora_fim
+            );
+
+
+        const descricaoAula =
+            `Aula ${aulaCancelada.numero} — ${aulaCancelada.titulo} • ${formatarDataNotificacao(
+                aulaCancelada.data
+            )}${horario
+                ? ` • ${horario}`
+                : ""
+            }`;
+
+
+        const motivoNormalizado =
+            motivo?.trim();
+
+
+        const mensagem =
+            motivoNormalizado
+                ? `${descricaoAula} • Motivo: ${motivoNormalizado}`
+                : descricaoAula;
+
+
+        /*
+         * O cancelamento já foi gravado.
+         * Falha de notificação não deve
+         * desfazer o cancelamento.
+         */
+        try {
+
+            /*
+             * 5. Notifica alunos da classe.
+             */
+            if (
+                igrejaId &&
+                aulaCancelada.classe_id
+            ) {
+
+                const pessoas =
+                    await PeopleRepository
+                        .listar(
+                            igrejaId
+                        );
+
+
+                const alunos =
+                    pessoas.filter(
+                        (pessoa) =>
+                            pessoa.perfil ===
+                            "ALUNO" &&
+                            pessoa.ativo ===
+                            true &&
+                            pessoa.status ===
+                            "ATIVO" &&
+                            pessoa.classe_id ===
+                            aulaCancelada.classe_id
+                    );
+
+
+                for (const aluno of alunos) {
+
+                    try {
+
+                        await NotificationService
+                            .criar({
+
+                                pessoa_id:
+                                    aluno.id,
+
+                                tipo:
+                                    "AULA_CANCELADA",
+
+                                titulo:
+                                    "Aula cancelada",
+
+                                mensagem,
+
+                                aula_id:
+                                    aulaCancelada.id,
+
+                                url:
+                                    `/aulas/${aulaCancelada.trimestre_id}/classe/${aulaCancelada.classe_id}`,
+                            });
+
+                    } catch (error) {
+
+                        console.error(
+                            `[AULA] Não foi possível notificar o aluno ${aluno.nome} sobre o cancelamento:`,
+                            error
+                        );
+                    }
+                }
+            }
+
+
+            /*
+             * 6. Notifica o professor.
+             */
+            if (
+                aulaCancelada.professor_id
+            ) {
+
+                try {
+
+                    await NotificationService
+                        .criar({
+
+                            pessoa_id:
+                                aulaCancelada.professor_id,
+
+                            tipo:
+                                "AULA_CANCELADA_PROFESSOR",
+
+                            titulo:
+                                "Aula cancelada",
+
+                            mensagem,
+
+                            aula_id:
+                                aulaCancelada.id,
+
+                            url:
+                                "/minhas-aulas",
+                        });
+
+                } catch (error) {
+
+                    console.error(
+                        "[AULA] Aula cancelada, mas não foi possível notificar o professor:",
+                        error
+                    );
+                }
+            }
+
+        } catch (error) {
+
+            console.error(
+                "[AULA] Aula cancelada, mas ocorreu um erro ao enviar as notificações:",
+                error
+            );
+        }
+
+
+        return aulaCancelada;
     },
+
+   
 
 };
 

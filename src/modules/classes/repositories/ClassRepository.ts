@@ -3,13 +3,14 @@ import type { Classe } from "../types/Classe";
 
 export class ClassRepository {
 
-  static async listar() {
+  static async listar(igrejaId: string) {
 
     const { data, error } =
       await supabase
         .schema("ebd")
         .from("classes")
         .select("*")
+        .eq("igreja_id", igrejaId)
         .eq("ativa", true)
         .order("nome");
 

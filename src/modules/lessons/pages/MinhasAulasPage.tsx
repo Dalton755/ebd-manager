@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import {
+    useSearchParams,
+} from "react-router-dom";
+import {
     BookOpen,
     CalendarDays,
-    ExternalLink,
+    CheckCircle2,
     Loader2,
     UserRound,
 } from "lucide-react";
@@ -15,6 +18,23 @@ import type { Trimestre } from "../types/Trimestre";
 export function MinhasAulasPage() {
 
     const { pessoa } = useAuth();
+
+    const [
+        searchParams,
+    ] =
+        useSearchParams();
+
+
+    const aulaDestaqueId =
+        searchParams.get(
+            "aula"
+        );
+
+
+    const destacarMaterial =
+        searchParams.get(
+            "material"
+        ) === "1";
 
     const [trimestre, setTrimestre] =
         useState<Trimestre | null>(null);
@@ -69,6 +89,14 @@ export function MinhasAulasPage() {
                         trimestreAtivo.id
                     );
 
+
+                const aulasAtivas =
+                    todasAsAulas.filter(
+                        (aula) =>
+                            !aula.cancelada
+                    );
+
+
                 let aulasParaExibir: Aula[] = [];
 
                 if (pessoa.perfil === "PROFESSOR") {
@@ -76,7 +104,7 @@ export function MinhasAulasPage() {
                     // PROFESSOR:
                     // mostra somente as aulas em que está escalado.
                     aulasParaExibir =
-                        todasAsAulas
+                        aulasAtivas
                             .filter(
                                 (aula) =>
                                     aula.professor_id === pessoa.id
@@ -101,8 +129,16 @@ export function MinhasAulasPage() {
                         0
                     );
 
+                    const aulasDaClasse =
+                        aulasAtivas.filter(
+                            (aula) =>
+                                aula.classe_id ===
+                                pessoa.classe_id
+                        );
+
+
                     const aulasOrdenadas =
-                        [...todasAsAulas].sort(
+                        [...aulasDaClasse].sort(
                             (a, b) =>
                                 a.numero - b.numero
                         );
@@ -162,6 +198,49 @@ export function MinhasAulasPage() {
         carregar();
 
     }, [pessoa?.id, pessoa?.igreja_id]);
+
+    useEffect(() => {
+
+        if (
+            !aulaDestaqueId ||
+            aulas.length === 0
+        ) {
+            return;
+        }
+
+
+        const timer =
+            window.setTimeout(
+                () => {
+
+                    const elemento =
+                        document.querySelector(
+                            `[data-aula-id="${aulaDestaqueId}"]`
+                        );
+
+
+                    elemento?.scrollIntoView({
+                        behavior:
+                            "smooth",
+
+                        block:
+                            "center",
+                    });
+
+                },
+                200
+            );
+
+
+        return () =>
+            window.clearTimeout(
+                timer
+            );
+
+    }, [
+        aulaDestaqueId,
+        aulas,
+    ]);
 
 
     function formatarData(data: string) {
@@ -367,8 +446,28 @@ export function MinhasAulasPage() {
 
                         <div
                             key={aula.id}
-                            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                            data-aula-id={aula.id}
+                            className={
+                                aula.id === aulaDestaqueId
+                                    ? "rounded-3xl border-2 border-emerald-400 bg-white p-5 shadow-lg ring-4 ring-emerald-100 transition sm:p-6"
+                                    : "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                            }
                         >
+
+                            {aula.id === aulaDestaqueId &&
+                                destacarMaterial && (
+
+                                    <div className="mb-5 flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-center text-sm font-bold text-emerald-700">
+
+                                        <CheckCircle2
+                                            className="h-5 w-5"
+                                        />
+
+                                        Presença registrada! Agora acesse o material da aula.
+
+                                    </div>
+
+                                )}
 
                             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
@@ -422,14 +521,27 @@ export function MinhasAulasPage() {
                                             href={aula.link_drive}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                                            className={
+                                                aula.id === aulaDestaqueId &&
+                                                    destacarMaterial
+                                                    ? "flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 px-6 py-5 text-base font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:w-auto sm:min-w-[270px]"
+                                                    : "flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto"
+                                            }
                                         >
 
-                                            <ExternalLink
-                                                className="h-4 w-4"
+                                            <BookOpen
+                                                className={
+                                                    aula.id === aulaDestaqueId &&
+                                                        destacarMaterial
+                                                        ? "h-6 w-6"
+                                                        : "h-4 w-4"
+                                                }
                                             />
 
-                                            Abrir material
+                                            {aula.id === aulaDestaqueId &&
+                                                destacarMaterial
+                                                ? "ACESSAR MATERIAL DA AULA"
+                                                : "Abrir material"}
 
                                         </a>
 

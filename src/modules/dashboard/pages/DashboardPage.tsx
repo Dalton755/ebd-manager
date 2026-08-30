@@ -16,6 +16,8 @@ import {
   CircleAlert,
 } from "lucide-react";
 
+import { useAuth } from "@/app/providers/AuthProvider";
+
 import { PageHeader } from "@/shared/components/ui/PageHeader";
 import { LoadingSpinner } from "@/shared/components/ui/LoadingSpinner";
 
@@ -24,7 +26,20 @@ import {
   type DashboardResumo,
 } from "../services/DashboardService";
 
+import { DashboardIgrejaPage } from "./DashboardIgrejaPage";
+
 export function DashboardPage() {
+
+  const {
+    plano,
+    igrejaId,
+  } = useAuth();
+
+  const nomePlano =
+    plano?.plano?.nome ?? "Semente";
+
+  console.log("PLANO DO DASHBOARD:", nomePlano);
+
   const [resumo, setResumo] =
     useState<DashboardResumo | null>(null);
 
@@ -34,8 +49,16 @@ export function DashboardPage() {
   useEffect(() => {
     async function carregarDashboard() {
       try {
+        if (!igrejaId) {
+          throw new Error(
+            "Igreja do usuário não identificada."
+          );
+        }
+
         const dados =
-          await DashboardService.carregarResumo();
+          await DashboardService.carregarResumo(
+            igrejaId
+          );
 
         setResumo(dados);
       } catch (error) {
@@ -49,7 +72,7 @@ export function DashboardPage() {
     }
 
     carregarDashboard();
-  }, []);
+  }, [igrejaId]);
 
   if (loading) {
     return (
@@ -63,6 +86,223 @@ export function DashboardPage() {
     return new Date(
       `${data}T00:00:00`
     ).toLocaleDateString("pt-BR");
+  }
+
+  // =====================================================
+  // DASHBOARD PREMIUM — PLANO IGREJA
+  // =====================================================
+
+  if (nomePlano === "Igreja") {
+    return (
+      <DashboardIgrejaPage
+        igrejaId={igrejaId}
+        resumoInicial={resumo}
+      />
+    );
+  }
+
+  // =====================================================
+  // DASHBOARD DO PLANO SEMENTE
+  // =====================================================
+
+  if (nomePlano === "Semente") {
+
+    return (
+      <div className="space-y-6">
+
+        <PageHeader
+          title="Dashboard"
+          subtitle="Visão geral da Escola Bíblica"
+          icon={LayoutDashboard}
+        />
+
+        {/* ================================================= */}
+        {/* INDICADORES BÁSICOS */}
+        {/* ================================================= */}
+
+        <div className="grid gap-4 sm:grid-cols-3">
+
+          {/* ALUNOS */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+            <div className="flex items-center justify-between">
+
+              <div>
+                <p className="text-sm font-medium text-slate-500">
+                  Alunos
+                </p>
+
+                <p className="mt-2 text-3xl font-bold text-slate-900">
+                  {resumo?.alunos ?? 0}
+                </p>
+
+                <p className="mt-1 text-xs text-slate-400">
+                  Alunos ativos
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                <Users size={21} />
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* PROFESSORES */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+            <div className="flex items-center justify-between">
+
+              <div>
+                <p className="text-sm font-medium text-slate-500">
+                  Professores
+                </p>
+
+                <p className="mt-2 text-3xl font-bold text-slate-900">
+                  {resumo?.professores ?? 0}
+                </p>
+
+                <p className="mt-1 text-xs text-slate-400">
+                  Professores ativos
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                <GraduationCap size={21} />
+              </div>
+
+            </div>
+
+          </div>
+
+
+          {/* CLASSES */}
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+
+            <div className="flex items-center justify-between">
+
+              <div>
+                <p className="text-sm font-medium text-slate-500">
+                  Classes
+                </p>
+
+                <p className="mt-2 text-3xl font-bold text-slate-900">
+                  {resumo?.classes ?? 0}
+                </p>
+
+                <p className="mt-1 text-xs text-slate-400">
+                  Classes ativas
+                </p>
+              </div>
+
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                <BookOpen size={21} />
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        {/* ================================================= */}
+        {/* FREQUÊNCIA */}
+        {/* ================================================= */}
+
+        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+          <div className="border-b border-slate-100 p-5">
+
+            <div className="flex items-center gap-3">
+
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+                <ClipboardCheck size={20} />
+              </div>
+
+              <div>
+
+                <h2 className="text-lg font-bold text-slate-800">
+                  Frequência
+                </h2>
+
+                <p className="text-sm text-slate-500">
+                  Registros recentes de presença
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <div className="divide-y divide-slate-100">
+
+            {resumo?.frequenciaRecente?.length ? (
+
+              resumo.frequenciaRecente.map(
+                (registro) => (
+
+                  <div
+                    key={registro.id}
+                    className="flex items-center justify-between gap-4 px-5 py-4"
+                  >
+
+                    <div className="min-w-0">
+
+                      <p className="truncate text-sm font-semibold text-slate-800">
+                        {registro.pessoa}
+                      </p>
+
+                      <p className="mt-1 text-xs text-slate-400">
+                        {formatarData(registro.data)}
+                      </p>
+
+                    </div>
+
+
+                    <div className="shrink-0 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-600">
+                      {registro.tipo}
+                    </div>
+
+                  </div>
+
+                )
+              )
+
+            ) : (
+
+              <div className="p-8 text-center">
+
+                <ClipboardCheck
+                  size={28}
+                  className="mx-auto text-slate-300"
+                />
+
+                <p className="mt-3 text-sm font-medium text-slate-500">
+                  Nenhum registro de frequência
+                </p>
+
+                <p className="mt-1 text-xs text-slate-400">
+                  Os registros aparecerão aqui quando houver presença.
+                </p>
+
+              </div>
+
+            )}
+
+          </div>
+
+        </div>
+
+      </div>
+    );
   }
 
   const frequencia =
@@ -548,8 +788,8 @@ export function DashboardPage() {
               <p className="mt-2 text-lg font-bold text-slate-900">
                 {resumo?.ultimaPresenca
                   ? formatarData(
-                      resumo.ultimaPresenca
-                    )
+                    resumo.ultimaPresenca
+                  )
                   : "Nenhum"}
               </p>
 

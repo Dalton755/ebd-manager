@@ -27,9 +27,22 @@ function resposta(
 Deno.serve(async (req: Request) => {
 
     if (req.method === "OPTIONS") {
-        return new Response("ok", {
-            headers: corsHeaders,
-        });
+        return new Response(
+            "ok",
+            {
+                headers: corsHeaders,
+            }
+        );
+    }
+
+    if (req.method !== "POST") {
+        return resposta(
+            {
+                error:
+                    "Método não permitido.",
+            },
+            405
+        );
     }
 
     try {
@@ -39,7 +52,9 @@ Deno.serve(async (req: Request) => {
         // =====================================================
 
         const supabaseUrl =
-            Deno.env.get("SUPABASE_URL");
+            Deno.env.get(
+                "SUPABASE_URL"
+            );
 
         const serviceRoleKey =
             Deno.env.get(
@@ -55,225 +70,159 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        const supabase = createClient(
-            supabaseUrl,
-            serviceRoleKey
-        );
+        const supabaseAdmin =
+            createClient(
+                supabaseUrl,
+                serviceRoleKey
+            );
+
 
         // =====================================================
-        // DADOS DO CADASTRO
+        // RECEBE DADOS
         // =====================================================
 
-        const {
-            nome,
-            email,
-            telefone,
-            igreja_id,
-            password,
-        } = await req.json();
+        const body =
+            await req.json();
 
-        const nomeNormalizado =
-            String(nome ?? "").trim();
+        const igrejaInput =
+            body?.igreja ?? {};
 
-        const emailNormalizado =
-            String(email ?? "")
+        const administradorInput =
+            body?.administrador ?? {};
+
+
+        // =====================================================
+        // DADOS DA IGREJA
+        // =====================================================
+
+        const nomeIgreja =
+            String(
+                igrejaInput.nome ?? ""
+            ).trim();
+
+        const sigla =
+            String(
+                igrejaInput.sigla ?? ""
+            )
+                .trim()
+                .toUpperCase();
+
+        const cnpj =
+            String(
+                igrejaInput.cnpj ?? ""
+            ).trim();
+
+        const telefoneIgreja =
+            String(
+                igrejaInput.telefone ?? ""
+            ).trim();
+
+        const emailIgreja =
+            String(
+                igrejaInput.email ?? ""
+            )
                 .trim()
                 .toLowerCase();
 
-        const telefoneNormalizado =
-            String(telefone ?? "").trim();
-
-        const igrejaId =
-            String(igreja_id ?? "").trim();
-
-        const senha =
-            String(password ?? "");
 
         // =====================================================
-        // VALIDAÇÃO BÁSICA
+        // DADOS DO ADMINISTRADOR
+        // =====================================================
+
+        const nomeAdministrador =
+            String(
+                administradorInput.nome ?? ""
+            ).trim();
+
+        const emailAdministrador =
+            String(
+                administradorInput.email ?? ""
+            )
+                .trim()
+                .toLowerCase();
+
+        const telefoneAdministrador =
+            String(
+                administradorInput.telefone ?? ""
+            ).trim();
+
+        const password =
+            String(
+                administradorInput.password ?? ""
+            );
+
+
+        // =====================================================
+        // VALIDAÇÃO
         // =====================================================
 
         if (
-            !nomeNormalizado ||
-            !emailNormalizado ||
-            !igrejaId ||
-            !senha
+            !nomeIgreja ||
+            !nomeAdministrador ||
+            !emailAdministrador ||
+            !telefoneAdministrador ||
+            !password
         ) {
+
             return resposta(
                 {
                     error:
-                        "Nome, e-mail, senha e igreja são obrigatórios.",
+                        "Preencha todos os campos obrigatórios.",
+
+                    codigo:
+                        "DADOS_OBRIGATORIOS",
                 },
                 400
             );
         }
 
-        if (senha.length < 6) {
+
+        if (password.length < 6) {
+
             return resposta(
                 {
                     error:
                         "A senha deve ter pelo menos 6 caracteres.",
+
+                    codigo:
+                        "SENHA_INVALIDA",
                 },
                 400
             );
         }
 
-        // =====================================================
-        // BUSCA A IGREJA
-        // =====================================================
-
-        const {
-            data: igreja,
-            error: igrejaError,
-        } =
-            await supabase
-                .schema("ebd")
-                .from("igrejas")
-                .select(`
-                    id,
-                    nome,
-                    ativa
-                `)
-                .eq(
-                    "id",
-                    igrejaId
-                )
-                .maybeSingle();
-
-        if (igrejaError) {
-            throw igrejaError;
-        }
-
-        if (!igreja) {
-            return resposta(
-                {
-                    error:
-                        "A igreja informada não foi encontrada.",
-                    codigo:
-                        "IGREJA_NAO_ENCONTRADA",
-                },
-                404
-            );
-        }
-
-        if (!igreja.ativa) {
-            return resposta(
-                {
-                    error:
-                        "Esta igreja não está disponível para novos cadastros.",
-                    codigo:
-                        "IGREJA_INATIVA",
-                },
-                403
-            );
-        }
 
         // =====================================================
-        // BUSCA ASSINATURA ATIVA
-        // =====================================================
-
-        const {
-            data: assinatura,
-            error: assinaturaError,
-        } =
-            await supabase
-                .schema("ebd")
-                .from("assinaturas")
-                .select(`
-                    id,
-                    plano_id,
-                    status
-                `)
-                .eq(
-                    "igreja_id",
-                    igrejaId
-                )
-                .eq(
-                    "status",
-                    "ATIVA"
-                )
-                .maybeSingle();
-
-        if (assinaturaError) {
-            throw assinaturaError;
-        }
-
-        if (!assinatura) {
-            return resposta(
-                {
-                    error:
-                        "Esta igreja não possui uma assinatura ativa.",
-                    codigo:
-                        "SEM_ASSINATURA_ATIVA",
-                },
-                403
-            );
-        }
-
-        // =====================================================
-// LIMITE DE PESSOAS
-// =====================================================
-//
-// O cadastro público não verifica limite de pessoas.
-//
-// O usuário pode se cadastrar normalmente e ficará
-// com status PENDENTE.
-//
-// O limite do plano será verificado somente quando
-// o administrador tentar aprovar o cadastro.
-//
-// =====================================================
-
-
-
-        // =====================================================
-// LIMITE DE PESSOAS
-// =====================================================
-//
-// IMPORTANTE:
-// O cadastro público NÃO é bloqueado pelo limite.
-//
-// Pessoas com status PENDENTE não ocupam vaga.
-// O limite será verificado somente quando
-// o administrador tentar aprovar o cadastro.
-//
-// =====================================================
-
-        // =====================================================
-        // VERIFICA E-MAIL DUPLICADO
+        // VERIFICA E-MAIL
         // =====================================================
 
         const {
             data: pessoaExistente,
             error: pessoaExistenteError,
         } =
-            await supabase
+            await supabaseAdmin
                 .schema("ebd")
                 .from("pessoas")
-                .select(`
-                    id,
-                    user_id,
-                    nome,
-                    email,
-                    ativo,
-                    status,
-                    igreja_id
-                `)
+                .select("id")
                 .eq(
                     "email",
-                    emailNormalizado
+                    emailAdministrador
                 )
                 .maybeSingle();
+
 
         if (pessoaExistenteError) {
             throw pessoaExistenteError;
         }
 
+
         if (pessoaExistente) {
+
             return resposta(
                 {
                     error:
                         "Já existe um cadastro com este e-mail.",
+
                     codigo:
                         "EMAIL_JA_CADASTRADO",
                 },
@@ -282,104 +231,264 @@ Deno.serve(async (req: Request) => {
         }
 
         // =====================================================
-        // CRIA USUÁRIO NO SUPABASE AUTH
+        // LOCALIZA A OFERTA GRATUITA DA SEMENTER
+        // =====================================================
+
+        const {
+            data: oferta,
+            error: ofertaError,
+        } =
+            await supabaseAdmin
+                .schema("ebd")
+                .from("ofertas_planos")
+                .select(`
+            id,
+            plano_id,
+            preco_recorrente,
+            gratuito,
+            duracao_gratuita_dias,
+            periodo_recorrente,
+            ativa,
+            planos (
+                id,
+                nome,
+                ativo
+            )
+        `)
+                .eq("ativa", true)
+                .eq("gratuito", true)
+                .eq("duracao_gratuita_dias", 5)
+                .maybeSingle();
+
+
+        if (ofertaError) {
+
+            throw ofertaError;
+
+        }
+
+
+        if (!oferta) {
+
+            return resposta(
+                {
+                    error:
+                        "O período de teste gratuito não está disponível no momento.",
+
+                    codigo:
+                        "TESTE_GRATUITO_INDISPONIVEL",
+                },
+                400
+            );
+
+        }
+
+
+        const plano =
+            Array.isArray(oferta.planos)
+                ? oferta.planos[0]
+                : oferta.planos;
+
+
+        if (
+            !plano ||
+            !plano.ativo ||
+            plano.nome !== "Semente"
+        ) {
+
+            return resposta(
+                {
+                    error:
+                        "O plano gratuito Semente não está disponível no momento.",
+
+                    codigo:
+                        "PLANO_SEMENTE_INDISPONIVEL",
+                },
+                400
+            );
+
+        }
+
+
+        // =====================================================
+        // CRIA USUÁRIO AUTH
         // =====================================================
 
         const {
             data: authData,
-            error: createUserError,
+            error: authError,
         } =
-            await supabase.auth.admin.createUser({
+            await supabaseAdmin.auth.admin.createUser({
+
                 email:
-                    emailNormalizado,
+                    emailAdministrador,
 
                 password:
-                    senha,
+                    password,
 
-                email_confirm: true,
+                email_confirm:
+                    true,
 
                 user_metadata: {
+
                     full_name:
-                        nomeNormalizado,
+                        nomeAdministrador,
+
                 },
+
             });
 
+
         if (
-            createUserError ||
+            authError ||
             !authData.user
         ) {
+
             return resposta(
                 {
                     error:
-                        createUserError?.message ??
+                        authError?.message ??
                         "Não foi possível criar o usuário.",
                 },
                 400
             );
         }
 
-        const novoUserId =
+
+        const userId =
             authData.user.id;
 
+
         // =====================================================
-        // CRIA PESSOA PENDENTE
+        // CRIA IGREJA
         // =====================================================
 
         const {
-            data: novaPessoa,
+            data: igreja,
+            error: igrejaError,
+        } =
+            await supabaseAdmin
+                .schema("ebd")
+                .from("igrejas")
+                .insert({
+
+                    nome:
+                        nomeIgreja,
+
+                    sigla:
+                        sigla || null,
+
+                    cnpj:
+                        cnpj || null,
+
+                    telefone:
+                        telefoneIgreja || null,
+
+                    email:
+                        emailIgreja || null,
+
+                    ativa:
+                        true,
+
+                })
+                .select()
+                .single();
+
+
+        if (igrejaError) {
+
+            await supabaseAdmin.auth.admin.deleteUser(
+                userId
+            );
+
+            throw igrejaError;
+        }
+
+
+        // =====================================================
+        // CRIA ADMINISTRADOR
+        // =====================================================
+
+        const {
+            data: pessoa,
             error: pessoaError,
         } =
-            await supabase
+            await supabaseAdmin
                 .schema("ebd")
                 .from("pessoas")
                 .insert({
+
                     user_id:
-                        novoUserId,
+                        userId,
 
                     nome:
-                        nomeNormalizado,
+                        nomeAdministrador,
 
                     email:
-                        emailNormalizado,
+                        emailAdministrador,
 
                     telefone:
-                        telefoneNormalizado,
+                        telefoneAdministrador,
 
                     ativo:
-                        false,
+                        true,
 
                     status:
-                        "PENDENTE",
+                        "ATIVO",
 
                     perfil:
-                        "ALUNO",
+                        "ADMIN",
 
                     senha_temporaria:
                         false,
 
                     igreja_id:
-                        igrejaId,
+                        igreja.id,
+
                 })
                 .select()
                 .single();
 
-        // =====================================================
-        // ROLLBACK
-        // =====================================================
 
         if (pessoaError) {
 
-            console.error(
-                "Erro ao criar pessoa. Removendo usuário do Auth:",
-                pessoaError
-            );
+            await supabaseAdmin
+                .schema("ebd")
+                .from("igrejas")
+                .delete()
+                .eq(
+                    "id",
+                    igreja.id
+                );
 
-            await supabase.auth.admin.deleteUser(
-                novoUserId
+            await supabaseAdmin.auth.admin.deleteUser(
+                userId
             );
 
             throw pessoaError;
         }
+
+
+        // =====================================================
+        // IMPORTANTE
+        // =====================================================
+        // A assinatura NÃO é criada aqui.
+        //
+        // A igreja acabou de ser cadastrada.
+        // O próximo passo será o administrador escolher
+        // uma oferta na tela /planos.
+        //
+        // Isso garante que:
+        //
+        // cadastro da igreja
+        //        ↓
+        // escolha da oferta
+        //        ↓
+        // criação da assinatura
+        //
+        // A condição comercial ficará congelada
+        // no momento da contratação.
+
 
         // =====================================================
         // SUCESSO
@@ -387,24 +496,45 @@ Deno.serve(async (req: Request) => {
 
         return resposta(
             {
-                success: true,
+
+                success:
+                    true,
 
                 message:
-                    "Cadastro realizado com sucesso. Aguarde a aprovação da igreja.",
+                    "Igreja cadastrada com sucesso. Escolha agora o plano desejado.",
 
-                pessoa:
-                    novaPessoa,
 
                 igreja: {
+
                     id:
                         igreja.id,
 
                     nome:
                         igreja.nome,
+
                 },
+
+
+                pessoa: {
+
+                    id:
+                        pessoa.id,
+
+                    nome:
+                        pessoa.nome,
+
+                    email:
+                        pessoa.email,
+
+                    perfil:
+                        pessoa.perfil,
+
+                },
+
             },
             200
         );
+
 
     } catch (error) {
 
@@ -413,14 +543,18 @@ Deno.serve(async (req: Request) => {
             error
         );
 
+
         return resposta(
             {
+
                 error:
                     error instanceof Error
                         ? error.message
                         : "Erro interno ao realizar cadastro.",
+
             },
             500
         );
     }
+
 });

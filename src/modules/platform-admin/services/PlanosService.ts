@@ -1,5 +1,34 @@
 import { supabase } from "@/shared/lib/supabase/client";
 
+export type OfertaPlano = {
+    id: string;
+    plano_id: string;
+    preco_recorrente: number;
+    gratuito: boolean;
+    duracao_gratuita_dias: number;
+    periodo_recorrente:
+    | "MENSAL"
+    | "TRIMESTRAL"
+    | "SEMESTRAL"
+    | "ANUAL";
+    ativa: boolean;
+    created_at?: string;
+    updated_at?: string;
+};
+
+export type OfertaPlanoInput = {
+    plano_id: string;
+    preco_recorrente: number;
+    gratuito: boolean;
+    duracao_gratuita_dias: number;
+    periodo_recorrente:
+    | "MENSAL"
+    | "TRIMESTRAL"
+    | "SEMESTRAL"
+    | "ANUAL";
+    ativa: boolean;
+};
+
 export type Plano = {
     id: string;
     nome: string;
@@ -507,5 +536,313 @@ export class PlanosService {
 
             throw erroInsercao;
         }
+
+
     }
+
+    // ============================================================
+    // OFERTAS COMERCIAIS
+    // ============================================================
+
+    static async buscarOfertaAtiva(
+        planoId: string
+    ): Promise<OfertaPlano | null> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("ofertas_planos")
+            .select(`
+                id,
+                plano_id,
+                preco_recorrente,
+                gratuito,
+                duracao_gratuita_dias,
+                periodo_recorrente,
+                ativa,
+                created_at,
+                updated_at
+            `)
+            .eq("plano_id", planoId)
+            .eq("ativa", true)
+            .maybeSingle();
+
+        if (error) {
+
+            console.error(
+                "Erro ao buscar oferta ativa:",
+                error
+            );
+
+            throw error;
+        }
+
+        if (!data) {
+            return null;
+        }
+
+        return {
+            id: data.id,
+            plano_id: data.plano_id,
+            preco_recorrente:
+                Number(data.preco_recorrente ?? 0),
+            gratuito:
+                Boolean(data.gratuito),
+            duracao_gratuita_dias:
+                Number(
+                    data.duracao_gratuita_dias ?? 0
+                ),
+            periodo_recorrente:
+                data.periodo_recorrente,
+            ativa:
+                Boolean(data.ativa),
+            created_at:
+                data.created_at,
+            updated_at:
+                data.updated_at,
+        };
+    }
+
+
+    static async listarOfertas(): Promise<OfertaPlano[]> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("ofertas_planos")
+            .select(`
+                id,
+                plano_id,
+                preco_recorrente,
+                gratuito,
+                duracao_gratuita_dias,
+                periodo_recorrente,
+                ativa,
+                created_at,
+                updated_at
+            `)
+            .order("created_at", {
+                ascending: false,
+            });
+
+        if (error) {
+
+            console.error(
+                "Erro ao listar ofertas:",
+                error
+            );
+
+            throw error;
+        }
+
+        return (data ?? []).map((item) => ({
+            id: item.id,
+            plano_id: item.plano_id,
+            preco_recorrente:
+                Number(item.preco_recorrente ?? 0),
+            gratuito:
+                Boolean(item.gratuito),
+            duracao_gratuita_dias:
+                Number(
+                    item.duracao_gratuita_dias ?? 0
+                ),
+            periodo_recorrente:
+                item.periodo_recorrente,
+            ativa:
+                Boolean(item.ativa),
+            created_at:
+                item.created_at,
+            updated_at:
+                item.updated_at,
+        }));
+    }
+
+
+    static async criarOferta(
+        dados: OfertaPlanoInput
+    ): Promise<OfertaPlano> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("ofertas_planos")
+            .insert({
+                plano_id:
+                    dados.plano_id,
+
+                preco_recorrente:
+                    dados.preco_recorrente,
+
+                gratuito:
+                    dados.gratuito,
+
+                duracao_gratuita_dias:
+                    dados.gratuito
+                        ? dados.duracao_gratuita_dias
+                        : 0,
+
+                periodo_recorrente:
+                    dados.periodo_recorrente,
+
+                ativa:
+                    dados.ativa,
+            })
+            .select(`
+                id,
+                plano_id,
+                preco_recorrente,
+                gratuito,
+                duracao_gratuita_dias,
+                periodo_recorrente,
+                ativa,
+                created_at,
+                updated_at
+            `)
+            .single();
+
+        if (error) {
+
+            console.error(
+                "Erro ao criar oferta:",
+                error
+            );
+
+            throw error;
+        }
+
+        return {
+            id: data.id,
+            plano_id: data.plano_id,
+            preco_recorrente:
+                Number(data.preco_recorrente ?? 0),
+            gratuito:
+                Boolean(data.gratuito),
+            duracao_gratuita_dias:
+                Number(
+                    data.duracao_gratuita_dias ?? 0
+                ),
+            periodo_recorrente:
+                data.periodo_recorrente,
+            ativa:
+                Boolean(data.ativa),
+            created_at:
+                data.created_at,
+            updated_at:
+                data.updated_at,
+        };
+    }
+
+
+    static async atualizarOferta(
+        id: string,
+        dados: OfertaPlanoInput
+    ): Promise<OfertaPlano> {
+
+        /*
+         * IMPORTANTE:
+         *
+         * A oferta antiga não deve ser alterada
+         * quando já foi utilizada por uma assinatura.
+         *
+         * Portanto, este método NÃO será usado para
+         * modificar uma oferta contratada.
+         *
+         * A tela do SuperAdmin deverá criar uma NOVA
+         * oferta e desativar a anterior.
+         */
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("ofertas_planos")
+            .update({
+                preco_recorrente:
+                    dados.preco_recorrente,
+
+                gratuito:
+                    dados.gratuito,
+
+                duracao_gratuita_dias:
+                    dados.gratuito
+                        ? dados.duracao_gratuita_dias
+                        : 0,
+
+                periodo_recorrente:
+                    dados.periodo_recorrente,
+
+                ativa:
+                    dados.ativa,
+
+                updated_at:
+                    new Date().toISOString(),
+            })
+            .eq("id", id)
+            .select(`
+                id,
+                plano_id,
+                preco_recorrente,
+                gratuito,
+                duracao_gratuita_dias,
+                periodo_recorrente,
+                ativa,
+                created_at,
+                updated_at
+            `)
+            .single();
+
+        if (error) {
+
+            console.error(
+                "Erro ao atualizar oferta:",
+                error
+            );
+
+            throw error;
+        }
+
+        return {
+            id: data.id,
+            plano_id: data.plano_id,
+            preco_recorrente:
+                Number(data.preco_recorrente ?? 0),
+            gratuito:
+                Boolean(data.gratuito),
+            duracao_gratuita_dias:
+                Number(
+                    data.duracao_gratuita_dias ?? 0
+                ),
+            periodo_recorrente:
+                data.periodo_recorrente,
+            ativa:
+                Boolean(data.ativa),
+            created_at:
+                data.created_at,
+            updated_at:
+                data.updated_at,
+        };
+    }
+
+
+    static async desativarOferta(
+        id: string
+    ): Promise<void> {
+
+        const { error } = await supabase
+            .schema("ebd")
+            .from("ofertas_planos")
+            .update({
+                ativa: false,
+                updated_at:
+                    new Date().toISOString(),
+            })
+            .eq("id", id);
+
+        if (error) {
+
+            console.error(
+                "Erro ao desativar oferta:",
+                error
+            );
+
+            throw error;
+        }
+    }
+
+
 }

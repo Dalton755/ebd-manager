@@ -1,0 +1,509 @@
+import { supabase } from "@/shared/lib/supabase/client";
+
+import type { Aula } from "../types/Aula";
+import type { Trimestre } from "../types/Trimestre";
+import type { TrimestreClasse } from "../types/TrimestreClasse";
+
+export const LessonRepository = {
+
+    async listarTrimestres(
+        igrejaId: string
+    ): Promise<Trimestre[]> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("trimestres")
+            .select("*")
+            .eq("igreja_id", igrejaId)
+            .order("ano", {
+                ascending: false,
+            })
+            .order("numero", {
+                ascending: false,
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        return data ?? [];
+    },
+
+
+    async buscarTrimestreAtivo(
+        igrejaId: string
+    ): Promise<Trimestre | null> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("trimestres")
+            .select("*")
+            .eq("igreja_id", igrejaId)
+            .eq("ativo", true)
+            .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    },
+
+
+    async criarTrimestre(
+        igrejaId: string,
+        trimestre: {
+            numero: number;
+            ano: number;
+            tema: string;
+            ativo: boolean;
+        }
+    ): Promise<Trimestre> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("trimestres")
+            .insert({
+                ...trimestre,
+                igreja_id: igrejaId,
+            })
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    },
+
+
+    async atualizarTrimestre(
+        igrejaId: string,
+        trimestreId: string,
+        dados: Partial<
+            Pick<
+                Trimestre,
+                "numero" | "ano" | "tema" | "ativo"
+            >
+        >
+    ): Promise<Trimestre> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("trimestres")
+            .update(dados)
+            .eq("id", trimestreId)
+            .eq("igreja_id", igrejaId)
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    },
+
+
+    async listarAulasPorTrimestre(
+        trimestreId: string
+    ): Promise<Aula[]> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("aulas")
+            .select(`
+                *,
+                professor:pessoas!aulas_professor_id_fkey (
+                    id,
+                    nome
+                ),
+                classe:classes!aulas_classe_id_fkey (
+                    id,
+                    nome
+                )
+            `)
+            .eq("trimestre_id", trimestreId)
+            .order("numero", {
+                ascending: true,
+            });
+
+        if (error) {
+            throw error;
+        }
+
+        return data ?? [];
+    },
+
+
+    async criarAula(
+        aula: Omit<
+            Aula,
+            "id" | "created_at" | "updated_at"
+        >
+    ): Promise<Aula> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("aulas")
+            .insert(aula)
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    },
+
+    async buscarAulaPorId(
+        aulaId: string
+    ): Promise<Aula | null> {
+
+        const { data, error } =
+            await supabase
+                .schema("ebd")
+                .from("aulas")
+                .select("*")
+                .eq("id", aulaId)
+                .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    },
+
+    async buscarIgrejaIdDaAula(
+        aulaId: string
+    ): Promise<string | null> {
+
+        const { data: aula, error: aulaError } =
+            await supabase
+                .schema("ebd")
+                .from("aulas")
+                .select("trimestre_id")
+                .eq("id", aulaId)
+                .maybeSingle();
+
+        if (aulaError) {
+            throw aulaError;
+        }
+
+        if (!aula?.trimestre_id) {
+            return null;
+        }
+
+        const {
+            data: trimestre,
+            error: trimestreError,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("trimestres")
+                .select("igreja_id")
+                .eq(
+                    "id",
+                    aula.trimestre_id
+                )
+                .maybeSingle();
+
+        if (trimestreError) {
+            throw trimestreError;
+        }
+
+        return trimestre?.igreja_id ?? null;
+    },
+
+
+    async atualizarAula(
+        aulaId: string,
+        dados: Partial<
+            Omit<
+                Aula,
+                "id" | "created_at" | "updated_at"
+            >
+        >
+    ): Promise<Aula> {
+
+        const { data, error } = await supabase
+            .schema("ebd")
+            .from("aulas")
+            .update(dados)
+            .eq("id", aulaId)
+            .select()
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    },
+
+    async cancelarAula(
+        aulaId: string,
+        pessoaId: string,
+        motivo?: string | null
+    ): Promise<Aula> {
+
+        const motivoNormalizado =
+            motivo?.trim() || null;
+
+
+        const {
+            data,
+            error,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("aulas")
+                .update({
+                    cancelada:
+                        true,
+
+                    cancelada_em:
+                        new Date()
+                            .toISOString(),
+
+                    cancelada_por:
+                        pessoaId,
+
+                    motivo_cancelamento:
+                        motivoNormalizado,
+                })
+                .eq(
+                    "id",
+                    aulaId
+                )
+                .select("*")
+                .single();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        return data;
+    },
+
+
+    async excluirAula(
+        aulaId: string
+    ): Promise<void> {
+
+        const { error } = await supabase
+            .schema("ebd")
+            .from("aulas")
+            .delete()
+            .eq("id", aulaId);
+
+        if (error) {
+            throw error;
+        }
+    },
+
+    async listarTrimestresClasses(
+        igrejaId: string
+    ): Promise<TrimestreClasse[]> {
+
+        const { data, error } =
+            await supabase
+                .schema("ebd")
+                .from("trimestres_classes")
+                .select(`
+                id,
+                trimestre_id,
+                classe_id,
+                tema,
+                created_at,
+                updated_at,
+
+                trimestre:trimestres!trimestres_classes_trimestre_id_fkey!inner (
+                    id,
+                    numero,
+                    ano,
+                    ativo,
+                    igreja_id
+                ),
+
+                classe:classes!trimestres_classes_classe_id_fkey!inner (
+                    id,
+                    nome,
+                    cor,
+                    ativa,
+                    igreja_id
+                )
+            `)
+                .eq(
+                    "trimestre.igreja_id",
+                    igrejaId
+                )
+                .eq(
+                    "classe.igreja_id",
+                    igrejaId
+                );
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        return (
+            data ?? []
+        ) as unknown as TrimestreClasse[];
+    },
+
+
+    async listarResumoAulasPorIgreja(
+        igrejaId: string
+    ): Promise<
+        {
+            id: string;
+            trimestre_id: string;
+            classe_id: string | null;
+        }[]
+    > {
+
+        const { data, error } =
+            await supabase
+                .schema("ebd")
+                .from("aulas")
+                .select(`
+                id,
+                trimestre_id,
+                classe_id,
+
+                trimestre:trimestres!aulas_trimestre_id_fkey!inner (
+                    igreja_id
+                )
+            `)
+                .eq(
+                    "trimestre.igreja_id",
+                    igrejaId
+                );
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        return (
+            data ?? []
+        ).map(
+            (aula) => ({
+                id:
+                    aula.id,
+
+                trimestre_id:
+                    aula.trimestre_id,
+
+                classe_id:
+                    aula.classe_id,
+            })
+        );
+    },
+
+
+    async listarAulasPorTrimestreEClasse(
+        trimestreId: string,
+        classeId: string
+    ): Promise<Aula[]> {
+
+        const { data, error } =
+            await supabase
+                .schema("ebd")
+                .from("aulas")
+                .select(`
+                *,
+
+                professor:pessoas!aulas_professor_id_fkey (
+                    id,
+                    nome
+                ),
+
+                classe:classes!aulas_classe_id_fkey (
+                    id,
+                    nome
+                )
+            `)
+                .eq(
+                    "trimestre_id",
+                    trimestreId
+                )
+                .eq(
+                    "classe_id",
+                    classeId
+                )
+                .order(
+                    "numero",
+                    {
+                        ascending: true,
+                    }
+                );
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        return data ?? [];
+    },
+
+
+    async salvarTemaClasseTrimestre(
+        trimestreId: string,
+        classeId: string,
+        tema: string
+    ): Promise<TrimestreClasse> {
+
+        const { data, error } =
+            await supabase
+                .schema("ebd")
+                .from("trimestres_classes")
+                .upsert(
+                    {
+                        trimestre_id:
+                            trimestreId,
+
+                        classe_id:
+                            classeId,
+
+                        tema:
+                            tema.trim(),
+
+                        updated_at:
+                            new Date().toISOString(),
+                    },
+                    {
+                        onConflict:
+                            "trimestre_id,classe_id",
+                    }
+                )
+                .select(`
+                id,
+                trimestre_id,
+                classe_id,
+                tema,
+                created_at,
+                updated_at
+            `)
+                .single();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        return data;
+    },
+
+};

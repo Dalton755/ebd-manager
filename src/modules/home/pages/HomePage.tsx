@@ -78,9 +78,34 @@ export function HomePage() {
                 setLoading(true);
                 setErro("");
 
-                const aula =
-                    await HomeService
-                        .buscarProximaAula();
+                let aula = null;
+
+
+                if (
+                    pessoa.perfil === "ALUNO"
+                ) {
+
+                    /*
+                     * Aluno sem classe não pode receber
+                     * aula de outra classe da igreja.
+                     */
+                    if (pessoa.classe_id) {
+
+                        aula =
+                            await HomeService
+                                .buscarProximaAula(
+                                    pessoa.classe_id
+                                );
+
+                    }
+
+                } else {
+
+                    aula =
+                        await HomeService
+                            .buscarProximaAula();
+
+                }
 
                 setProximaAula(aula);
 
@@ -92,7 +117,11 @@ export function HomePage() {
                     const dadosFrequencia =
                         await HomeService
                             .buscarFrequenciaAluno(
-                                pessoa.id
+                                pessoa.id,
+
+                                pessoa.perfil === "ALUNO"
+                                    ? pessoa.classe_id ?? null
+                                    : undefined
                             );
 
                     setFrequencia(

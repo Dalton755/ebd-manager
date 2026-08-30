@@ -19,7 +19,6 @@ import {
     Plus,
     UserRound,
     Pencil,
-    Trash2,
 } from "lucide-react";
 
 import { LessonService } from "../services/LessonService";
@@ -30,6 +29,9 @@ import type { Trimestre } from "../types/Trimestre";
 import type { Pessoa } from "../../people/types/Pessoa";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { temPermissao } from "@/shared/auth/permissions";
+
+import { ClassService } from "@/modules/classes/services/ClassService";
+import type { Classe } from "@/modules/classes/types/Classe";
 
 
 
@@ -94,17 +96,30 @@ export function LessonsPage() {
     } = useFormDraft(
         `aula-form-${trimestreId ?? "novo"}`,
         {
+            classeId: "",
             numero: "",
             titulo: "",
             data: "",
+            horaInicio: "",
+            horaFim: "",
             linkDrive: "",
         }
     );
 
     const numero = formulario.numero;
+    const classeId = formulario.classeId;
     const titulo = formulario.titulo;
     const data = formulario.data;
+    const horaInicio = formulario.horaInicio;
+    const horaFim = formulario.horaFim;
     const linkDrive = formulario.linkDrive;
+
+    function setClasseId(valor: string) {
+        setFormulario((atual) => ({
+            ...atual,
+            classeId: valor,
+        }));
+    }
 
     function setNumero(valor: string) {
         setFormulario((atual) => ({
@@ -127,12 +142,31 @@ export function LessonsPage() {
         }));
     }
 
+    function setHoraInicio(valor: string) {
+        setFormulario((atual) => ({
+            ...atual,
+            horaInicio: valor,
+        }));
+    }
+
+    function setHoraFim(valor: string) {
+        setFormulario((atual) => ({
+            ...atual,
+            horaFim: valor,
+        }));
+    }
+
     function setLinkDrive(valor: string) {
         setFormulario((atual) => ({
             ...atual,
             linkDrive: valor,
         }));
     }
+
+    const [
+        classes,
+        setClasses,
+    ] = useState<Classe[]>([]);
 
     const [
         professores,
@@ -164,20 +198,14 @@ export function LessonsPage() {
         setAulaParaEditar,
     ] = useState<Aula | null>(null);
 
-    const [
-        aulaParaExcluir,
-        setAulaParaExcluir,
-    ] = useState<Aula | null>(null);
+   
 
     const [
         salvandoEdicao,
         setSalvandoEdicao,
     ] = useState(false);
 
-    const [
-        excluindoAula,
-        setExcluindoAula,
-    ] = useState(false);
+    
 
 
     useEffect(() => {
@@ -194,6 +222,41 @@ export function LessonsPage() {
         carregarDados();
 
     }, [trimestreId, pessoa?.igreja_id]);
+
+    useEffect(() => {
+
+        async function carregarClasses() {
+
+            if (!pessoa?.igreja_id) {
+                setClasses([]);
+                return;
+            }
+
+            try {
+
+                const classesDaIgreja =
+                    await ClassService.listar(
+                        pessoa.igreja_id
+                    );
+
+                setClasses(
+                    classesDaIgreja
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao carregar classes:",
+                    error
+                );
+
+                setClasses([]);
+            }
+        }
+
+        void carregarClasses();
+
+    }, [pessoa?.igreja_id]);
 
 
     async function carregarDados() {
@@ -238,7 +301,7 @@ export function LessonsPage() {
 
             setTrimestre(
                 trimestreEncontrado
-            );const [
+            ); const [
                 aulasDoTrimestre,
                 pessoasCadastradas,
             ] = await Promise.all([
@@ -419,6 +482,11 @@ export function LessonsPage() {
             const formulario =
                 new FormData(event.currentTarget);
 
+            const classeId =
+                String(
+                    formulario.get("classeId") ?? ""
+                ).trim();
+
             const numero =
                 Number(
                     formulario.get("numero")
@@ -434,6 +502,16 @@ export function LessonsPage() {
                     formulario.get("data") ?? ""
                 );
 
+            const horaInicio =
+                String(
+                    formulario.get("horaInicio") ?? ""
+                ).trim();
+
+            const horaFim =
+                String(
+                    formulario.get("horaFim") ?? ""
+                ).trim();
+
             const linkDrive =
                 String(
                     formulario.get("linkDrive") ?? ""
@@ -442,9 +520,13 @@ export function LessonsPage() {
             await LessonService.atualizarAula(
                 aulaParaEditar.id,
                 {
+                    classe_id:
+                        classeId || null,
                     numero,
                     titulo,
                     data,
+                    hora_inicio: horaInicio,
+                    hora_fim: horaFim,
                     professor_id:
                         aulaParaEditar.professor_id,
                     link_drive:
@@ -478,48 +560,7 @@ export function LessonsPage() {
 
     }
 
-    async function confirmarExclusaoAula() {
-
-        if (!aulaParaExcluir) {
-            return;
-        }
-
-        try {
-
-            setExcluindoAula(true);
-
-            setError("");
-            setSuccess("");
-
-            await LessonService.excluirAula(
-                aulaParaExcluir.id
-            );
-
-            setAulaParaExcluir(null);
-
-            setSuccess(
-                "Aula excluÃ­da com sucesso!"
-            );
-
-            await carregarDados();
-
-        } catch (error) {
-
-            console.error(error);
-
-            setError(
-                error instanceof Error
-                    ? error.message
-                    : "NÃ£o foi possÃ­vel excluir a aula."
-            );
-
-        } finally {
-
-            setExcluindoAula(false);
-
-        }
-
-    }
+    
 
 
     async function handleSubmit(
@@ -543,9 +584,12 @@ export function LessonsPage() {
             await LessonService.criarAula(
                 {
                     trimestre_id: trimestreId,
+                    classe_id: classeId,
                     numero: Number(numero),
                     titulo: titulo.trim(),
                     data,
+                    hora_inicio: horaInicio,
+                    hora_fim: horaFim,
                     professor_id: null,
                     link_drive:
                         linkDrive.trim() || null,
@@ -555,11 +599,17 @@ export function LessonsPage() {
 
             limparRascunho();
 
+            setClasseId("");
+
             setNumero("");
 
             setTitulo("");
 
             setData("");
+
+            setHoraInicio("");
+
+            setHoraFim("");
 
             setLinkDrive("");
 
@@ -808,10 +858,40 @@ export function LessonsPage() {
                         >
 
                             <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    Classe
+                                </label>
+
+                                <select
+                                    value={classeId}
+                                    onChange={(event) =>
+                                        setClasseId(
+                                            event.target.value
+                                        )
+                                    }
+                                    required
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-blue-500"
+                                >
+                                    <option value="">
+                                        Selecione a classe
+                                    </option>
+
+                                    {classes.map((classe) => (
+                                        <option
+                                            key={classe.id}
+                                            value={classe.id}
+                                        >
+                                            {classe.nome}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
 
-                                    NÃºmero da aula
+                                    Número da aula
 
                                 </label>
 
@@ -836,7 +916,7 @@ export function LessonsPage() {
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
 
-                                    TÃ­tulo da aula
+                                    Tí­tulo da aula
 
                                 </label>
 
@@ -875,6 +955,46 @@ export function LessonsPage() {
                                     required
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
                                 />
+
+                            </div>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        Hora de início
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        value={horaInicio}
+                                        onChange={(event) =>
+                                            setHoraInicio(
+                                                event.target.value
+                                            )
+                                        }
+                                        required
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        Hora de término
+                                    </label>
+
+                                    <input
+                                        type="time"
+                                        value={horaFim}
+                                        onChange={(event) =>
+                                            setHoraFim(
+                                                event.target.value
+                                            )
+                                        }
+                                        required
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
+                                    />
+                                </div>
 
                             </div>
 
@@ -1061,17 +1181,7 @@ export function LessonsPage() {
                                                         Editar
                                                     </button>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() =>
-                                                            setAulaParaExcluir(aula)
-                                                        }
-                                                        className="flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-50"
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-
-                                                        Excluir
-                                                    </button>
+                                                   
                                                 </>
 
                                             )}
@@ -1277,9 +1387,37 @@ export function LessonsPage() {
                         >
 
                             <div>
+                                <label className="mb-1 block text-sm font-medium text-slate-700">
+                                    Classe
+                                </label>
+
+                                <select
+                                    name="classeId"
+                                    defaultValue={
+                                        aulaParaEditar.classe_id ?? ""
+                                    }
+                                    required
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 outline-none transition focus:border-blue-500"
+                                >
+                                    <option value="">
+                                        Selecione a classe
+                                    </option>
+
+                                    {classes.map((classe) => (
+                                        <option
+                                            key={classe.id}
+                                            value={classe.id}
+                                        >
+                                            {classe.nome}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                                    NÃºmero da aula
+                                    Número da aula
                                 </label>
 
                                 <input
@@ -1299,7 +1437,7 @@ export function LessonsPage() {
                             <div>
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
-                                    TÃ­tulo da aula
+                                    Tí­tulo da aula
                                 </label>
 
                                 <input
@@ -1330,6 +1468,44 @@ export function LessonsPage() {
                                     required
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
                                 />
+
+                            </div>
+
+                            <div className="grid gap-4 sm:grid-cols-2">
+
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        Hora de início
+                                    </label>
+
+                                    <input
+                                        name="horaInicio"
+                                        type="time"
+                                        defaultValue={
+                                            aulaParaEditar.hora_inicio
+                                                ?.slice(0, 5) ?? ""
+                                        }
+                                        required
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                                        Hora de término
+                                    </label>
+
+                                    <input
+                                        name="horaFim"
+                                        type="time"
+                                        defaultValue={
+                                            aulaParaEditar.hora_fim
+                                                ?.slice(0, 5) ?? ""
+                                        }
+                                        required
+                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 outline-none transition focus:border-blue-500"
+                                    />
+                                </div>
 
                             </div>
 
@@ -1379,7 +1555,7 @@ export function LessonsPage() {
 
                                     {salvandoEdicao
                                         ? "Salvando..."
-                                        : "Salvar alteraÃ§Ãµes"}
+                                        : "Salvar alterações"}
 
                                 </button>
 
@@ -1393,85 +1569,7 @@ export function LessonsPage() {
 
             )}
 
-            {aulaParaExcluir && (
-
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
-
-                    <div className="w-full max-w-md rounded-xl bg-white shadow-xl">
-
-                        <div className="border-b border-slate-200 px-5 py-4">
-
-                            <h2 className="font-semibold text-slate-800">
-                                Excluir aula
-                            </h2>
-
-                        </div>
-
-
-                        <div className="space-y-4 p-5">
-
-                            <p className="text-sm text-slate-600">
-
-                                Tem certeza que deseja excluir a aula{" "}
-
-                                <strong>
-                                    {aulaParaExcluir.numero}
-                                    {" - "}
-                                    {aulaParaExcluir.titulo}
-                                </strong>
-
-                                ?
-
-                            </p>
-
-                            <p className="text-sm text-red-600">
-
-                                Essa aÃ§Ã£o nÃ£o poderÃ¡ ser desfeita.
-
-                            </p>
-
-
-                            <div className="flex gap-3 pt-2">
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setAulaParaExcluir(null)
-                                    }
-                                    disabled={excluindoAula}
-                                    className="flex-1 rounded-lg border border-slate-200 px-4 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
-                                >
-                                    Cancelar
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={
-                                        confirmarExclusaoAula
-                                    }
-                                    disabled={excluindoAula}
-                                    className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2.5 font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-
-                                    {excluindoAula && (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    )}
-
-                                    {excluindoAula
-                                        ? "Excluindo..."
-                                        : "Excluir aula"}
-
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            )}
+            
 
         </div>
 

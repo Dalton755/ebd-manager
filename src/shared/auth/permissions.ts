@@ -15,6 +15,7 @@ export type Permissao =
     | "VER_AULAS"
     | "GERENCIAR_CLASSES"
     | "VER_CLASSES"
+    | "VER_SALA_AULA"
     | "REGISTRAR_PRESENCA"
     | "VER_PRESENCAS"
     | "VALIDAR_PRESENCAS"
@@ -24,7 +25,9 @@ export type Permissao =
     | "VER_MINHAS_AULAS"
     | "VER_MINHAS_PRESENCAS"
     | "VER_FINANCEIRO"
-    | "GERENCIAR_FINANCEIRO";
+    | "GERENCIAR_FINANCEIRO"
+    | "GERENCIAR_PERSONALIZACAO_IGREJA"
+    | "GERENCIAR_CONFIGURACAO_CHECKIN";
 
 const permissoesPorPerfil: Record<
     Perfil,
@@ -39,10 +42,13 @@ const permissoesPorPerfil: Record<
         "VER_AULAS",
         "GERENCIAR_CLASSES",
         "VER_CLASSES",
+        "VER_SALA_AULA",
         "REGISTRAR_PRESENCA",
         "VER_PRESENCAS",
         "VER_FINANCEIRO",
         "GERENCIAR_FINANCEIRO",
+        "GERENCIAR_PERSONALIZACAO_IGREJA",
+        "GERENCIAR_CONFIGURACAO_CHECKIN",
         "VALIDAR_PRESENCAS",
         "APROVAR_USUARIOS",
         "MINISTRAR_AULA",
@@ -55,9 +61,11 @@ const permissoesPorPerfil: Record<
         "VER_AULAS",
         "GERENCIAR_CLASSES",
         "VER_CLASSES",
+        "VER_SALA_AULA",
         "REGISTRAR_PRESENCA",
         "VER_PRESENCAS",
         "VER_FINANCEIRO",
+        "GERENCIAR_CONFIGURACAO_CHECKIN",
         "GERENCIAR_FINANCEIRO",
         "VALIDAR_PRESENCAS",
         "MINISTRAR_AULA",
@@ -71,8 +79,11 @@ const permissoesPorPerfil: Record<
         "VER_PESSOAS",
         "VER_AULAS",
         "VER_CLASSES",
+        "VER_SALA_AULA",
         "VER_PRESENCAS",
         "VER_FINANCEIRO",
+        "GERENCIAR_PERSONALIZACAO_IGREJA",
+        "GERENCIAR_CONFIGURACAO_CHECKIN",
         "MINISTRAR_AULA",
         "FAZER_CHECKIN",
         "VER_MINHAS_AULAS",

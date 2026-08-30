@@ -3,9 +3,9 @@ import type { Classe } from "../types/Classe";
 
 export class ClassService {
 
-  static listar() {
-    return ClassRepository.listar();
-  }
+  static listar(igrejaId: string) {
+  return ClassRepository.listar(igrejaId);
+}
 
   static criar(classe: Classe) {
     return ClassRepository.criar(classe);

@@ -1,0 +1,549 @@
+import { useEffect, useState, useCallback } from "react";
+
+import { PeopleService } from "../services/PeopleService";
+import type { Pessoa } from "../types/Pessoa";
+import { PeopleForm } from "../components/PeopleForm";
+import { PeopleTable } from "../components/PeopleTable";
+import { UserPlus, Users, X, } from "lucide-react";
+import { PageHeader } from "@/shared/components/ui/PageHeader";
+import { toast } from "sonner";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/shared/components/ui/Card";
+import { ConfirmDialog } from "@/shared/components/ui/ConfirmDialog";
+import { SearchInput } from "@/shared/components/ui/SearchInput";
+import { LoadingSpinner } from "@/shared/components/ui/LoadingSpinner";
+import { useSearch } from "@/shared/hooks/useSearch";
+import { useCrud } from "@/shared/hooks/useCrud";
+import { PeopleCardList } from "../components/PeopleCardList";
+import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { temPermissao } from "@/shared/auth/permissions";
+import { PlanLimitModal } from "@/shared/components/plans/PlanLimitModal";
+
+
+export function PeoplePage() {
+
+  const { pessoa: usuarioLogado } = useAuth();
+
+  const perfilUsuario =
+    usuarioLogado?.perfil === "PENDENTE"
+      ? undefined
+      : usuarioLogado?.perfil;
+
+  const podeGerenciarPessoas = temPermissao(
+    perfilUsuario,
+    "GERENCIAR_PESSOAS"
+  );
+
+  const podeGerenciarPerfis = temPermissao(
+    perfilUsuario,
+    "GERENCIAR_PERFIS"
+  );
+
+  const carregarPessoasCallback =
+    useCallback(async () => {
+      if (!usuarioLogado?.igreja_id) {
+        return [];
+      }
+
+      return await PeopleService.listar(
+        usuarioLogado.igreja_id
+      );
+    }, [usuarioLogado?.igreja_id]);
+
+  const {
+    data: pessoas,
+    loading,
+    refresh: carregarPessoas,
+  } = useCrud<Pessoa>(
+    carregarPessoasCallback,
+    "Erro ao carregar pessoas."
+  );
+
+  useEffect(() => {
+    if (usuarioLogado?.igreja_id) {
+      carregarPessoas();
+    }
+  }, [usuarioLogado?.igreja_id]);
+
+  const [pessoaSelecionada, setPessoaSelecionada] = useState<Pessoa | undefined>();
+  const [formModalOpen, setFormModalOpen,] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [pessoaParaInativar, setPessoaParaInativar] = useState<Pessoa | undefined>();
+  const [planLimitModalOpen, setPlanLimitModalOpen] = useState(false);
+  const [pessoasUtilizadas, setPessoasUtilizadas] = useState(0);
+  const [limitePessoas, setLimitePessoas] = useState(0);
+  const [recursoLimite, setRecursoLimite] = useState<
+    | "pessoas"
+    | "classes"
+    | "professores"
+    | "secretarios"
+    | "pastores"
+    | "administradores"
+    | "superintendentes"
+  >("pessoas");
+
+  function abrirNovaPessoa() {
+
+    setPessoaSelecionada(
+      undefined
+    );
+
+    setFormModalOpen(
+      true
+    );
+  }
+
+
+  function abrirEdicao(
+    pessoa: Pessoa
+  ) {
+
+    setPessoaSelecionada(
+      pessoa
+    );
+
+    setFormModalOpen(
+      true
+    );
+  }
+
+
+  function fecharFormulario() {
+
+    setFormModalOpen(
+      false
+    );
+
+    setPessoaSelecionada(
+      undefined
+    );
+  }
+
+
+  async function atualizarPerfilPessoa(
+    pessoa: Pessoa,
+    perfil: Pessoa["perfil"]
+  ) {
+    if (!podeGerenciarPerfis) {
+      toast.error(
+        "Você não tem permissão para alterar perfis."
+      );
+      return;
+    }
+
+    if (!pessoa.id) return;
+
+    try {
+      await PeopleService.atualizarPerfil(
+        pessoa.id,
+        perfil
+      );
+
+      toast.success(
+        `Perfil de ${pessoa.nome} atualizado para ${perfil}.`
+      );
+
+      carregarPessoas();
+    } catch (error: any) {
+      console.error(
+        "Erro ao atualizar perfil:",
+        error
+      );
+
+      // =====================================================
+      // LIMITE DE PROFESSORES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_PROFESSORES_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite("professores");
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // LIMITE DE ADMINISTRADORES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_ADMINISTRADORES_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite("administradores");
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // LIMITE DE SECRETÁRIOS
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_SECRETARIOS_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite("secretarios");
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // LIMITE DE PASTORES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_PASTORES_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite("pastores");
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // LIMITE DE SUPERINTENDENTES
+      // =====================================================
+
+      if (
+        error?.codigo ===
+        "LIMITE_SUPERINTENDENTES_ATINGIDO"
+      ) {
+        setPessoasUtilizadas(
+          error.utilizado ?? 0
+        );
+
+        setLimitePessoas(
+          error.limite ?? 0
+        );
+
+        setRecursoLimite(
+          "superintendentes"
+        );
+
+        setPlanLimitModalOpen(true);
+
+        return;
+      }
+
+      // =====================================================
+      // ERRO GENÉRICO
+      // =====================================================
+
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Erro ao atualizar o perfil da pessoa.";
+
+      toast.error(mensagem);
+    }
+  }
+
+  function inativarPessoa(pessoa: Pessoa) {
+    if (!podeGerenciarPessoas) {
+      toast.error(
+        "Você não tem permissão para inativar pessoas."
+      );
+      return;
+    }
+
+    setPessoaParaInativar(pessoa);
+    setDialogOpen(true);
+  }
+
+  async function confirmarInativacao() {
+    if (!podeGerenciarPessoas) {
+      toast.error(
+        "Você não tem permissão para inativar pessoas."
+      );
+      return;
+    }
+
+    if (!pessoaParaInativar) return;
+
+    try {
+      await PeopleService.inativar(pessoaParaInativar.id!);
+
+      toast.success("Pessoa inativada com sucesso.");
+
+      carregarPessoas();
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao inativar pessoa.");
+
+    } finally {
+      setDialogOpen(false);
+      setPessoaParaInativar(undefined);
+    }
+  }
+
+
+
+  const {
+    search,
+    setSearch,
+    filtered: pessoasFiltradas,
+  } = useSearch(pessoas, (pessoa) => pessoa.nome);
+
+
+
+  return (
+
+
+    <div className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:p-6">
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+        <PageHeader
+          title="Pessoas"
+          subtitle="Cadastre e gerencie alunos, professores e colaboradores"
+          icon={Users}
+        />
+
+
+        {podeGerenciarPessoas && (
+
+          <button
+            type="button"
+            onClick={abrirNovaPessoa}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+          >
+
+            <UserPlus size={18} />
+
+            Nova pessoa
+
+          </button>
+
+        )}
+
+      </div>
+
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+          />
+        </CardContent>
+      </Card>
+
+
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pessoas cadastradas</CardTitle>
+        </CardHeader>
+
+        <CardContent>
+          {loading ? (
+            <LoadingSpinner text="Carregando pessoas..." />
+          ) : (
+            <>
+              <div className="hidden md:block">
+                <PeopleTable
+                  pessoas={pessoasFiltradas}
+                  onEditar={abrirEdicao}
+                  onInativar={inativarPessoa}
+                  onAtualizarPerfil={atualizarPerfilPessoa}
+                  podeGerenciar={podeGerenciarPessoas}
+                  podeGerenciarPerfis={podeGerenciarPerfis}
+                />
+              </div>
+
+              <div className="md:hidden">
+                <PeopleCardList
+                  pessoas={pessoasFiltradas}
+                  onEditar={abrirEdicao}
+                  onInativar={inativarPessoa}
+                  onAtualizarPerfil={atualizarPerfilPessoa}
+                  podeGerenciar={podeGerenciarPessoas}
+                  podeGerenciarPerfis={podeGerenciarPerfis}
+                />
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* MODAL NOVA / EDITAR PESSOA */}
+
+      {formModalOpen &&
+        podeGerenciarPessoas && (
+
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4">
+
+            <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+
+
+              {/* CABEÇALHO */}
+
+              <div className="flex items-start justify-between border-b border-slate-100 px-6 py-5">
+
+                <div className="flex items-center gap-3">
+
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+
+                    {pessoaSelecionada
+                      ? <Users size={21} />
+                      : <UserPlus size={21} />}
+
+                  </div>
+
+
+                  <div>
+
+                    <h2 className="text-xl font-bold text-slate-900">
+
+                      {pessoaSelecionada
+                        ? "Editar pessoa"
+                        : "Nova pessoa"}
+
+                    </h2>
+
+
+                    <p className="mt-1 text-sm text-slate-500">
+
+                      {pessoaSelecionada
+                        ? "Atualize os dados da pessoa cadastrada."
+                        : "Informe os dados para cadastrar uma nova pessoa."}
+
+                    </p>
+
+                  </div>
+
+                </div>
+
+
+                <button
+                  type="button"
+                  onClick={fecharFormulario}
+                  className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  title="Fechar"
+                >
+
+                  <X size={20} />
+
+                </button>
+
+              </div>
+
+
+              {/* FORMULÁRIO */}
+
+              <div className="max-h-[75vh] overflow-y-auto p-6">
+
+                <PeopleForm
+                  pessoa={pessoaSelecionada}
+
+                  onSaved={() => {
+
+                    fecharFormulario();
+
+                    void carregarPessoas();
+
+                  }}
+
+                  onLimitReached={(
+                    recurso,
+                    utilizado,
+                    limite
+                  ) => {
+
+                    setRecursoLimite(
+                      recurso
+                    );
+
+                    setPessoasUtilizadas(
+                      utilizado
+                    );
+
+                    setLimitePessoas(
+                      limite
+                    );
+
+                    setPlanLimitModalOpen(
+                      true
+                    );
+
+                  }}
+                />
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )}
+
+      <ConfirmDialog
+        open={dialogOpen}
+        title="Inativar pessoa"
+        description={`Deseja realmente inativar "${pessoaParaInativar?.nome}"?`}
+        confirmText="Inativar"
+        cancelText="Cancelar"
+        onConfirm={confirmarInativacao}
+        onCancel={() => {
+          setDialogOpen(false);
+          setPessoaParaInativar(undefined);
+        }}
+      />
+
+      <PlanLimitModal
+        open={planLimitModalOpen}
+        utilizado={pessoasUtilizadas}
+        limite={limitePessoas}
+        recurso={recursoLimite}
+        onClose={() => setPlanLimitModalOpen(false)}
+      />
+
+    </div>
+  );
+}

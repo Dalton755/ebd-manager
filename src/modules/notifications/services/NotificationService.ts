@@ -59,7 +59,7 @@ export const NotificationService = {
             aula_id?: string | null;
             url?: string;
         }
-    ): Promise<Notificacao> {
+    ): Promise<void> {
 
         if (!notificacao.pessoa_id) {
             throw new Error(
@@ -80,7 +80,7 @@ export const NotificationService = {
         }
 
         // 1. Grava a notificação no banco
-        const criada =
+        
             await NotificationRepository.criar({
                 pessoa_id:
                     notificacao.pessoa_id,
@@ -130,7 +130,7 @@ export const NotificationService = {
             // dentro do sistema.
         }
 
-        return criada;
+       
     },
 
     async notificarTodosOsAlunos(

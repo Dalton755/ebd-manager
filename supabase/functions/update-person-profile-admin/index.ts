@@ -526,6 +526,23 @@ Deno.serve(async (req: Request) => {
         // ALTERA PERFIL
         // =====================================================
 
+        const dadosAtualizacao:
+            Record<string, unknown> = {
+            perfil:
+                novoPerfil,
+        };
+
+
+        if (
+            novoPerfil !==
+            "ALUNO"
+        ) {
+
+            dadosAtualizacao.classe_id =
+                null;
+        }
+
+
         const {
             data: pessoaAtualizada,
             error: updateError,
@@ -533,10 +550,9 @@ Deno.serve(async (req: Request) => {
             await supabase
                 .schema("ebd")
                 .from("pessoas")
-                .update({
-                    perfil:
-                        novoPerfil,
-                })
+                .update(
+                    dadosAtualizacao
+                )
                 .eq(
                     "id",
                     pessoaId

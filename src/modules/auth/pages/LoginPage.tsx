@@ -36,7 +36,6 @@ export function LoginPage() {
             pessoa.perfil;
 
         if (
-            perfil === "ALUNO" ||
             perfil === "PROFESSOR"
         ) {
 
@@ -46,6 +45,27 @@ export function LoginPage() {
 
             return;
         }
+
+
+        if (
+            perfil === "ALUNO"
+        ) {
+
+            /*
+             * O aluno passa pela rota inicial inteligente.
+             *
+             * Ela decidirá entre:
+             * - check-in;
+             * - aula/material;
+             * - início.
+             */
+            navigate("/", {
+                replace: true,
+            });
+
+            return;
+        }
+
 
         navigate("/", {
             replace: true,

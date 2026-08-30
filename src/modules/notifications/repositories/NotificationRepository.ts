@@ -56,7 +56,7 @@ export const NotificationRepository = {
         return count ?? 0;
     },
 
-       async marcarComoLida(
+    async marcarComoLida(
         notificacaoId: string
     ): Promise<void> {
 
@@ -82,9 +82,9 @@ export const NotificationRepository = {
             mensagem: string;
             aula_id?: string | null;
         }
-    ): Promise<Notificacao> {
+    ): Promise<void> {
 
-        const { data, error } =
+        const { error } =
             await supabase
                 .schema("ebd")
                 .from("notificacoes")
@@ -105,15 +105,11 @@ export const NotificationRepository = {
                         notificacao.aula_id ?? null,
 
                     lida: false,
-                })
-                .select()
-                .single();
+                });
 
         if (error) {
             throw error;
         }
-
-        return data;
     },
 
 };

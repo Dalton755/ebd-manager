@@ -1,5 +1,6 @@
 ﻿export interface Pessoa {
   id?: string;
+  classe_id?: string | null;
   nome: string;
   email: string;
   telefone: string;

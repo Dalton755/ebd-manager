@@ -1,12 +1,20 @@
 import {
+    useEffect,
+    useState,
+} from "react";
+
+import {
     createBrowserRouter,
     Navigate,
 } from "react-router-dom";
+
 
 import { MainLayout } from "../layouts/MainLayout";
 import { DashboardPage } from "../../modules/dashboard/pages/DashboardPage";
 import { LoginPage } from "../../modules/auth/pages/LoginPage";
 import { ProtectedRoute } from "@/modules/auth/components/ProtectedRoute";
+import { SubscriptionGuard } from "@/modules/auth/components/SubscriptionGuard";
+import { SubscriptionExpiredPage } from "@/modules/plans/pages/SubscriptionExpiredPage";
 import { PeoplePage } from "@/modules/people/pages/PeoplePage";
 import { ResetPasswordPage } from "../../modules/auth/pages/ResetPasswordPage";
 import { ChangeTemporaryPasswordPage } from "../../modules/auth/pages/ChangeTemporaryPasswordPage";
@@ -15,11 +23,16 @@ import { AttendanceHistoryPage } from "../../modules/attendance/pages/Attendance
 import { StudentCheckinPage } from "../../modules/student/pages/StudentCheckinPage";
 import { AttendanceRecordsPage } from "@/modules/reports/pages/AttendanceRecordsPage";
 import { RegisterPage } from "../../modules/auth/pages/RegisterPage";
+import { ChurchRegistrationPage } from "../../modules/auth/pages/ChurchRegistrationPage";
 import { PendingApprovalPage } from "../../modules/auth/pages/PendingApprovalPage";
 import { UserApprovalPage } from "@/modules/administration/pages/UserApprovalPage";
+import { ChurchCustomizationPage } from "@/modules/administration/pages/ChurchCustomizationPage";
+import { CheckinConfigurationPage } from "@/modules/administration/pages/CheckinConfigurationPage";
 import { TrimestersPage } from "@/modules/lessons/pages/TrimestersPage";
 import { LessonsPage } from "@/modules/lessons/pages/LessonsPage";
+import { ClassLessonsPage } from "@/modules/lessons/pages/ClassLessonsPage";
 import { ClassesPage } from "@/modules/classes/pages/ClassesPage";
+import { ClassroomPage } from "@/modules/classroom/pages/ClassroomPage";
 import { MyPlanPage } from "@/modules/plans/pages/MyPlanPage";
 import { PermissionRoute } from "@/modules/auth/components/PermissionRoute";
 import { PlanGuard } from "@/modules/auth/components/PlanGuard";
@@ -37,6 +50,8 @@ import { IgrejasPage } from "@/modules/platform-admin/pages/IgrejasPage";
 import { AssinaturasPage } from "@/modules/platform-admin/pages/AssinaturasPage";
 import { PlanosPage } from "@/modules/platform-admin/pages/PlanosPage";
 import { RecursosPage } from "@/modules/platform-admin/pages/RecursosPage";
+import { StudentCheckinService } from "@/modules/student/services/StudentCheckinService";
+
 
 function RotaInicial() {
 
@@ -44,18 +59,230 @@ function RotaInicial() {
         pessoa,
     } = useAuth();
 
+
+    const [
+        destinoAluno,
+        setDestinoAluno,
+    ] =
+        useState<string | null>(
+            null
+        );
+
+
+    const [
+        verificandoAluno,
+        setVerificandoAluno,
+    ] =
+        useState(false);
+
+
+    useEffect(() => {
+
+        let cancelado = false;
+
+
+        async function verificarAluno() {
+
+            if (
+                pessoa?.perfil !==
+                "ALUNO"
+            ) {
+                return;
+            }
+
+
+            if (
+                !pessoa.id ||
+                !pessoa.igreja_id ||
+                !pessoa.classe_id
+            ) {
+
+                if (!cancelado) {
+                    setDestinoAluno(
+                        "/inicio"
+                    );
+                }
+
+                return;
+            }
+
+
+            try {
+
+                setVerificandoAluno(
+                    true
+                );
+
+
+                const situacao =
+                    await StudentCheckinService
+                        .buscarSituacaoAulaHoje(
+                            pessoa.id,
+                            pessoa.igreja_id,
+                            pessoa.classe_id
+                        );
+
+
+                if (cancelado) {
+                    return;
+                }
+
+
+                /*
+                 * Se já existe presença nesta aula,
+                 * leva diretamente para a aula e
+                 * destaca o material.
+                 */
+                if (
+                    situacao.aula &&
+                    situacao.presencaRegistrada
+                ) {
+
+                    setDestinoAluno(
+                        `/minhas-aulas?aula=${situacao.aula.id}&material=1`
+                    );
+
+                    return;
+                }
+
+
+                /*
+                 * Se ainda não registrou presença
+                 * e a janela está aberta,
+                 * leva diretamente ao check-in.
+                 */
+                if (
+                    situacao.aula &&
+                    situacao.checkinDisponivel
+                ) {
+
+                    setDestinoAluno(
+                        "/aluno/checkin"
+                    );
+
+                    return;
+                }
+
+
+                /*
+                 * Fora da janela de check-in,
+                 * mantém a página inicial normal.
+                 */
+                setDestinoAluno(
+                    "/inicio"
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao definir rota inicial do aluno:",
+                    error
+                );
+
+
+                if (!cancelado) {
+
+                    setDestinoAluno(
+                        "/inicio"
+                    );
+
+                }
+
+            } finally {
+
+                if (!cancelado) {
+
+                    setVerificandoAluno(
+                        false
+                    );
+
+                }
+
+            }
+
+        }
+
+
+        verificarAluno();
+
+
+        return () => {
+
+            cancelado = true;
+
+        };
+
+    }, [
+        pessoa?.id,
+        pessoa?.perfil,
+        pessoa?.igreja_id,
+        pessoa?.classe_id,
+    ]);
+
+
+    /*
+     * PROFESSOR
+     */
     if (
-        pessoa?.perfil === "ALUNO" ||
-        pessoa?.perfil === "PROFESSOR"
+        pessoa?.perfil ===
+        "PROFESSOR"
     ) {
+
         return (
             <Navigate
                 to="/inicio"
                 replace
             />
         );
+
     }
 
+
+    /*
+     * ALUNO
+     */
+    if (
+        pessoa?.perfil ===
+        "ALUNO"
+    ) {
+
+        if (
+            verificandoAluno ||
+            !destinoAluno
+        ) {
+
+            return (
+                <div className="flex min-h-[60vh] items-center justify-center">
+
+                    <div className="text-center">
+
+                        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" />
+
+                        <p className="mt-4 text-sm font-medium text-slate-500">
+                            Verificando sua aula...
+                        </p>
+
+                    </div>
+
+                </div>
+            );
+
+        }
+
+
+        return (
+            <Navigate
+                to={destinoAluno}
+                replace
+            />
+        );
+
+    }
+
+
+    /*
+     * DEMAIS PERFIS
+     */
     return (
         <PermissionRoute
             permission="VER_DASHBOARD"
@@ -74,6 +301,11 @@ export const router = createBrowserRouter([
     {
         path: "/cadastro",
         element: <RegisterPage />,
+    },
+
+    {
+        path: "/cadastro-igreja",
+        element: <ChurchRegistrationPage />,
     },
 
     {
@@ -97,13 +329,40 @@ export const router = createBrowserRouter([
     },
 
     {
+        path: "/assinatura-expirada",
+        element: <SubscriptionExpiredPage />,
+    },
+
+    {
         path: "/",
         element: (
             <ProtectedRoute>
-                <MainLayout />
+                <SubscriptionGuard>
+                    <MainLayout />
+                </SubscriptionGuard>
             </ProtectedRoute>
         ),
         children: [
+
+            {
+                path: "administracao/configuracao-checkin",
+                element: (
+                    <PermissionRoute
+                        permission="GERENCIAR_CONFIGURACAO_CHECKIN"
+                    >
+                        <PlanGuard recurso="CHECKIN_LOCALIZACAO">
+                            <CheckinConfigurationPage />
+                        </PlanGuard>
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "administracao/personalizacao",
+                element: (
+                    <ChurchCustomizationPage />
+                ),
+            },
 
             {
                 path: "administracao/plataforma",
@@ -179,6 +438,17 @@ export const router = createBrowserRouter([
                         <PlanGuard recurso="CLASSES">
                             <ClassesPage />
                         </PlanGuard>
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "sala-de-aula",
+                element: (
+                    <PermissionRoute
+                        permission="VER_SALA_AULA"
+                    >
+                        <ClassroomPage />
                     </PermissionRoute>
                 ),
             },
@@ -297,6 +567,8 @@ export const router = createBrowserRouter([
                 ),
             },
 
+
+
             {
                 path: "aulas",
                 element: (
@@ -308,6 +580,22 @@ export const router = createBrowserRouter([
                     >
                         <PlanGuard recurso="TRIMESTRES">
                             <TrimestersPage />
+                        </PlanGuard>
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "aulas/:trimestreId/classe/:classeId",
+                element: (
+                    <PermissionRoute
+                        permissions={[
+                            "VER_AULAS",
+                            "VER_MINHAS_AULAS",
+                        ]}
+                    >
+                        <PlanGuard recurso="AULAS">
+                            <ClassLessonsPage />
                         </PlanGuard>
                     </PermissionRoute>
                 ),

@@ -7,6 +7,7 @@ import {
   Users,
   BarChart3,
   Wallet,
+  Building2
 } from "lucide-react";
 
 export const menu = [
@@ -49,5 +50,11 @@ export const menu = [
     title: "Administração",
     path: "/administracao",
     icon: Settings,
+  },
+
+  {
+    title: "Personalização",
+    path: "/administracao/personalizacao",
+    icon: Building2,
   },
 ];

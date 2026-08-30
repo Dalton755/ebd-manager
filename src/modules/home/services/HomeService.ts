@@ -33,7 +33,9 @@ export class HomeService {
     // PRÓXIMA AULA
     // =====================================================
 
-    static async buscarProximaAula(): Promise<ProximaAulaHome | null> {
+    static async buscarProximaAula(
+        classeId?: string
+    ): Promise<ProximaAulaHome | null> {
 
         const hoje = new Date();
 
@@ -44,59 +46,132 @@ export class HomeService {
                 hoje.getDate()
             ).padStart(2, "0")}`;
 
-        const { data, error } =
-            await supabase
+
+        let consulta =
+            supabase
                 .schema("ebd")
                 .from("aulas")
                 .select(`
-                    id,
-                    numero,
-                    titulo,
-                    data,
-                    link_drive,
-                    professor:pessoas!aulas_professor_id_fkey (
-                        nome
-                    ),
-                    trimestre:trimestres!aulas_trimestre_id_fkey (
-                        ativo
-                    )
-                `)
-                .gte("data", dataHoje)
-                .eq("trimestre.ativo", true)
-                .order("data", {
-                    ascending: true,
-                })
-                .order("numero", {
-                    ascending: true,
-                })
+                id,
+                numero,
+                titulo,
+                data,
+                hora_inicio,
+                hora_fim,
+                link_drive,
+                classe_id,
+
+                professor:pessoas!aulas_professor_id_fkey (
+                    nome
+                ),
+
+                trimestre:trimestres!aulas_trimestre_id_fkey (
+                    ativo
+                )
+            `)
+                .eq(
+                    "cancelada",
+                    false
+                )
+                .gte(
+                    "data",
+                    dataHoje
+                )
+                .eq(
+                    "trimestre.ativo",
+                    true
+                );
+
+
+        /*
+         * Quando uma classe é informada,
+         * mostra somente aulas daquela classe.
+         *
+         * Usado principalmente para o perfil ALUNO.
+         */
+        if (classeId) {
+
+            consulta =
+                consulta.eq(
+                    "classe_id",
+                    classeId
+                );
+
+        }
+
+
+        const {
+            data,
+            error,
+        } =
+            await consulta
+                .order(
+                    "data",
+                    {
+                        ascending: true,
+                    }
+                )
+                .order(
+                    "numero",
+                    {
+                        ascending: true,
+                    }
+                )
                 .limit(1)
                 .maybeSingle();
+
 
         if (error) {
             throw error;
         }
 
+
         if (!data) {
             return null;
         }
 
+
         const professor =
-            Array.isArray(data.professor)
+            Array.isArray(
+                data.professor
+            )
                 ? data.professor[0]
                 : data.professor;
 
+
         return {
-            id: data.id,
-            numero: data.numero,
-            titulo: data.titulo,
-            data: data.data,
-            horario: "09:00",
-            link_drive: data.link_drive,
+            id:
+                data.id,
+
+            numero:
+                data.numero,
+
+            titulo:
+                data.titulo,
+
+            data:
+                data.data,
+
+            horario:
+                data.hora_inicio &&
+                    data.hora_fim
+                    ? `${data.hora_inicio.slice(
+                        0,
+                        5
+                    )} às ${data.hora_fim.slice(
+                        0,
+                        5
+                    )}`
+                    : "Horário não definido",
+
+            link_drive:
+                data.link_drive,
+
             professor:
-                professor?.nome ?? null,
+                professor?.nome ??
+                null,
         };
     }
-
 
     // =====================================================
     // ESCALA DO PROFESSOR
@@ -124,6 +199,8 @@ export class HomeService {
                     numero,
                     titulo,
                     data,
+                    hora_inicio,
+                    hora_fim,
                     link_drive,
                     trimestre:trimestres!aulas_trimestre_id_fkey (
                         ativo
@@ -132,6 +209,10 @@ export class HomeService {
                 .eq(
                     "professor_id",
                     pessoaId
+                )
+                .eq(
+                    "cancelada",
+                    false
                 )
                 .gte("data", dataHoje)
                 .eq("trimestre.ativo", true)
@@ -152,7 +233,11 @@ export class HomeService {
                 numero: aula.numero,
                 titulo: aula.titulo,
                 data: aula.data,
-                horario: "09:00",
+                horario:
+                    aula.hora_inicio &&
+                        aula.hora_fim
+                        ? `${aula.hora_inicio.slice(0, 5)} às ${aula.hora_fim.slice(0, 5)}`
+                        : "Horário não definido",
                 link_drive:
                     aula.link_drive,
             })
@@ -165,24 +250,79 @@ export class HomeService {
     // =====================================================
 
     static async buscarFrequenciaAluno(
-        pessoaId: string
+        pessoaId: string,
+        classeId?: string | null
     ): Promise<FrequenciaHome> {
 
-        const { data: aulas, error: aulasError } =
-            await supabase
+        /*
+ * ALUNO SEM CLASSE:
+ * não deve contabilizar aulas de outras classes.
+ */
+        if (classeId === null) {
+
+            return {
+                totalAulas: 0,
+                presencas: 0,
+                faltas: 0,
+                sequencia: 0,
+                participouUltima: false,
+            };
+
+        }
+
+
+        let consultaAulas =
+            supabase
                 .schema("ebd")
                 .from("aulas")
                 .select(`
-                    id,
-                    data,
-                    trimestre:trimestres!aulas_trimestre_id_fkey (
-                        ativo
-                    )
-                `)
-                .eq("trimestre.ativo", true)
-                .order("data", {
-                    ascending: true,
-                });
+            id,
+            data,
+            classe_id,
+
+            trimestre:trimestres!aulas_trimestre_id_fkey!inner (
+                ativo
+            )
+        `)
+                .eq(
+                    "cancelada",
+                    false
+                )
+                .eq(
+                    "trimestre.ativo",
+                    true
+                );
+
+
+        /*
+         * Quando a classe é informada,
+         * contabiliza somente aulas dessa classe.
+         *
+         * Para chamadas antigas sem classe,
+         * preservamos o comportamento anterior.
+         */
+        if (classeId) {
+
+            consultaAulas =
+                consultaAulas.eq(
+                    "classe_id",
+                    classeId
+                );
+
+        }
+
+
+        const {
+            data: aulas,
+            error: aulasError,
+        } =
+            await consultaAulas
+                .order(
+                    "data",
+                    {
+                        ascending: true,
+                    }
+                );
 
         if (aulasError) {
             throw aulasError;
@@ -258,7 +398,7 @@ export class HomeService {
 
         const ultimaAula =
             aulasRealizadas[
-                aulasRealizadas.length - 1
+            aulasRealizadas.length - 1
             ];
 
         const participouUltima =

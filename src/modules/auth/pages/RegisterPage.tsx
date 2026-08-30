@@ -1,15 +1,11 @@
-import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+﻿import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { AuthService } from "../services/AuthService";
 import { Eye, EyeOff } from "lucide-react";
 
 export function RegisterPage() {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-
-    const igrejaId =
-        searchParams.get("igreja")?.trim() || null;
 
     const [nome, setNome] = useState("");
     const [email, setEmail] = useState("");
@@ -54,13 +50,6 @@ export function RegisterPage() {
     ) {
         event.preventDefault();
 
-        if (!igrejaId) {
-            toast.error(
-                "Este link de cadastro não está vinculado a uma igreja."
-            );
-            return;
-        }
-
         if (
             !nome.trim() ||
             !email.trim() ||
@@ -82,7 +71,7 @@ export function RegisterPage() {
 
         if (password !== confirmPassword) {
             toast.error(
-                "As senhas não coincidem."
+                "As senhas n├úo coincidem."
             );
             return;
         }
@@ -96,7 +85,6 @@ export function RegisterPage() {
                     email.trim(),
                     telefone.trim(),
                     password,
-                    igrejaId
                 );
 
             if (error) {
@@ -105,7 +93,7 @@ export function RegisterPage() {
             }
 
             toast.success(
-                "Cadastro realizado com sucesso! Aguarde a validação do administrador."
+                "Cadastro realizado com sucesso! Aguarde a valida├º├úo do administrador."
             );
 
             navigate("/login");
@@ -113,7 +101,7 @@ export function RegisterPage() {
             console.error(error);
 
             toast.error(
-                "Não foi possível realizar o cadastro."
+                "N├úo foi poss├¡vel realizar o cadastro."
             );
         } finally {
             setLoading(false);
@@ -129,7 +117,7 @@ export function RegisterPage() {
                     </h1>
 
                     <p className="mt-2 text-slate-500">
-                        Crie sua conta para acessar a Escola Bíblica
+                        Crie sua conta para acessar a Escola B├¡blica
                     </p>
                 </div>
 
@@ -199,7 +187,7 @@ export function RegisterPage() {
                                 onChange={(event) =>
                                     setPassword(event.target.value)
                                 }
-                                placeholder="Mínimo de 6 caracteres"
+                                placeholder="M├¡nimo de 6 caracteres"
                                 className="w-full rounded-lg border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-600"
                             />
 
@@ -256,8 +244,8 @@ export function RegisterPage() {
                                 className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 hover:text-blue-600"
                                 aria-label={
                                     showConfirmPassword
-                                        ? "Ocultar confirmação de senha"
-                                        : "Mostrar confirmação de senha"
+                                        ? "Ocultar confirma├º├úo de senha"
+                                        : "Mostrar confirma├º├úo de senha"
                                 }
                             >
                                 {showConfirmPassword ? (
@@ -287,7 +275,7 @@ export function RegisterPage() {
                             }
                             className="text-sm text-blue-600 hover:underline"
                         >
-                            Já tenho uma conta
+                            J├í tenho uma conta
                         </button>
                     </div>
                 </form>
