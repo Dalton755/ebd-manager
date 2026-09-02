@@ -37,14 +37,29 @@ export class AuthService {
   // LOGIN GOOGLE
   // ============================================================
 
-  static async loginWithGoogle() {
+  static async loginWithGoogle(
+    igrejaId?: string | null
+  ) {
+
+    if (igrejaId) {
+      localStorage.setItem(
+        "ebd_convite_igreja_id",
+        igrejaId
+      );
+    }
+
+    const redirectUrl =
+      igrejaId
+        ? `${window.location.origin}/login?igreja_id=${encodeURIComponent(
+          igrejaId
+        )}`
+        : `${window.location.origin}/login`;
 
     return await supabase.auth.signInWithOAuth({
       provider: "google",
 
       options: {
-        redirectTo:
-          window.location.origin,
+        redirectTo: redirectUrl,
       },
     });
 
@@ -161,6 +176,58 @@ export class AuthService {
 
   }
 
+  static async validarConviteAluno(
+    igrejaId: string
+  ) {
+
+    const {
+      data,
+      error,
+    } =
+      await supabase.functions.invoke(
+        "public-student-invite",
+        {
+          body: {
+            action:
+              "VALIDATE",
+
+            igreja_id:
+              igrejaId,
+          },
+        }
+      );
+
+
+    if (error) {
+
+      return {
+        data: null,
+        error,
+      };
+    }
+
+
+    if (
+      data?.error
+    ) {
+
+      return {
+        data: null,
+        error:
+          new Error(
+            data.error
+          ),
+      };
+    }
+
+
+    return {
+      data,
+      error: null,
+    };
+
+  }
+
 
   // ============================================================
   // CADASTRO SIMPLES
@@ -170,81 +237,86 @@ export class AuthService {
     nome: string,
     email: string,
     telefone: string,
-    password: string
+    password: string,
+    igrejaId: string
   ) {
 
-    const {
-      data: authData,
-      error: authError
-    } =
-      await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-    if (authError) {
+    if (!igrejaId) {
 
       return {
         data: null,
-        error: authError,
+        error:
+          new Error(
+            "Não foi possível identificar a igreja deste convite."
+          ),
       };
 
     }
 
-    if (!authData.user) {
-
-      return {
-        data: null,
-        error: new Error(
-          "Não foi possível criar o usuário."
-        ),
-      };
-
-    }
 
     const {
-      data: pessoaData,
-      error: pessoaError
+      data,
+      error,
     } =
-      await supabase
-        .schema("ebd")
-        .from("pessoas")
-        .insert({
+      await supabase.functions.invoke(
+        "public-student-invite",
+        {
+          body: {
 
-          user_id:
-            authData.user.id,
+            action:
+              "REGISTER",
 
-          nome,
+            igreja_id:
+              igrejaId,
 
-          email,
+            nome,
 
-          telefone,
+            email,
 
-          ativo:
-            false,
+            telefone,
 
-          status:
-            "PENDENTE",
+            password,
 
-          perfil:
-            "ALUNO",
+          },
+        }
+      );
 
-        })
-        .select()
-        .single();
 
-    if (pessoaError) {
+    if (error) {
 
       return {
         data: null,
-        error: pessoaError,
+        error,
       };
-
     }
+
+
+    if (
+      data?.error
+    ) {
+
+      return {
+        data: null,
+        error:
+          new Error(
+            data.error
+          ),
+      };
+    }
+
+
+    localStorage.removeItem(
+      "ebd_convite_igreja_id"
+    );
+
 
     return {
-      data: pessoaData,
-      error: null,
+      data:
+        data?.pessoa ??
+        null,
+
+      error:
+        null,
     };
 
   }
@@ -287,7 +359,7 @@ export class AuthService {
 
       };
 
-      
+
 
     }
   ) {

@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+    useNavigate,
+    useSearchParams,
+} from "react-router-dom";
 import { AuthService } from "../services/AuthService";
 import { toast } from "sonner";
 import { Modal } from "@/shared/components/ui/Modal";
@@ -12,6 +15,15 @@ import { Eye, EyeOff } from "lucide-react";
 export function LoginPage() {
 
     const navigate = useNavigate();
+
+    const [
+        searchParams,
+    ] = useSearchParams();
+
+    const igrejaId =
+        searchParams.get(
+            "igreja_id"
+        );
 
     const {
         user,
@@ -82,7 +94,9 @@ export function LoginPage() {
             setLoading(true);
 
             const { error } =
-                await AuthService.loginWithGoogle();
+                await AuthService.loginWithGoogle(
+                    igrejaId
+                );
 
             if (error) {
                 console.error(
@@ -299,7 +313,23 @@ export function LoginPage() {
 
                         <button
                             type="button"
-                            onClick={() => navigate("/cadastro")}
+                            onClick={() => {
+
+                                if (igrejaId) {
+
+                                    navigate(
+                                        `/cadastro?igreja_id=${encodeURIComponent(
+                                            igrejaId
+                                        )}`
+                                    );
+
+                                    return;
+                                }
+
+                                navigate(
+                                    "/cadastro"
+                                );
+                            }}
                             className="text-sm text-blue-600 hover:underline"
                         >
                             Criar minha conta

@@ -73,20 +73,57 @@ export class AssinaturasService {
             throw error;
         }
 
-        const resultado: Assinatura[] = (data ?? []).map((item) => ({
-            id: item.id,
-            igreja_id: item.igreja_id,
-            plano_id: item.plano_id,
-            status: item.status,
-            inicio_em: item.inicio_em,
-            fim_em: item.fim_em,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
+        const resultado: Assinatura[] =
+            (data ?? []).map(
+                (item) => {
 
-            igreja: item.igreja?.[0] ?? null,
+                    const igreja =
+                        Array.isArray(
+                            item.igreja
+                        )
+                            ? item.igreja[0] ?? null
+                            : item.igreja ?? null;
 
-            plano: item.plano?.[0] ?? null,
-        }));
+
+                    const plano =
+                        Array.isArray(
+                            item.plano
+                        )
+                            ? item.plano[0] ?? null
+                            : item.plano ?? null;
+
+
+                    return {
+                        id:
+                            item.id,
+
+                        igreja_id:
+                            item.igreja_id,
+
+                        plano_id:
+                            item.plano_id,
+
+                        status:
+                            item.status,
+
+                        inicio_em:
+                            item.inicio_em,
+
+                        fim_em:
+                            item.fim_em,
+
+                        created_at:
+                            item.created_at,
+
+                        updated_at:
+                            item.updated_at,
+
+                        igreja,
+
+                        plano,
+                    };
+                }
+            );
 
         return resultado;
     }

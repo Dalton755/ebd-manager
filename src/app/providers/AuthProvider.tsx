@@ -364,7 +364,7 @@ export function AuthProvider({
 
         // =================================================
         // PRIMEIRO LOGIN COM GOOGLE
-        // Cria automaticamente como PENDENTE
+        // Cria como ALUNO ATIVO quando veio por convite
         // =================================================
 
         console.log(
@@ -372,40 +372,114 @@ export function AuthProvider({
         );
 
 
+        const igrejaIdConvite =
+            localStorage.getItem(
+                "ebd_convite_igreja_id"
+            );
+
+
+        if (!igrejaIdConvite) {
+
+            console.error(
+                "Novo usuário Google sem igreja de convite."
+            );
+
+            return null;
+        }
+
+
+        const {
+            data: igrejaConvite,
+            error: igrejaConviteError,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("igrejas")
+                .select(`
+            id,
+            nome,
+            ativa
+        `)
+                .eq(
+                    "id",
+                    igrejaIdConvite
+                )
+                .eq(
+                    "ativa",
+                    true
+                )
+                .maybeSingle();
+
+
+        if (
+            igrejaConviteError ||
+            !igrejaConvite
+        ) {
+
+            console.error(
+                "Igreja do convite inválida:",
+                igrejaConviteError
+            );
+
+            localStorage.removeItem(
+                "ebd_convite_igreja_id"
+            );
+
+            return null;
+        }
+
+
         const {
             data: novaPessoa,
             error: erroCadastro,
-        } = await supabase
-            .schema("ebd")
-            .from("pessoas")
-            .insert({
+        } =
+            await supabase
+                .schema("ebd")
+                .from("pessoas")
+                .insert({
 
-                user_id:
-                    usuario.id,
+                    user_id:
+                        usuario.id,
 
-                nome:
-                    usuario.user_metadata?.full_name ??
-                    usuario.user_metadata?.name ??
-                    "Usuário",
+                    igreja_id:
+                        igrejaConvite.id,
 
-                email:
-                    usuario.email ?? "",
+                    nome:
+                        usuario.user_metadata?.full_name ??
+                        usuario.user_metadata?.name ??
+                        "Usuário",
 
-                telefone:
-                    "",
+                    email:
+                        usuario.email ?? "",
 
-                ativo:
-                    false,
+                    telefone:
+                        "",
 
-                status:
-                    "PENDENTE",
+                    ativo:
+                        true,
 
-                perfil:
-                    "ALUNO",
+                    status:
+                        "ATIVO",
 
-            })
-            .select()
-            .single();
+                    perfil:
+                        "ALUNO",
+
+                })
+                .select()
+                .single();
+
+
+        if (!erroCadastro) {
+
+            localStorage.removeItem(
+                "ebd_convite_igreja_id"
+            );
+
+            localStorage.setItem(
+                "login_at",
+                new Date().toISOString()
+            );
+        }
 
 
         if (erroCadastro) {

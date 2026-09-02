@@ -69,6 +69,7 @@ type MeuPlano = {
         secretarios: number;
         pastores: number;
         administradores: number;
+        trimestres_ativos: number;
     };
 };
 
@@ -228,15 +229,13 @@ function formatarTempoRestante(
         dias > 0
     ) {
 
-        return `${dias} ${
-            dias === 1
+        return `${dias} ${dias === 1
                 ? "dia"
                 : "dias"
-        } e ${horas} ${
-            horas === 1
+            } e ${horas} ${horas === 1
                 ? "hora"
                 : "horas"
-        }`;
+            }`;
 
     }
 
@@ -245,15 +244,13 @@ function formatarTempoRestante(
         horas > 0
     ) {
 
-        return `${horas} ${
-            horas === 1
+        return `${horas} ${horas === 1
                 ? "hora"
                 : "horas"
-        } e ${minutos} ${
-            minutos === 1
+            } e ${minutos} ${minutos === 1
                 ? "minuto"
                 : "minutos"
-        }`;
+            }`;
 
     }
 
@@ -262,11 +259,10 @@ function formatarTempoRestante(
         minutos > 0
     ) {
 
-        return `${minutos} ${
-            minutos === 1
+        return `${minutos} ${minutos === 1
                 ? "minuto"
                 : "minutos"
-        }`;
+            }`;
 
     }
 
@@ -755,9 +751,9 @@ export function MyPlanPage() {
 
     const podeFazerUpgrade =
         plano?.plano.nome ===
-            "Semente" ||
+        "Semente" ||
         plano?.plano.nome ===
-            "Crescimento";
+        "Crescimento";
 
 
     /*
@@ -1179,7 +1175,9 @@ export function MyPlanPage() {
 
                         <RecursoCard
                             nome="Trimestres ativos"
-                            utilizado={0}
+                            utilizado={
+                                plano.utilizados.trimestres_ativos
+                            }
                             limite={
                                 plano.limites.trimestres_ativos
                             }
