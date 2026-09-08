@@ -19,9 +19,18 @@ import {
     Plus,
     UserRound,
     Pencil,
+    Upload,
+    BookOpen,
 } from "lucide-react";
 
 import { LessonService } from "../services/LessonService";
+import {
+    PresentationService,
+} from "../services/PresentationService";
+
+import type {
+    ApresentacaoAula,
+} from "../types/ApresentacaoAula";
 import { PeopleService } from "../../people/services/PeopleService";
 
 import type { Aula } from "../types/Aula";
@@ -70,6 +79,30 @@ export function LessonsPage() {
     ] = useState<Aula[]>([]);
 
     const [
+        apresentacoes,
+        setApresentacoes,
+    ] = useState<
+        Record<
+            string,
+            ApresentacaoAula | null
+        >
+    >({});
+
+    const [
+        aulaEnviandoPdf,
+        setAulaEnviandoPdf,
+    ] = useState<string | null>(
+        null
+    );
+
+    const [
+        erroApresentacao,
+        setErroApresentacao,
+    ] = useState<string | null>(
+        null
+    );
+
+    const [
         loading,
         setLoading,
     ] = useState(true);
@@ -88,6 +121,73 @@ export function LessonsPage() {
         success,
         setSuccess,
     ] = useState("");
+
+
+
+    async function importarPdf(
+        aula: Aula,
+        arquivo: File
+    ) {
+
+        if (
+            !pessoa?.igreja_id ||
+            !pessoa?.id
+        ) {
+            setErroApresentacao(
+                "Não foi possível identificar o usuário ou a igreja."
+            );
+
+            return;
+        }
+
+        try {
+
+            setErroApresentacao(
+                null
+            );
+
+            setAulaEnviandoPdf(
+                aula.id
+            );
+
+            const apresentacao =
+                await PresentationService
+                    .importar(
+                        arquivo,
+                        aula.id,
+                        pessoa.igreja_id,
+                        pessoa.id
+                    );
+
+            setApresentacoes(
+                (estadoAtual) => ({
+                    ...estadoAtual,
+
+                    [aula.id]:
+                        apresentacao,
+                })
+            );
+
+        } catch (error) {
+
+            console.error(
+                "[APRESENTAÇÃO] Erro ao importar PDF:",
+                error
+            );
+
+            setErroApresentacao(
+                error instanceof Error
+                    ? error.message
+                    : "Não foi possível importar o PDF."
+            );
+
+        } finally {
+
+            setAulaEnviandoPdf(
+                null
+            );
+        }
+    }
 
     const {
         valores: formulario,
@@ -198,14 +298,14 @@ export function LessonsPage() {
         setAulaParaEditar,
     ] = useState<Aula | null>(null);
 
-   
+
 
     const [
         salvandoEdicao,
         setSalvandoEdicao,
     ] = useState(false);
 
-    
+
 
 
     useEffect(() => {
@@ -318,6 +418,48 @@ export function LessonsPage() {
             setPessoas(
                 pessoasCadastradas
             );
+
+            /*
+             * Carrega as apresentações PDF das aulas.
+             * Nesta tela administrativa o ADMIN pode
+             * gerenciar o PDF de qualquer aula do trimestre.
+             */
+            if (
+                perfilUsuario === "ADMIN" &&
+                aulasDoTrimestre.length > 0
+            ) {
+
+                const resultados =
+                    await Promise.all(
+                        aulasDoTrimestre.map(
+                            async (aula) => {
+
+                                const apresentacao =
+                                    await PresentationService
+                                        .buscar(
+                                            aula.id
+                                        );
+
+                                return [
+                                    aula.id,
+                                    apresentacao,
+                                ] as const;
+                            }
+                        )
+                    );
+
+                setApresentacoes(
+                    Object.fromEntries(
+                        resultados
+                    )
+                );
+
+            } else {
+
+                setApresentacoes(
+                    {}
+                );
+            }
 
         } catch (error) {
 
@@ -560,7 +702,7 @@ export function LessonsPage() {
 
     }
 
-    
+
 
 
     async function handleSubmit(
@@ -810,6 +952,16 @@ export function LessonsPage() {
                 <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
 
                     {error}
+
+                </div>
+
+            )}
+
+            {erroApresentacao && (
+
+                <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+
+                    {erroApresentacao}
 
                 </div>
 
@@ -1181,7 +1333,7 @@ export function LessonsPage() {
                                                         Editar
                                                     </button>
 
-                                                   
+
                                                 </>
 
                                             )}
@@ -1201,6 +1353,123 @@ export function LessonsPage() {
                                                     Material
 
                                                 </a>
+
+                                            )}
+
+                                            {perfilUsuario === "ADMIN" && (
+
+                                                apresentacoes[aula.id] ? (
+
+                                                    <>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                navigate(
+                                                                    `/minhas-aulas/${aula.id}/apresentacao?modo=aula`
+                                                                )
+                                                            }
+                                                            className="flex items-center gap-2 rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 transition hover:bg-blue-50"
+                                                        >
+                                                            <BookOpen className="h-4 w-4" />
+
+                                                            Ver aula
+                                                        </button>
+
+
+                                                        <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
+
+                                                            {aulaEnviandoPdf === aula.id ? (
+
+                                                                <Loader2 className="h-4 w-4 animate-spin" />
+
+                                                            ) : (
+
+                                                                <Upload className="h-4 w-4" />
+
+                                                            )}
+
+
+                                                            {aulaEnviandoPdf === aula.id
+                                                                ? "Enviando..."
+                                                                : "Substituir PDF"}
+
+
+                                                            <input
+                                                                type="file"
+                                                                accept="application/pdf,.pdf"
+                                                                className="hidden"
+                                                                disabled={
+                                                                    aulaEnviandoPdf === aula.id
+                                                                }
+                                                                onChange={async (event) => {
+
+                                                                    const arquivo =
+                                                                        event.target.files?.[0];
+
+                                                                    event.target.value = "";
+
+                                                                    if (!arquivo) {
+                                                                        return;
+                                                                    }
+
+                                                                    await importarPdf(
+                                                                        aula,
+                                                                        arquivo
+                                                                    );
+                                                                }}
+                                                            />
+
+                                                        </label>
+                                                    </>
+
+                                                ) : (
+
+                                                    <label className="flex cursor-pointer items-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
+
+                                                        {aulaEnviandoPdf === aula.id ? (
+
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+
+                                                        ) : (
+
+                                                            <Upload className="h-4 w-4" />
+
+                                                        )}
+
+
+                                                        {aulaEnviandoPdf === aula.id
+                                                            ? "Enviando PDF..."
+                                                            : "Importar PDF"}
+
+
+                                                        <input
+                                                            type="file"
+                                                            accept="application/pdf,.pdf"
+                                                            className="hidden"
+                                                            disabled={
+                                                                aulaEnviandoPdf === aula.id
+                                                            }
+                                                            onChange={async (event) => {
+
+                                                                const arquivo =
+                                                                    event.target.files?.[0];
+
+                                                                event.target.value = "";
+
+                                                                if (!arquivo) {
+                                                                    return;
+                                                                }
+
+                                                                await importarPdf(
+                                                                    aula,
+                                                                    arquivo
+                                                                );
+                                                            }}
+                                                        />
+
+                                                    </label>
+
+                                                )
 
                                             )}
 
@@ -1569,7 +1838,7 @@ export function LessonsPage() {
 
             )}
 
-            
+
 
         </div>
 

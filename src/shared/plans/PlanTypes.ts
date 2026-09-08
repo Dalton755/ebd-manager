@@ -1,5 +1,6 @@
 ﻿export type RecursoCodigo =
   | "ALUNOS_CLASSES"
+  | "APRESENTACOES_PDF"
   | "AULAS"
   | "CHECKIN"
   | "CHECKIN_LOCALIZACAO"

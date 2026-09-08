@@ -23,6 +23,8 @@ export type Permissao =
     | "MINISTRAR_AULA"
     | "FAZER_CHECKIN"
     | "VER_MINHAS_AULAS"
+    | "EDITAR_APRESENTACAO"
+    | "PUBLICAR_APRESENTACAO"
     | "VER_MINHAS_PRESENCAS"
     | "VER_FINANCEIRO"
     | "GERENCIAR_FINANCEIRO"
@@ -52,6 +54,9 @@ const permissoesPorPerfil: Record<
         "VALIDAR_PRESENCAS",
         "APROVAR_USUARIOS",
         "MINISTRAR_AULA",
+        "VER_MINHAS_AULAS",
+        "EDITAR_APRESENTACAO",
+        "PUBLICAR_APRESENTACAO",
     ],
 
     SUPERINTENDENTE: [
@@ -71,6 +76,8 @@ const permissoesPorPerfil: Record<
         "MINISTRAR_AULA",
         "FAZER_CHECKIN",
         "VER_MINHAS_AULAS",
+        "EDITAR_APRESENTACAO",
+        "PUBLICAR_APRESENTACAO",
         "VER_MINHAS_PRESENCAS",
     ],
 
@@ -87,6 +94,8 @@ const permissoesPorPerfil: Record<
         "MINISTRAR_AULA",
         "FAZER_CHECKIN",
         "VER_MINHAS_AULAS",
+        "EDITAR_APRESENTACAO",
+        "PUBLICAR_APRESENTACAO",
         "VER_MINHAS_PRESENCAS",
     ],
 
@@ -100,6 +109,8 @@ const permissoesPorPerfil: Record<
         "APROVAR_USUARIOS",
         "FAZER_CHECKIN",
         "VER_MINHAS_AULAS",
+        "EDITAR_APRESENTACAO",
+        "PUBLICAR_APRESENTACAO",
         "VER_MINHAS_PRESENCAS",
     ],
 
@@ -112,6 +123,8 @@ const permissoesPorPerfil: Record<
         "MINISTRAR_AULA",
         "FAZER_CHECKIN",
         "VER_MINHAS_AULAS",
+        "EDITAR_APRESENTACAO",
+        "PUBLICAR_APRESENTACAO",
         "VER_MINHAS_PRESENCAS",
     ],
 

@@ -20,12 +20,21 @@ import {
     Pencil,
     Plus,
     UserRound,
+    Upload,
     X,
 } from "lucide-react";
 
 import { toast } from "sonner";
 
 import { LessonService } from "../services/LessonService";
+
+import {
+    PresentationService,
+} from "../services/PresentationService";
+
+import type {
+    ApresentacaoAula,
+} from "../types/ApresentacaoAula";
 
 import { PeopleService } from "../../people/services/PeopleService";
 
@@ -142,6 +151,26 @@ export function ClassLessonsPage() {
     ] =
         useState<AulaComStatus[]>(
             []
+        );
+
+    const [
+        apresentacoes,
+        setApresentacoes,
+    ] =
+        useState<
+            Record<
+                string,
+                ApresentacaoAula | null
+            >
+        >({});
+
+
+    const [
+        aulaEnviandoPdf,
+        setAulaEnviandoPdf,
+    ] =
+        useState<string | null>(
+            null
         );
 
 
@@ -291,6 +320,80 @@ export function ClassLessonsPage() {
             : formulario;
 
 
+    async function importarPdf(
+        aula: AulaComStatus,
+        arquivo: File
+    ) {
+
+        if (
+            perfilUsuario !== "ADMIN" ||
+            !pessoa?.igreja_id ||
+            !pessoa?.id
+        ) {
+            toast.error(
+                "Você não tem permissão para importar esta apresentação."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            setAulaEnviandoPdf(
+                aula.id
+            );
+
+
+            const apresentacao =
+                await PresentationService
+                    .importar(
+                        arquivo,
+                        aula.id,
+                        pessoa.igreja_id,
+                        pessoa.id
+                    );
+
+
+            setApresentacoes(
+                (estadoAtual) => ({
+                    ...estadoAtual,
+
+                    [aula.id]:
+                        apresentacao,
+                })
+            );
+
+
+            toast.success(
+                apresentacoes[aula.id]
+                    ? "PDF substituído com sucesso."
+                    : "PDF importado com sucesso."
+            );
+
+        } catch (error) {
+
+            console.error(
+                "[APRESENTAÇÃO] Erro ao importar PDF:",
+                error
+            );
+
+
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Não foi possível importar o PDF."
+            );
+
+        } finally {
+
+            setAulaEnviandoPdf(
+                null
+            );
+        }
+    }
+
+
     async function carregarDados(
         silencioso = false
     ) {
@@ -420,6 +523,71 @@ export function ClassLessonsPage() {
         trimestreId,
         classeId,
         pessoa?.igreja_id,
+    ]);
+
+
+    useEffect(() => {
+
+        async function carregarApresentacoes() {
+
+            if (
+                perfilUsuario !== "ADMIN" ||
+                aulas.length === 0
+            ) {
+
+                setApresentacoes(
+                    {}
+                );
+
+                return;
+            }
+
+
+            try {
+
+                const resultados =
+                    await Promise.all(
+                        aulas.map(
+                            async (aula) => {
+
+                                const apresentacao =
+                                    await PresentationService
+                                        .buscar(
+                                            aula.id
+                                        );
+
+
+                                return [
+                                    aula.id,
+                                    apresentacao,
+                                ] as const;
+                            }
+                        )
+                    );
+
+
+                setApresentacoes(
+                    Object.fromEntries(
+                        resultados
+                    )
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "[APRESENTAÇÃO] Erro ao carregar PDFs:",
+                    error
+                );
+
+            }
+        }
+
+
+        void carregarApresentacoes();
+
+    }, [
+        aulas,
+        perfilUsuario,
     ]);
 
 
@@ -1669,6 +1837,158 @@ export function ClassLessonsPage() {
                                     <ExternalLink size={16} />
                                     Abrir material
                                 </a>
+
+                            )}
+
+                            {perfilUsuario === "ADMIN" && (
+
+                                <div className="border-t border-slate-100 pt-4">
+
+                                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                        Apresentação da aula
+                                    </p>
+
+
+                                    {apresentacoes[
+                                        aulaSelecionada.id
+                                    ] ? (
+
+                                        <div className="grid gap-3 sm:grid-cols-2">
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/minhas-aulas/${aulaSelecionada.id}/apresentacao?modo=aula`
+                                                    )
+                                                }
+                                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                                            >
+
+                                                <BookOpen size={18} />
+
+                                                Ver aula
+
+                                            </button>
+
+
+                                            <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+
+                                                {aulaEnviandoPdf ===
+                                                    aulaSelecionada.id ? (
+
+                                                    <Loader2 className="h-5 w-5 animate-spin" />
+
+                                                ) : (
+
+                                                    <Upload size={18} />
+
+                                                )}
+
+
+                                                {aulaEnviandoPdf ===
+                                                    aulaSelecionada.id
+                                                    ? "Enviando..."
+                                                    : "Substituir PDF"}
+
+
+                                                <input
+                                                    type="file"
+                                                    accept="application/pdf,.pdf"
+                                                    className="hidden"
+                                                    disabled={
+                                                        aulaEnviandoPdf ===
+                                                        aulaSelecionada.id
+                                                    }
+                                                    onChange={async (
+                                                        event
+                                                    ) => {
+
+                                                        const arquivo =
+                                                            event.target
+                                                                .files?.[0];
+
+
+                                                        event.target.value =
+                                                            "";
+
+
+                                                        if (!arquivo) {
+                                                            return;
+                                                        }
+
+
+                                                        await importarPdf(
+                                                            aulaSelecionada,
+                                                            arquivo
+                                                        );
+                                                    }}
+                                                />
+
+                                            </label>
+
+                                        </div>
+
+                                    ) : (
+
+                                        <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+
+                                            {aulaEnviandoPdf ===
+                                                aulaSelecionada.id ? (
+
+                                                <Loader2 className="h-5 w-5 animate-spin" />
+
+                                            ) : (
+
+                                                <Upload size={18} />
+
+                                            )}
+
+
+                                            {aulaEnviandoPdf ===
+                                                aulaSelecionada.id
+                                                ? "Enviando PDF..."
+                                                : "Importar PDF"}
+
+
+                                            <input
+                                                type="file"
+                                                accept="application/pdf,.pdf"
+                                                className="hidden"
+                                                disabled={
+                                                    aulaEnviandoPdf ===
+                                                    aulaSelecionada.id
+                                                }
+                                                onChange={async (
+                                                    event
+                                                ) => {
+
+                                                    const arquivo =
+                                                        event.target
+                                                            .files?.[0];
+
+
+                                                    event.target.value =
+                                                        "";
+
+
+                                                    if (!arquivo) {
+                                                        return;
+                                                    }
+
+
+                                                    await importarPdf(
+                                                        aulaSelecionada,
+                                                        arquivo
+                                                    );
+                                                }}
+                                            />
+
+                                        </label>
+
+                                    )}
+
+                                </div>
 
                             )}
 

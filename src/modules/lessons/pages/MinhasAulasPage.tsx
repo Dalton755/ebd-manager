@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+    useNavigate,
     useSearchParams,
 } from "react-router-dom";
 import {
@@ -7,17 +8,46 @@ import {
     CalendarDays,
     CheckCircle2,
     Loader2,
+    Presentation,
+    Upload,
     UserRound,
 } from "lucide-react";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
+import { usePlan } from "@/shared/plans/usePlan";
+
 import { LessonService } from "../services/LessonService";
+import { PresentationService } from "../services/PresentationService";
+
 import type { Aula } from "../types/Aula";
+import type { ApresentacaoAula } from "../types/ApresentacaoAula";
 import type { Trimestre } from "../types/Trimestre";
 
 export function MinhasAulasPage() {
 
     const { pessoa } = useAuth();
+
+    console.log(
+        "[MINHAS AULAS] Pessoa:",
+        {
+            id: pessoa?.id,
+            nome: pessoa?.nome,
+            perfil: pessoa?.perfil,
+            igreja_id: pessoa?.igreja_id,
+            classe_id: pessoa?.classe_id,
+        }
+    );
+
+    const navigate =
+        useNavigate();
+
+    const { temRecurso } =
+        usePlan();
+
+    const possuiRecursoApresentacoes =
+        temRecurso(
+            "APRESENTACOES_PDF"
+        );
 
     const [
         searchParams,
@@ -47,6 +77,104 @@ export function MinhasAulasPage() {
 
     const [erro, setErro] =
         useState<string | null>(null);
+
+    const [
+        apresentacoes,
+        setApresentacoes,
+    ] =
+        useState<
+            Record<
+                string,
+                ApresentacaoAula | null
+            >
+        >({});
+
+
+    const [
+        aulaEnviandoPdf,
+        setAulaEnviandoPdf,
+    ] =
+        useState<string | null>(
+            null
+        );
+
+
+    const [
+        erroApresentacao,
+        setErroApresentacao,
+    ] =
+        useState<string | null>(
+            null
+        );
+
+    async function importarPdf(
+        aula: Aula,
+        arquivo: File
+    ) {
+
+        if (
+            !pessoa?.igreja_id ||
+            !pessoa?.id
+        ) {
+            setErroApresentacao(
+                "Não foi possível identificar o usuário ou a igreja."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            setErroApresentacao(
+                null
+            );
+
+            setAulaEnviandoPdf(
+                aula.id
+            );
+
+
+            const apresentacao =
+                await PresentationService
+                    .importar(
+                        arquivo,
+                        aula.id,
+                        pessoa.igreja_id,
+                        pessoa.id
+                    );
+
+
+            setApresentacoes(
+                (estadoAtual) => ({
+                    ...estadoAtual,
+
+                    [aula.id]:
+                        apresentacao,
+                })
+            );
+
+        } catch (error) {
+
+            console.error(
+                "[APRESENTAÇÃO] Erro ao importar PDF:",
+                error
+            );
+
+
+            setErroApresentacao(
+                error instanceof Error
+                    ? error.message
+                    : "Não foi possível importar o PDF."
+            );
+
+        } finally {
+
+            setAulaEnviandoPdf(
+                null
+            );
+        }
+    }
 
 
     useEffect(() => {
@@ -99,10 +227,15 @@ export function MinhasAulasPage() {
 
                 let aulasParaExibir: Aula[] = [];
 
-                if (pessoa.perfil === "PROFESSOR") {
+                if (
+                    pessoa.perfil === "PROFESSOR" ||
+                    pessoa.perfil === "SUPERINTENDENTE" ||
+                    pessoa.perfil === "ADMIN"
+                ) {
 
-                    // PROFESSOR:
-                    // mostra somente as aulas em que está escalado.
+                    // PERFIS QUE PODEM MINISTRAR:
+                    // mostra somente as aulas em que a própria
+                    // pessoa está escalada como professor.
                     aulasParaExibir =
                         aulasAtivas
                             .filter(
@@ -178,7 +311,57 @@ export function MinhasAulasPage() {
 
                 }
 
-                setAulas(aulasParaExibir);
+                setAulas(
+                    aulasParaExibir
+                );
+
+
+                /*
+                 * Carrega as apresentações somente
+                 * das aulas que aparecem nesta tela.
+                 *
+                 * O recurso também é protegido pelo
+                 * banco/RLS. Esta verificação evita
+                 * consultas desnecessárias para planos
+                 * que não possuem apresentações.
+                 */
+                if (
+                    possuiRecursoApresentacoes &&
+                    aulasParaExibir.length > 0
+                ) {
+
+                    const resultados =
+                        await Promise.all(
+                            aulasParaExibir.map(
+                                async (aula) => {
+
+                                    const apresentacao =
+                                        await PresentationService
+                                            .buscar(
+                                                aula.id
+                                            );
+
+                                    return [
+                                        aula.id,
+                                        apresentacao,
+                                    ] as const;
+                                }
+                            )
+                        );
+
+
+                    setApresentacoes(
+                        Object.fromEntries(
+                            resultados
+                        )
+                    );
+
+                } else {
+
+                    setApresentacoes(
+                        {}
+                    );
+                }
 
             } catch (error) {
 
@@ -197,7 +380,11 @@ export function MinhasAulasPage() {
 
         carregar();
 
-    }, [pessoa?.id, pessoa?.igreja_id]);
+    }, [
+        pessoa?.id,
+        pessoa?.igreja_id,
+        possuiRecursoApresentacoes,
+    ]);
 
     useEffect(() => {
 
@@ -435,6 +622,16 @@ export function MinhasAulasPage() {
 
             )}
 
+            {erroApresentacao && (
+
+                <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+
+                    {erroApresentacao}
+
+                </div>
+
+            )}
+
 
             {/* LISTA DE AULAS */}
 
@@ -515,48 +712,231 @@ export function MinhasAulasPage() {
 
                                 <div className="shrink-0">
 
-                                    {aula.link_drive ? (
+                                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Material da aula
+                                    </p>
 
-                                        <a
-                                            href={aula.link_drive}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className={
-                                                aula.id === aulaDestaqueId &&
-                                                    destacarMaterial
-                                                    ? "flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 px-6 py-5 text-base font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:w-auto sm:min-w-[270px]"
-                                                    : "flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 sm:w-auto"
-                                            }
-                                        >
+                                    <div className="flex flex-col gap-2">
 
-                                            <BookOpen
+                                        {possuiRecursoApresentacoes &&
+                                            apresentacoes[aula.id] && (
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/minhas-aulas/${aula.id}/apresentacao?modo=aula`
+                                                        )
+                                                    }
+                                                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 sm:min-w-[190px]"
+                                                >
+                                                    <BookOpen className="h-4 w-4" />
+
+                                                    Ver aula
+                                                </button>
+
+                                            )}
+
+                                        {aula.link_drive && (
+
+                                            <a
+                                                href={aula.link_drive}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
                                                 className={
                                                     aula.id === aulaDestaqueId &&
                                                         destacarMaterial
-                                                        ? "h-6 w-6"
-                                                        : "h-4 w-4"
+                                                        ? "flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 px-6 py-5 text-base font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:min-w-[270px]"
+                                                        : "flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:min-w-[190px]"
                                                 }
-                                            />
+                                            >
+                                                <BookOpen
+                                                    className={
+                                                        aula.id === aulaDestaqueId &&
+                                                            destacarMaterial
+                                                            ? "h-6 w-6"
+                                                            : "h-4 w-4"
+                                                    }
+                                                />
 
-                                            {aula.id === aulaDestaqueId &&
-                                                destacarMaterial
-                                                ? "ACESSAR MATERIAL DA AULA"
-                                                : "Abrir material"}
+                                                {aula.id === aulaDestaqueId &&
+                                                    destacarMaterial
+                                                    ? "ACESSAR MATERIAL DA AULA"
+                                                    : "Abrir material"}
+                                            </a>
 
-                                        </a>
+                                        )}
 
-                                    ) : (
+                                        {!aula.link_drive &&
+                                            !apresentacoes[aula.id] && (
 
-                                        <div className="rounded-xl bg-slate-100 px-4 py-3 text-center text-sm text-slate-500">
+                                                <div className="rounded-xl bg-slate-100 px-4 py-3 text-center text-sm text-slate-500">
+                                                    Material ainda não disponibilizado
+                                                </div>
 
-                                            Material ainda não
-                                            disponibilizado
+                                            )}
+
+                                    </div>
+
+                                </div>
+
+
+                                {/* APRESENTAÇÃO */}
+
+                                {possuiRecursoApresentacoes &&
+                                    (
+                                        pessoa?.perfil === "PROFESSOR" ||
+                                        pessoa?.perfil === "SUPERINTENDENTE" ||
+                                        pessoa?.perfil === "ADMIN"
+                                    ) && (
+
+                                        <div className="shrink-0 border-t border-slate-100 pt-4 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
+
+                                            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                Apresentação
+                                            </p>
+
+
+                                            {apresentacoes[aula.id] ? (
+
+                                                <div className="flex flex-col gap-2">
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            navigate(
+                                                                `/minhas-aulas/${aula.id}/apresentacao?modo=apresentacao`
+                                                            )
+                                                        }
+                                                        title="Abrir apresentação"
+                                                        className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 sm:w-auto"
+                                                    >
+
+                                                        <Presentation className="h-4 w-4" />
+
+                                                        Apresentar
+
+                                                    </button>
+
+
+                                                    <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">
+
+                                                        {aulaEnviandoPdf ===
+                                                            aula.id ? (
+
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+
+                                                        ) : (
+
+                                                            <Upload className="h-4 w-4" />
+
+                                                        )}
+
+
+                                                        {aulaEnviandoPdf ===
+                                                            aula.id
+                                                            ? "Enviando..."
+                                                            : "Substituir PDF"}
+
+
+                                                        <input
+                                                            type="file"
+                                                            accept="application/pdf,.pdf"
+                                                            className="hidden"
+                                                            disabled={
+                                                                aulaEnviandoPdf ===
+                                                                aula.id
+                                                            }
+                                                            onChange={async (
+                                                                event
+                                                            ) => {
+
+                                                                const arquivo =
+                                                                    event.target
+                                                                        .files?.[0];
+
+                                                                event.target.value =
+                                                                    "";
+
+
+                                                                if (!arquivo) {
+                                                                    return;
+                                                                }
+
+
+                                                                await importarPdf(
+                                                                    aula,
+                                                                    arquivo
+                                                                );
+                                                            }}
+                                                        />
+
+                                                    </label>
+
+                                                </div>
+
+                                            ) : (
+
+                                                <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">
+
+                                                    {aulaEnviandoPdf ===
+                                                        aula.id ? (
+
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+
+                                                    ) : (
+
+                                                        <Upload className="h-4 w-4" />
+
+                                                    )}
+
+
+                                                    {aulaEnviandoPdf ===
+                                                        aula.id
+                                                        ? "Enviando PDF..."
+                                                        : "Importar PDF"}
+
+
+                                                    <input
+                                                        type="file"
+                                                        accept="application/pdf,.pdf"
+                                                        className="hidden"
+                                                        disabled={
+                                                            aulaEnviandoPdf ===
+                                                            aula.id
+                                                        }
+                                                        onChange={async (
+                                                            event
+                                                        ) => {
+
+                                                            const arquivo =
+                                                                event.target
+                                                                    .files?.[0];
+
+                                                            event.target.value =
+                                                                "";
+
+
+                                                            if (!arquivo) {
+                                                                return;
+                                                            }
+
+
+                                                            await importarPdf(
+                                                                aula,
+                                                                arquivo
+                                                            );
+                                                        }}
+                                                    />
+
+                                                </label>
+
+                                            )}
 
                                         </div>
 
                                     )}
 
-                                </div>
 
                             </div>
 

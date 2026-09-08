@@ -105,7 +105,7 @@ function limparCheckoutMercadoPagoDoStorage() {
 
 
 // ============================================================
-// DESCRIÃ‡Ã•ES
+//  DESCRIÇÕES DOS PLANOS
 // ============================================================
 
 const DESCRICOES_PLANOS: Record<
@@ -136,6 +136,9 @@ const NOMES_RECURSOS: Record<
     ALUNOS_CLASSES:
         "Alunos por classe",
 
+    APRESENTACOES_PDF:
+        "Apresentações interativas",
+
     AULAS:
         "GestÃ£o de aulas",
 
@@ -161,22 +164,22 @@ const NOMES_RECURSOS: Record<
         "SolicitaÃ§Ãµes de senha",
 
     NOTIFICACAO_PUSH:
-        "NotificaÃ§Ãµes automÃ¡ticas",
+        "Notificações automáticas",
 
     NOTIFICACOES:
-        "NotificaÃ§Ãµes",
+        "Notificações",
 
     PESSOAS:
-        "GestÃ£o de pessoas",
+        "Gestão de pessoas",
 
     PRESENCAS:
-        "Controle de presenÃ§as",
+        "Controle de presenças",
 
     PROFESSORES:
         "Professores",
 
     RELATORIOS:
-        "RelatÃ³rios",
+        "Relatórios",
 
     TRIMESTRES:
         "Trimestres",
@@ -347,7 +350,7 @@ function obterDestaquePlano(
 
         return {
             texto:
-                "ExperiÃªncia completa",
+                "Experiência completa",
 
             classe:
                 "bg-slate-900 text-white",
@@ -423,7 +426,7 @@ export function PlansPage() {
 
 
     // ========================================================
-    // CARREGA CATÃLOGO E ASSINATURA
+    // CARREGA CATÁLOGO E ASSINATURA
     // ========================================================
 
     useEffect(() => {
@@ -800,6 +803,10 @@ export function PlansPage() {
                     return;
                 }
 
+
+                if (!igrejaId) {
+                    return;
+                }
 
                 const assinaturaAtualizada =
                     await PlanService

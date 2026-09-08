@@ -42,6 +42,7 @@ import { HomePage } from "@/modules/home/pages/HomePage";
 import { StudentAttendancePage } from "@/modules/student/pages/StudentAttendancePage";
 import { MeusDadosPage } from "@/modules/student/pages/MeusDadosPage";
 import { MinhasAulasPage } from "../../modules/lessons/pages/MinhasAulasPage";
+import { PresentationPage } from "@/modules/lessons/pages/PresentationPage";
 import { PlansPage } from "@/modules/plans/pages/PlansPage";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { FinancePageBloqueada } from "@/modules/finance/pages/FinancePageBloqueada";
@@ -406,6 +407,32 @@ export const router = createBrowserRouter([
                         permission="VER_MINHAS_AULAS"
                     >
                         <MinhasAulasPage />
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "minhas-aulas/:aulaId/apresentacao",
+                element: (
+                    <PermissionRoute
+                        permission="VER_MINHAS_AULAS"
+                    >
+                        <PlanGuard recurso="APRESENTACOES_PDF">
+                            <PresentationPage />
+                        </PlanGuard>
+                    </PermissionRoute>
+                ),
+            },
+
+            {
+                path: "minhas-aulas/:aulaId/editar-apresentacao",
+                element: (
+                    <PermissionRoute
+                        permission="EDITAR_APRESENTACAO"
+                    >
+                        <PlanGuard recurso="APRESENTACOES_PDF">
+                            <PresentationPage />
+                        </PlanGuard>
                     </PermissionRoute>
                 ),
             },
