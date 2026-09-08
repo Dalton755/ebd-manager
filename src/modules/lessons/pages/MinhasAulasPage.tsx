@@ -732,7 +732,7 @@ export function MinhasAulasPage() {
                                                 >
                                                     <BookOpen className="h-4 w-4" />
 
-                                                    Ver aula
+                                                    Ver apresentação
                                                 </button>
 
                                             )}
@@ -746,11 +746,11 @@ export function MinhasAulasPage() {
                                                 className={
                                                     aula.id === aulaDestaqueId &&
                                                         destacarMaterial
-                                                        ? "flex w-full items-center justify-center gap-3 rounded-2xl bg-blue-600 px-6 py-5 text-base font-extrabold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 sm:min-w-[270px]"
-                                                        : "flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 sm:min-w-[190px]"
+                                                        ? "flex w-full items-center justify-center gap-3 rounded-2xl border border-amber-400 bg-amber-300 px-6 py-5 text-base font-extrabold text-amber-950 shadow-lg shadow-amber-100 transition hover:bg-amber-400 sm:min-w-[270px]"
+                                                        : "flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-900 transition hover:border-amber-400 hover:bg-amber-200 sm:min-w-[190px]"
                                                 }
                                             >
-                                                <BookOpen
+                                                <Presentation
                                                     className={
                                                         aula.id === aulaDestaqueId &&
                                                             destacarMaterial
@@ -759,10 +759,12 @@ export function MinhasAulasPage() {
                                                     }
                                                 />
 
-                                                {aula.id === aulaDestaqueId &&
-                                                    destacarMaterial
-                                                    ? "ACESSAR MATERIAL DA AULA"
-                                                    : "Abrir material"}
+                                                <span>
+                                                    {aula.id === aulaDestaqueId &&
+                                                        destacarMaterial
+                                                        ? "ABRIR MATERIAL ORIGINAL"
+                                                        : "Abrir material original"}
+                                                </span>
                                             </a>
 
                                         )}
