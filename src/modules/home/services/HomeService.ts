@@ -8,6 +8,7 @@ export type ProximaAulaHome = {
     horario: string;
     link_drive: string | null;
     professor: string | null;
+    apresentacao_publicada: boolean;
 };
 
 export type AulaEscalaHome = {
@@ -138,6 +139,34 @@ export class HomeService {
                 ? data.professor[0]
                 : data.professor;
 
+        const {
+            data: apresentacao,
+            error: apresentacaoError,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("apresentacoes_aula")
+                .select(
+                    "versao_publicada_id"
+                )
+                .eq(
+                    "aula_id",
+                    data.id
+                )
+                .maybeSingle();
+
+
+        if (apresentacaoError) {
+            throw apresentacaoError;
+        }
+
+
+        const apresentacaoPublicada =
+            Boolean(
+                apresentacao
+                    ?.versao_publicada_id
+            );
+
 
         return {
             id:
@@ -170,6 +199,9 @@ export class HomeService {
             professor:
                 professor?.nome ??
                 null,
+
+            apresentacao_publicada:
+                apresentacaoPublicada,
         };
     }
 

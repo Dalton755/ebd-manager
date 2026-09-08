@@ -353,7 +353,23 @@ export function HomePage() {
 
                     <div className="flex flex-wrap gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
 
-                        {proximaAula.link_drive && (
+                        {proximaAula.apresentacao_publicada ? (
+
+                            <Link
+                                to={
+                                    `/minhas-aulas/${proximaAula.id}/apresentacao?modo=aula`
+                                }
+                                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                            >
+                                <BookOpen
+                                    className="h-4 w-4"
+                                />
+
+                                Abrir apresentação
+
+                            </Link>
+
+                        ) : proximaAula.link_drive ? (
 
                             <a
                                 href={
@@ -363,7 +379,6 @@ export function HomePage() {
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                             >
-
                                 <ExternalLink
                                     className="h-4 w-4"
                                 />
@@ -372,7 +387,7 @@ export function HomePage() {
 
                             </a>
 
-                        )}
+                        ) : null}
 
                         {pessoa?.perfil === "ALUNO" && (
 
