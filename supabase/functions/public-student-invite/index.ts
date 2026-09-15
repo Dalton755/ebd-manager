@@ -81,7 +81,7 @@ Deno.serve(
 
             const serviceRoleKey =
                 Deno.env.get(
-                    "SUPABASE_SERVICE_ROLE_KEY"
+                    "EBD_MANAGER_ADMIN_KEY"
                 );
 
 

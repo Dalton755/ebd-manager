@@ -2,7 +2,6 @@
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "target": "es2023",
-    
     "lib": [
       "ES2023",
       "DOM"
@@ -13,11 +12,9 @@
     ],
     "allowArbitraryExtensions": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
-    "ignoreDeprecations": "5.0",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ]
     },
     /* Bundler mode */

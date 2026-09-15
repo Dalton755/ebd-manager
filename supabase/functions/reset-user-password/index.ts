@@ -38,7 +38,7 @@ Deno.serve(async (req: Request) => {
             Deno.env.get("SUPABASE_URL");
 
         const supabaseServiceRoleKey =
-            Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+            Deno.env.get("EBD_MANAGER_ADMIN_KEY");
 
         if (
             !supabaseUrl ||
