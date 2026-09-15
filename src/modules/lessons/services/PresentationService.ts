@@ -198,6 +198,15 @@ export class PresentationService {
                         });
             }
 
+            if (
+    apresentacaoSalva.arquivo_path !==
+    novoArquivo.path
+) {
+    throw new Error(
+        "O novo PDF foi enviado, mas a apresentação não foi atualizada corretamente. Tente novamente."
+    );
+            }
+
         } catch (error) {
 
             /*
@@ -290,9 +299,17 @@ export class PresentationService {
         }
 
 
-        return PresentationRepository
-            .gerarUrl(
-                apresentacao.arquivo_path
-            );
+        const url =
+    await PresentationRepository
+        .gerarUrl(
+            apresentacao.arquivo_path
+        );
+
+const separador =
+    url.includes("?")
+        ? "&"
+        : "?";
+
+return `${url}${separador}_v=${Date.now()}`;
     }
 }
