@@ -1244,19 +1244,47 @@ export function PresentationPage() {
                 setErro(null);
 
                 const url =
-                    await PresentationService
-                        .gerarUrl(
-                            aulaId
-                        );
+    await PresentationService
+        .gerarUrl(
+            aulaId
+        );
 
-                const tarefa =
-                    pdfjsLib.getDocument({
-                        url,
-                    });
+const resposta =
+    await fetch(
+        url,
+        {
+            cache: "no-store",
+        }
+    );
 
-                const pdf =
-                    await tarefa.promise;
+if (!resposta.ok) {
+    throw new Error(
+        `Não foi possível baixar o PDF atualizado. HTTP ${resposta.status}.`
+    );
+}
 
+const arrayBuffer =
+    await resposta.arrayBuffer();
+
+if (
+    arrayBuffer.byteLength === 0
+) {
+    throw new Error(
+        "O PDF retornado pelo armazenamento está vazio."
+    );
+}
+
+const tarefa =
+    pdfjsLib.getDocument({
+        data:
+            new Uint8Array(
+                arrayBuffer
+            ),
+    });
+
+const pdf =
+    await tarefa.promise;
+                
                 if (!ativo) {
                     return;
                 }
