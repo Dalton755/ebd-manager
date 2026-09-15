@@ -50,10 +50,10 @@ export class PresentationRepository {
                     caminho,
                     arquivo,
                     {
-                        cacheControl: "3600",
-                        upsert: false,
-                        contentType:
-                            "application/pdf",
+    cacheControl: "0",
+    upsert: false,
+    contentType:
+        "application/pdf",
                     }
                 );
 
