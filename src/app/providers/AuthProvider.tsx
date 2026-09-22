@@ -907,6 +907,39 @@ export function AuthProvider({
                     );
 
 
+                    /*
+                     * TOKEN_REFRESHED acontece normalmente
+                     * quando o app volta do segundo plano.
+                     *
+                     * No celular isso é muito comum ao abrir
+                     * o seletor de arquivos.
+                     *
+                     * Não podemos ligar o loading global aqui,
+                     * porque ProtectedRoute desmontaria a tela
+                     * atual e destruiria o <input type="file">
+                     * antes do onChange receber o arquivo.
+                     */
+                    if (
+                        event === "TOKEN_REFRESHED"
+                    ) {
+
+                        if (!ativo) {
+                            return;
+                        }
+
+                        setSession(
+                            novaSession
+                        );
+
+                        setUser(
+                            novaSession?.user ??
+                            null
+                        );
+
+                        return;
+                    }
+
+
                     if (
                         event === "SIGNED_IN" &&
                         novaSession
