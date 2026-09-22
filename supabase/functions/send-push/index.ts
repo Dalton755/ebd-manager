@@ -9,22 +9,88 @@ const corsHeaders = {
         "POST, OPTIONS",
 };
 
+function resposta(
+    body: Record<string, unknown>,
+    status: number
+) {
+    return new Response(
+        JSON.stringify(body),
+        {
+            status,
+            headers: {
+                ...corsHeaders,
+                "Content-Type":
+                    "application/json",
+            },
+        }
+    );
+}
+
 Deno.serve(async (req: Request) => {
 
     if (req.method === "OPTIONS") {
-        return new Response("ok", {
-            headers: corsHeaders,
-        });
+        return new Response(
+            "ok",
+            {
+                headers: corsHeaders,
+            }
+        );
+    }
+
+    if (req.method !== "POST") {
+        return resposta(
+            {
+                success: false,
+                error:
+                    "Método não permitido.",
+            },
+            405
+        );
     }
 
     try {
 
-        // =====================================================
-        // CONFIGURAÇÕES
-        // =====================================================
+        const authorization =
+            req.headers.get(
+                "Authorization"
+            );
+
+        if (
+            !authorization ||
+            !authorization.startsWith(
+                "Bearer "
+            )
+        ) {
+            return resposta(
+                {
+                    success: false,
+                    error:
+                        "Usuário não autenticado.",
+                },
+                401
+            );
+        }
+
+        const token =
+            authorization
+                .substring(7)
+                .trim();
+
+        if (!token) {
+            return resposta(
+                {
+                    success: false,
+                    error:
+                        "Sessão inválida.",
+                },
+                401
+            );
+        }
 
         const supabaseUrl =
-            Deno.env.get("SUPABASE_URL");
+            Deno.env.get(
+                "SUPABASE_URL"
+            );
 
         const serviceRoleKey =
             Deno.env.get(
@@ -46,7 +112,6 @@ Deno.serve(async (req: Request) => {
                 "VAPID_SUBJECT"
             );
 
-
         if (
             !supabaseUrl ||
             !serviceRoleKey ||
@@ -54,27 +119,96 @@ Deno.serve(async (req: Request) => {
             !vapidPrivateKey ||
             !vapidSubject
         ) {
-
             throw new Error(
-                "Configuração do Push não está completa."
+                "Configuração do Push incompleta."
             );
         }
-
-
-        // =====================================================
-        // SUPABASE ADMIN
-        // =====================================================
 
         const supabase =
             createClient(
                 supabaseUrl,
-                serviceRoleKey
+                serviceRoleKey,
+                {
+                    auth: {
+                        autoRefreshToken:
+                            false,
+                        persistSession:
+                            false,
+                    },
+                }
             );
 
+        const {
+            data: authData,
+            error: authError,
+        } =
+            await supabase
+                .auth
+                .getUser(
+                    token
+                );
 
-        // =====================================================
-        // DADOS DA NOTIFICAÇÃO
-        // =====================================================
+        if (
+            authError ||
+            !authData.user
+        ) {
+            return resposta(
+                {
+                    success: false,
+                    error:
+                        "Sessão inválida.",
+                },
+                401
+            );
+        }
+
+        const {
+            data: remetente,
+            error: remetenteError,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("pessoas")
+                .select(`
+                    id,
+                    igreja_id,
+                    perfil,
+                    ativo,
+                    status
+                `)
+                .eq(
+                    "user_id",
+                    authData.user.id
+                )
+                .maybeSingle();
+
+        if (remetenteError) {
+            throw remetenteError;
+        }
+
+        const podeEnviar =
+            remetente &&
+            remetente.igreja_id &&
+            remetente.ativo === true &&
+            remetente.status ===
+                "ATIVO" &&
+            (
+                remetente.perfil ===
+                    "ADMIN" ||
+                remetente.perfil ===
+                    "SUPERINTENDENTE"
+            );
+
+        if (!podeEnviar) {
+            return resposta(
+                {
+                    success: false,
+                    error:
+                        "Você não possui permissão para enviar notificações.",
+                },
+                403
+            );
+        }
 
         const {
             pessoa_id,
@@ -84,48 +218,116 @@ Deno.serve(async (req: Request) => {
             url,
         } = await req.json();
 
+        const pessoaId =
+            String(
+                pessoa_id ?? ""
+            ).trim();
 
-        if (!pessoa_id) {
+        const tituloNormalizado =
+            String(
+                titulo ?? ""
+            ).trim();
 
-            return new Response(
-                JSON.stringify({
+        const mensagemNormalizada =
+            String(
+                mensagem ?? ""
+            ).trim();
+
+        const aulaId =
+            aula_id
+                ? String(
+                    aula_id
+                ).trim()
+                : null;
+
+        const urlRecebida =
+            String(
+                url ?? "/"
+            ).trim();
+
+        const urlSegura =
+            urlRecebida.startsWith("/")
+                ? urlRecebida
+                : "/";
+
+        if (!pessoaId) {
+            return resposta(
+                {
+                    success: false,
                     error:
                         "pessoa_id é obrigatório.",
-                }),
-                {
-                    status: 400,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
+                },
+                400
             );
         }
 
-
-        if (!titulo || !mensagem) {
-
-            return new Response(
-                JSON.stringify({
+        if (
+            !tituloNormalizado ||
+            !mensagemNormalizada
+        ) {
+            return resposta(
+                {
+                    success: false,
                     error:
-                        "titulo e mensagem são obrigatórios.",
-                }),
-                {
-                    status: 400,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
+                        "Título e mensagem são obrigatórios.",
+                },
+                400
             );
         }
 
+        if (
+            tituloNormalizado.length >
+                120 ||
+            mensagemNormalizada.length >
+                500
+        ) {
+            return resposta(
+                {
+                    success: false,
+                    error:
+                        "Notificação excede o tamanho permitido.",
+                },
+                400
+            );
+        }
 
-        // =====================================================
-        // BUSCA DISPOSITIVOS
-        // =====================================================
+        const {
+            data: destinatario,
+            error: destinatarioError,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("pessoas")
+                .select(
+                    "id, igreja_id, ativo"
+                )
+                .eq(
+                    "id",
+                    pessoaId
+                )
+                .eq(
+                    "igreja_id",
+                    remetente.igreja_id
+                )
+                .maybeSingle();
+
+        if (destinatarioError) {
+            throw destinatarioError;
+        }
+
+        if (
+            !destinatario ||
+            destinatario.ativo !== true
+        ) {
+            return resposta(
+                {
+                    success: false,
+                    error:
+                        "Destinatário não encontrado nesta igreja.",
+                },
+                404
+            );
+        }
 
         const {
             data: subscriptions,
@@ -133,7 +335,9 @@ Deno.serve(async (req: Request) => {
         } =
             await supabase
                 .schema("ebd")
-                .from("push_subscriptions")
+                .from(
+                    "push_subscriptions"
+                )
                 .select(`
                     id,
                     endpoint,
@@ -142,42 +346,27 @@ Deno.serve(async (req: Request) => {
                 `)
                 .eq(
                     "pessoa_id",
-                    pessoa_id
+                    pessoaId
                 );
-
 
         if (subscriptionError) {
             throw subscriptionError;
         }
 
-
         if (
             !subscriptions ||
             subscriptions.length === 0
         ) {
-
-            return new Response(
-                JSON.stringify({
+            return resposta(
+                {
                     success: true,
                     enviados: 0,
                     mensagem:
                         "Nenhum dispositivo registrado.",
-                }),
-                {
-                    status: 200,
-                    headers: {
-                        ...corsHeaders,
-                        "Content-Type":
-                            "application/json",
-                    },
-                }
+                },
+                200
             );
         }
-
-
-        // =====================================================
-        // CONFIGURA VAPID
-        // =====================================================
 
         webpush.setVapidDetails(
             vapidSubject,
@@ -185,87 +374,79 @@ Deno.serve(async (req: Request) => {
             vapidPrivateKey
         );
 
-
-        // =====================================================
-        // PAYLOAD
-        // =====================================================
-
         const payload =
             JSON.stringify({
-                title: titulo,
-                body: mensagem,
+                title:
+                    tituloNormalizado,
+                body:
+                    mensagemNormalizada,
                 aula_id:
-                    aula_id ?? null,
+                    aulaId,
                 url:
-                    url ?? "/",
+                    urlSegura,
             });
-
 
         let enviados = 0;
         let removidos = 0;
-        const erros: unknown[] = [];
-
-
-        // =====================================================
-        // ENVIA PARA CADA DISPOSITIVO
-        // =====================================================
 
         for (
             const subscription
             of subscriptions
         ) {
-
             try {
 
-                await webpush.sendNotification(
+                await webpush
+                    .sendNotification(
+                        {
+                            endpoint:
+                                subscription
+                                    .endpoint,
 
-                    {
-                        endpoint:
-                            subscription.endpoint,
+                            keys: {
+                                p256dh:
+                                    subscription
+                                        .p256dh,
 
-                        keys: {
-                            p256dh:
-                                subscription.p256dh,
-
-                            auth:
-                                subscription.auth,
+                                auth:
+                                    subscription
+                                        .auth,
+                            },
                         },
-                    },
 
-                    payload,
+                        payload,
 
-                    {
-                        TTL: 60,
+                        {
+                            TTL: 60,
+                            urgency:
+                                "high",
+                        }
+                    );
 
-                        urgency:
-                            "high",
-                    }
-                );
-
-
-                enviados++;
+                enviados += 1;
 
             } catch (error) {
 
-                console.error(
-                    "Erro ao enviar Push:",
-                    error
-                );
-
-
                 const statusCode =
-                    error?.statusCode;
-
-
-                // =================================================
-                // SUBSCRIPTION EXPIRADA / INVÁLIDA
-                // =================================================
+                    typeof error ===
+                            "object" &&
+                        error !== null &&
+                        "statusCode" in
+                            error
+                        ? Number(
+                            (
+                                error as {
+                                    statusCode?:
+                                        unknown;
+                                }
+                            )
+                                .statusCode
+                        )
+                        : null;
 
                 if (
                     statusCode === 404 ||
                     statusCode === 410
                 ) {
-
                     const {
                         error:
                             deleteError,
@@ -278,103 +459,47 @@ Deno.serve(async (req: Request) => {
                             .delete()
                             .eq(
                                 "id",
-                                subscription.id
+                                subscription
+                                    .id
                             );
 
-
                     if (!deleteError) {
-                        removidos++;
+                        removidos += 1;
                     }
-
                 } else {
-
-                    erros.push({
-                        subscription_id:
-                            subscription.id,
-
-                        status:
-                            statusCode ??
-                            null,
-
-                        erro:
-                            error instanceof Error
-                                ? error.message
-                                : String(error),
-                    });
+                    console.error(
+                        "[SEND-PUSH] Falha em dispositivo:",
+                        statusCode
+                    );
                 }
             }
         }
 
-
-        // =====================================================
-        // RESPOSTA
-        // =====================================================
-
-        return new Response(
-            JSON.stringify({
+        return resposta(
+            {
                 success: true,
-
                 dispositivos:
                     subscriptions.length,
-
                 enviados,
-
                 removidos,
-
-                erros,
-            }),
-            {
-                status: 200,
-
-                headers: {
-                    ...corsHeaders,
-
-                    "Content-Type":
-                        "application/json",
-                },
-            }
+            },
+            200
         );
 
-      } catch (error) {
+    } catch (error) {
 
         console.error(
-            "Erro na função send-push:",
+            "[SEND-PUSH] Erro interno:",
             error
         );
 
-        const erroDetalhado =
-            error instanceof Error
-                ? {
-                    name: error.name,
-                    message: error.message,
-                    stack: error.stack,
-                }
-                : error;
-
-        console.error(
-            "Erro detalhado:",
-            JSON.stringify(
-                erroDetalhado,
-                null,
-                2
-            )
-        );
-
-        return new Response(
-            JSON.stringify({
-                success: false,
-                error: erroDetalhado,
-            }),
+        return resposta(
             {
-                status: 500,
-
-                headers: {
-                    ...corsHeaders,
-
-                    "Content-Type":
-                        "application/json",
-                },
-            }
+                success: false,
+                error:
+                    "Não foi possível enviar a notificação.",
+            },
+            500
         );
     }
 });

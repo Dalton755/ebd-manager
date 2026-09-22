@@ -13,8 +13,10 @@ import {
     UserRound,
 } from "lucide-react";
 
+import { toast } from "sonner";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { usePlan } from "@/shared/plans/usePlan";
+import { temPermissao } from "@/shared/auth/permissions";
 
 import { LessonService } from "../services/LessonService";
 import { PresentationService } from "../services/PresentationService";
@@ -26,6 +28,17 @@ import type { Trimestre } from "../types/Trimestre";
 export function MinhasAulasPage() {
 
     const { pessoa } = useAuth();
+
+    const perfilUsuario =
+        pessoa?.perfil === "PENDENTE"
+            ? undefined
+            : pessoa?.perfil;
+
+    const podeEditarApresentacao =
+        temPermissao(
+            perfilUsuario,
+            "EDITAR_APRESENTACAO"
+        );
 
     console.log(
         "[MINHAS AULAS] Pessoa:",
@@ -113,11 +126,19 @@ export function MinhasAulasPage() {
     ) {
 
         if (
+            !podeEditarApresentacao ||
             !pessoa?.igreja_id ||
             !pessoa?.id
         ) {
+            const mensagem =
+                "Você não tem permissão para importar esta apresentação.";
+
             setErroApresentacao(
-                "Não foi possível identificar o usuário ou a igreja."
+                mensagem
+            );
+
+            toast.error(
+                mensagem
             );
 
             return;
@@ -154,6 +175,12 @@ export function MinhasAulasPage() {
                 })
             );
 
+            toast.success(
+                apresentacoes[aula.id]
+                    ? "PDF substituído com sucesso."
+                    : "PDF importado com sucesso."
+            );
+
         } catch (error) {
 
             console.error(
@@ -162,10 +189,17 @@ export function MinhasAulasPage() {
             );
 
 
-            setErroApresentacao(
+            const mensagem =
                 error instanceof Error
                     ? error.message
-                    : "Não foi possível importar o PDF."
+                    : "Não foi possível importar o PDF.";
+
+            setErroApresentacao(
+                mensagem
+            );
+
+            toast.error(
+                mensagem
             );
 
         } finally {
@@ -786,11 +820,7 @@ export function MinhasAulasPage() {
                                 {/* APRESENTAÇÃO */}
 
                                 {possuiRecursoApresentacoes &&
-                                    (
-                                        pessoa?.perfil === "PROFESSOR" ||
-                                        pessoa?.perfil === "SUPERINTENDENTE" ||
-                                        pessoa?.perfil === "ADMIN"
-                                    ) && (
+                                    podeEditarApresentacao && (
 
                                         <div className="shrink-0 border-t border-slate-100 pt-4 sm:border-l sm:border-t-0 sm:pl-5 sm:pt-0">
 

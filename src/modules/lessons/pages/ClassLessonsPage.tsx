@@ -135,6 +135,12 @@ export function ClassLessonsPage() {
             "GERENCIAR_AULAS"
         );
 
+    const podeEditarApresentacao =
+        temPermissao(
+            perfilUsuario,
+            "EDITAR_APRESENTACAO"
+        );
+
 
     const [
         contexto,
@@ -326,7 +332,7 @@ export function ClassLessonsPage() {
     ) {
 
         if (
-            perfilUsuario !== "ADMIN" ||
+            !podeEditarApresentacao ||
             !pessoa?.igreja_id ||
             !pessoa?.id
         ) {
@@ -531,7 +537,7 @@ export function ClassLessonsPage() {
         async function carregarApresentacoes() {
 
             if (
-                perfilUsuario !== "ADMIN" ||
+                !podeEditarApresentacao ||
                 aulas.length === 0
             ) {
 
@@ -1840,7 +1846,7 @@ export function ClassLessonsPage() {
 
                             )}
 
-                            {perfilUsuario === "ADMIN" && (
+                            {podeEditarApresentacao && (
 
                                 <div className="border-t border-slate-100 pt-4">
 

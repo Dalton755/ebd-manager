@@ -94,7 +94,8 @@ Deno.serve(async (req: Request) => {
                 id,
                 perfil,
                 ativo,
-                status
+                status,
+                igreja_id
             `)
             .eq(
                 "user_id",
@@ -219,7 +220,8 @@ Deno.serve(async (req: Request) => {
                 id,
                 user_id,
                 nome,
-                telefone
+                telefone,
+                igreja_id
             `)
             .eq(
                 "id",
@@ -229,6 +231,25 @@ Deno.serve(async (req: Request) => {
 
         if (pessoaError) {
             throw pessoaError;
+        }
+
+        if (
+            !admin.igreja_id ||
+            pessoa.igreja_id !== admin.igreja_id
+        ) {
+            return new Response(
+                JSON.stringify({
+                    error:
+                        "A solicitação não pertence à sua igreja.",
+                }),
+                {
+                    status: 403,
+                    headers: {
+                        ...corsHeaders,
+                        "Content-Type": "application/json",
+                    },
+                }
+            );
         }
 
         if (!pessoa.user_id) {

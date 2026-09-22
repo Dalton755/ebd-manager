@@ -15,9 +15,9 @@ const TAMANHO_MAXIMO =
     50 * 1024 * 1024;
 
 
-function validarPdf(
+async function validarPdf(
     arquivo: File
-): void {
+): Promise<void> {
 
     if (!arquivo) {
         throw new Error(
@@ -33,10 +33,14 @@ function validarPdf(
             ?.toLowerCase();
 
 
-    if (
-        arquivo.type !== "application/pdf" ||
-        extensao !== "pdf"
-    ) {
+    /*
+     * Não confiamos no MIME informado pelo navegador.
+     *
+     * No Android alguns seletores de arquivos entregam PDFs
+     * com MIME vazio ou application/octet-stream. O conteúdo
+     * do arquivo é a fonte de verdade.
+     */
+    if (extensao !== "pdf") {
         throw new Error(
             "A apresentação deve ser um arquivo PDF."
         );
@@ -56,6 +60,51 @@ function validarPdf(
     ) {
         throw new Error(
             "O PDF deve ter no máximo 50 MB."
+        );
+    }
+
+
+    const bytes =
+        new Uint8Array(
+            await arquivo
+                .slice(0, 1024)
+                .arrayBuffer()
+        );
+
+    const assinatura = [
+        0x25, // %
+        0x50, // P
+        0x44, // D
+        0x46, // F
+        0x2d, // -
+    ];
+
+    let pdfValido = false;
+
+    for (
+        let inicio = 0;
+        inicio <=
+        bytes.length -
+        assinatura.length;
+        inicio += 1
+    ) {
+        const corresponde =
+            assinatura.every(
+                (byte, indice) =>
+                    bytes[
+                        inicio + indice
+                    ] === byte
+            );
+
+        if (corresponde) {
+            pdfValido = true;
+            break;
+        }
+    }
+
+    if (!pdfValido) {
+        throw new Error(
+            "O arquivo selecionado não é um PDF válido."
         );
     }
 }
@@ -104,7 +153,7 @@ export class PresentationService {
         pessoaId: string | null
     ): Promise<ApresentacaoAula> {
 
-        validarPdf(
+        await validarPdf(
             arquivo
         );
 

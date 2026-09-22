@@ -4,6 +4,7 @@
 } from "react";
 
 import { useFormDraft } from "@/shared/hooks/useFormDraft";
+import { toast } from "sonner";
 
 import {
     useNavigate,
@@ -56,6 +57,11 @@ export function LessonsPage() {
     const podeGerenciarAulas = temPermissao(
         perfilUsuario,
         "GERENCIAR_AULAS"
+    );
+
+    const podeEditarApresentacao = temPermissao(
+        perfilUsuario,
+        "EDITAR_APRESENTACAO"
     );
 
     const podeVerProfessor =
@@ -130,11 +136,19 @@ export function LessonsPage() {
     ) {
 
         if (
+            !podeEditarApresentacao ||
             !pessoa?.igreja_id ||
             !pessoa?.id
         ) {
+            const mensagem =
+                "Você não tem permissão para importar esta apresentação.";
+
             setErroApresentacao(
-                "Não foi possível identificar o usuário ou a igreja."
+                mensagem
+            );
+
+            toast.error(
+                mensagem
             );
 
             return;
@@ -168,6 +182,12 @@ export function LessonsPage() {
                 })
             );
 
+            toast.success(
+                apresentacoes[aula.id]
+                    ? "PDF substituído com sucesso."
+                    : "PDF importado com sucesso."
+            );
+
         } catch (error) {
 
             console.error(
@@ -175,10 +195,17 @@ export function LessonsPage() {
                 error
             );
 
-            setErroApresentacao(
+            const mensagem =
                 error instanceof Error
                     ? error.message
-                    : "Não foi possível importar o PDF."
+                    : "Não foi possível importar o PDF.";
+
+            setErroApresentacao(
+                mensagem
+            );
+
+            toast.error(
+                mensagem
             );
 
         } finally {
@@ -425,7 +452,7 @@ export function LessonsPage() {
              * gerenciar o PDF de qualquer aula do trimestre.
              */
             if (
-                perfilUsuario === "ADMIN" &&
+                podeEditarApresentacao &&
                 aulasDoTrimestre.length > 0
             ) {
 
@@ -1356,7 +1383,7 @@ export function LessonsPage() {
 
                                             )}
 
-                                            {perfilUsuario === "ADMIN" && (
+                                            {podeEditarApresentacao && (
 
                                                 apresentacoes[aula.id] ? (
 
