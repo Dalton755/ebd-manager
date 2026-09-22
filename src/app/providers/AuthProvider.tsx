@@ -2,6 +2,7 @@
     createContext,
     useContext,
     useEffect,
+    useRef,
     useState,
     type ReactNode,
 } from "react";
@@ -289,6 +290,11 @@ export function AuthProvider({
     const [user, setUser] =
         useState<User | null>(null);
 
+    const usuarioAutenticadoRef =
+        useRef<string | null>(
+            null
+        );
+
     const [session, setSession] =
         useState<Session | null>(null);
 
@@ -524,6 +530,9 @@ export function AuthProvider({
         setUser(
             usuario
         );
+
+        usuarioAutenticadoRef.current =
+            usuario?.id ?? null;
 
 
         let superAdmin = false;
@@ -919,8 +928,20 @@ export function AuthProvider({
                      * atual e destruiria o <input type="file">
                      * antes do onChange receber o arquivo.
                      */
+                    const mesmoUsuarioJaCarregado =
+                        Boolean(
+                            novaSession?.user?.id &&
+                            usuarioAutenticadoRef.current ===
+                                novaSession.user.id
+                        );
+
+
                     if (
-                        event === "TOKEN_REFRESHED"
+                        event === "TOKEN_REFRESHED" ||
+                        (
+                            event === "SIGNED_IN" &&
+                            mesmoUsuarioJaCarregado
+                        )
                     ) {
 
                         if (!ativo) {
@@ -991,6 +1012,9 @@ export function AuthProvider({
         setSession(null);
 
         setUser(null);
+
+        usuarioAutenticadoRef.current =
+            null;
 
         setPessoa(null);
 
