@@ -2094,7 +2094,7 @@ export function DashboardIgrejaPage({
                         </Link>
 
                         <Link
-                            to="/chamada"
+                            to="/presencas"
                             className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
                         >
                             <CheckCircle2 size={18} className="text-amber-600" />

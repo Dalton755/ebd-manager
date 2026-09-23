@@ -366,7 +366,7 @@ export function HomePage() {
                                 </div>
 
                                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
-                                    <BookOpen className="h-4.5 w-4.5" />
+                                    <BookOpen className="h-5 w-5" />
                                 </div>
 
                             </div>
@@ -502,7 +502,7 @@ export function HomePage() {
 
                     {pessoa?.perfil === "ALUNO" ? (
                         <Link
-                            to="/aluno/presencas"
+                            to="/minhas-presencas"
                             className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
                         >
                             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
