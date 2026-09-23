@@ -6,12 +6,14 @@ import {
 
 import {
     Outlet,
+    useLocation,
     useNavigate,
 } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { Sidebar } from "@/shared/components/layout/Sidebar";
 import { Header } from "@/shared/components/layout/Header";
+import { MobileBottomNav } from "@/shared/components/layout/MobileBottomNav";
 import marcaDagua from "@/assets/marca-dagua.png";
 
 import {
@@ -44,6 +46,14 @@ export function MainLayout() {
     const navigate =
         useNavigate();
 
+    const location =
+        useLocation();
+
+    const mainRef =
+        useRef<HTMLElement | null>(
+            null
+        );
+
 
     /*
      * Impede que a checagem seja
@@ -54,6 +64,91 @@ export function MainLayout() {
         useRef<string | null>(
             null
         );
+
+
+    /*
+     * Guarda a posição de cada tela durante a sessão.
+     * Se o Android descarregar e recriar a aba, o usuário
+     * volta praticamente ao mesmo ponto em que estava.
+     */
+    useEffect(() => {
+
+        const elemento =
+            mainRef.current;
+
+        if (!elemento) {
+            return;
+        }
+
+        const chave =
+            `ebd_scroll:${location.pathname}${location.search}`;
+
+        const posicaoSalva =
+            Number(
+                window.sessionStorage
+                    .getItem(
+                        chave
+                    ) ??
+                "0"
+            );
+
+        const frame =
+            window.requestAnimationFrame(
+                () => {
+
+                    elemento.scrollTo({
+                        top:
+                            Number.isFinite(
+                                posicaoSalva
+                            )
+                                ? posicaoSalva
+                                : 0,
+
+                        behavior:
+                            "auto",
+                    });
+                }
+            );
+
+        const salvar =
+            () => {
+
+                window.sessionStorage
+                    .setItem(
+                        chave,
+                        String(
+                            elemento.scrollTop
+                        )
+                    );
+            };
+
+        elemento.addEventListener(
+            "scroll",
+            salvar,
+            {
+                passive:
+                    true,
+            }
+        );
+
+        return () => {
+
+            window.cancelAnimationFrame(
+                frame
+            );
+
+            salvar();
+
+            elemento.removeEventListener(
+                "scroll",
+                salvar
+            );
+        };
+
+    }, [
+        location.pathname,
+        location.search,
+    ]);
 
 
     useEffect(() => {
@@ -208,20 +303,20 @@ export function MainLayout() {
 
             {/* Área principal */}
             <div className="flex min-w-0 flex-1 flex-col">
-                <div className="flex items-center border-b border-slate-200 bg-white md:hidden">
-                    <button
-                        type="button"
-                        onClick={() => setMenuOpen(true)}
-                        className="p-4"
-                        aria-label="Abrir menu"
-                    >
-                        <Menu size={24} />
-                    </button>
-                </div>
+                <Header
+                    onOpenMenu={() =>
+                        setMenuOpen(
+                            true
+                        )
+                    }
+                />
 
-                <Header />
-
-                <main className="relative min-w-0 flex-1 overflow-auto bg-slate-50">
+                <main
+                    ref={
+                        mainRef
+                    }
+                    className="relative min-w-0 flex-1 overflow-auto overscroll-y-contain bg-slate-50"
+                >
 
                     {/* MARCA D'ÁGUA */}
                     <div
@@ -236,11 +331,19 @@ export function MainLayout() {
                     </div>
 
                     {/* CONTEÚDO */}
-                    <div className="relative z-10 p-4 md:p-6">
+                    <div className="relative z-10 mx-auto w-full max-w-[1600px] p-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6">
                         <Outlet />
                     </div>
 
                 </main>
+
+                <MobileBottomNav
+                    onOpenMenu={() =>
+                        setMenuOpen(
+                            true
+                        )
+                    }
+                />
             </div>
         </div>
     );
