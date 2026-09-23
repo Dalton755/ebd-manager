@@ -23,6 +23,7 @@ export function SubscriptionGuard({
 
     const {
         loading,
+        pessoa,
         isSuperAdmin,
         assinaturaExpirada,
     } = useAuth();
@@ -36,7 +37,10 @@ export function SubscriptionGuard({
     // AGUARDA CARREGAMENTO
     // =====================================================
 
-    if (loading) {
+    if (
+        loading &&
+        !pessoa
+    ) {
 
         return null;
 
