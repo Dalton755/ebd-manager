@@ -140,8 +140,12 @@ body,
 }
 
 body {
-    overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
+}
+
+.ebd-main-scroll {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
 }
 
 @media (max-width: 767px) {
