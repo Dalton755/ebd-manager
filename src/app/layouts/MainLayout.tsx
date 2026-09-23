@@ -261,7 +261,7 @@ export function MainLayout() {
     ]);
 
     return (
-        <div className="flex min-h-screen w-full bg-slate-50">
+        <div className="flex h-screen h-dvh min-h-0 w-full overflow-hidden bg-slate-50">
             {/* Sidebar desktop */}
             <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white p-6 md:block">
                 <Sidebar />
@@ -302,7 +302,7 @@ export function MainLayout() {
             </aside>
 
             {/* Área principal */}
-            <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col">
                 <Header
                     onOpenMenu={() =>
                         setMenuOpen(
@@ -315,7 +315,7 @@ export function MainLayout() {
                     ref={
                         mainRef
                     }
-                    className="relative min-w-0 flex-1 overflow-auto overscroll-y-contain bg-slate-50"
+                    className="relative min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-50"
                 >
 
                     {/* MARCA D'ÁGUA */}
