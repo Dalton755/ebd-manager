@@ -23,7 +23,6 @@ import { AttendanceHistoryPage } from "../../modules/attendance/pages/Attendance
 import { StudentCheckinPage } from "../../modules/student/pages/StudentCheckinPage";
 import { AttendanceRecordsPage } from "@/modules/reports/pages/AttendanceRecordsPage";
 import { RegisterPage } from "../../modules/auth/pages/RegisterPage";
-import { ChurchRegistrationPage } from "../../modules/auth/pages/ChurchRegistrationPage";
 import { PendingApprovalPage } from "../../modules/auth/pages/PendingApprovalPage";
 import { UserApprovalPage } from "@/modules/administration/pages/UserApprovalPage";
 import { ChurchCustomizationPage } from "@/modules/administration/pages/ChurchCustomizationPage";
@@ -52,12 +51,19 @@ import { AssinaturasPage } from "@/modules/platform-admin/pages/AssinaturasPage"
 import { PlanosPage } from "@/modules/platform-admin/pages/PlanosPage";
 import { RecursosPage } from "@/modules/platform-admin/pages/RecursosPage";
 import { StudentCheckinService } from "@/modules/student/services/StudentCheckinService";
+import { DemoRegistrationPage } from "@/modules/demo/pages/DemoRegistrationPage";
+import { DemoHomePage } from "@/modules/demo/pages/DemoHomePage";
+import { AdhesionPage } from "@/modules/demo/pages/AdhesionPage";
+import { TermsOfUsePage } from "@/modules/legal/pages/TermsOfUsePage";
+import { PrivacyPolicyPage } from "@/modules/legal/pages/PrivacyPolicyPage";
+import { LgpdPage } from "@/modules/legal/pages/LgpdPage";
 
 
 function RotaInicial() {
 
     const {
         pessoa,
+        modoDemo,
     } = useAuth();
 
 
@@ -221,6 +227,14 @@ function RotaInicial() {
     ]);
 
 
+    if (modoDemo) {
+
+        return (
+            <DemoHomePage />
+        );
+    }
+
+
     /*
      * PROFESSOR
      */
@@ -306,7 +320,36 @@ export const router = createBrowserRouter([
 
     {
         path: "/cadastro-igreja",
-        element: <ChurchRegistrationPage />,
+        element: <DemoRegistrationPage />,
+    },
+
+    {
+        path: "/demo",
+        element: <DemoRegistrationPage />,
+    },
+
+    {
+        path: "/termos-de-uso",
+        element: <TermsOfUsePage />,
+    },
+
+    {
+        path: "/privacidade",
+        element: <PrivacyPolicyPage />,
+    },
+
+    {
+        path: "/lgpd",
+        element: <LgpdPage />,
+    },
+
+    {
+        path: "/adesao",
+        element: (
+            <ProtectedRoute>
+                <AdhesionPage />
+            </ProtectedRoute>
+        ),
     },
 
     {

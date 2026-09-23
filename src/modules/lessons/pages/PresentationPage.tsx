@@ -2850,7 +2850,9 @@ const pdf =
             className={
                 telaCheiaAtiva
                     ? "relative flex h-dvh w-screen flex-col overflow-hidden bg-slate-950 text-white"
-                    : "relative flex h-[calc(100dvh-1rem)] min-h-[520px] flex-col overflow-hidden rounded-2xl bg-slate-950 text-white"
+                    : pessoa?.perfil && pessoa.perfil !== "ADMIN"
+                        ? "relative flex h-[calc(100dvh-9.5rem)] min-h-[360px] flex-col overflow-hidden rounded-2xl bg-slate-950 text-white md:h-[calc(100dvh-1rem)] md:min-h-[520px]"
+                        : "relative flex h-[calc(100dvh-1rem)] min-h-[520px] flex-col overflow-hidden rounded-2xl bg-slate-950 text-white"
             }
         >
 
@@ -3711,15 +3713,7 @@ const pdf =
 
             {!telaCheiaAtiva && (
 
-                <footer
-                    className={[
-                        "flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5",
-                        pessoa?.perfil &&
-                        pessoa.perfil !== "ADMIN"
-                            ? "mb-[4.75rem] md:mb-0"
-                            : "",
-                    ].join(" ")}
-                >
+                <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5">
 
                     <button
                         type="button"

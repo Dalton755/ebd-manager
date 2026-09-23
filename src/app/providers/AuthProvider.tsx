@@ -44,6 +44,8 @@ type AuthContextType = {
     igrejaId: string | null;
     igrejaNome: string | null;
     igrejaLogoUrl: string | null;
+    modoDemo: boolean;
+    demoExpiraEm: string | null;
     plano: PlanoCompleto | null;
     isSuperAdmin: boolean;
     senhaTemporaria: boolean;
@@ -64,7 +66,7 @@ type Props = {
 
 
 const AUTH_VISUAL_CACHE_KEY =
-    "ebd_auth_visual_v1";
+    "ebd_auth_visual_v2";
 
 const AUTH_VISUAL_CACHE_TTL =
     12 * 60 * 60 * 1000;
@@ -75,6 +77,8 @@ type AuthVisualCache = {
     igrejaId: string | null;
     igrejaNome: string | null;
     igrejaLogoUrl: string | null;
+    modoDemo: boolean;
+    demoExpiraEm: string | null;
     plano: PlanoCompleto | null;
     isSuperAdmin: boolean;
     senhaTemporaria: boolean;
@@ -429,6 +433,18 @@ export function AuthProvider({
             null
         );
 
+    const [modoDemo, setModoDemo] =
+        useState(
+            cacheInicial?.modoDemo ??
+            false
+        );
+
+    const [demoExpiraEm, setDemoExpiraEm] =
+        useState<string | null>(
+            cacheInicial?.demoExpiraEm ??
+            null
+        );
+
     const [senhaTemporaria, setSenhaTemporaria] =
         useState(
             cacheInicial?.senhaTemporaria ??
@@ -732,6 +748,10 @@ export function AuthProvider({
 
             setIgrejaLogoUrl(null);
 
+            setModoDemo(false);
+
+            setDemoExpiraEm(null);
+
             setLoading(false);
 
             setIsSuperAdmin(false);
@@ -780,7 +800,7 @@ export function AuthProvider({
                     .schema("ebd")
                     .from("igrejas")
                     .select(
-                        "nome, logo_url"
+                        "nome, logo_url, modo_demo, demo_expira_em"
                     )
                     .eq(
                         "id",
@@ -804,6 +824,14 @@ export function AuthProvider({
                     igreja?.logo_url ?? null
                 );
 
+                setModoDemo(
+                    igreja?.modo_demo === true
+                );
+
+                setDemoExpiraEm(
+                    igreja?.demo_expira_em ?? null
+                );
+
             } catch (erro) {
 
                 console.error(
@@ -814,6 +842,10 @@ export function AuthProvider({
                 setIgrejaNome(null);
 
                 setIgrejaLogoUrl(null);
+
+                setModoDemo(false);
+
+                setDemoExpiraEm(null);
             }
 
         } else {
@@ -821,6 +853,10 @@ export function AuthProvider({
             setIgrejaNome(null);
 
             setIgrejaLogoUrl(null);
+
+            setModoDemo(false);
+
+            setDemoExpiraEm(null);
         }
 
 
@@ -1202,6 +1238,10 @@ export function AuthProvider({
 
         setIgrejaLogoUrl(null);
 
+        setModoDemo(false);
+
+        setDemoExpiraEm(null);
+
         setSenhaTemporaria(false);
 
         setAssinaturaExpirada(false);
@@ -1236,6 +1276,10 @@ export function AuthProvider({
             igrejaNome,
 
             igrejaLogoUrl,
+
+            modoDemo,
+
+            demoExpiraEm,
 
             plano,
 
@@ -1275,6 +1319,8 @@ export function AuthProvider({
         igrejaId,
         igrejaNome,
         igrejaLogoUrl,
+        modoDemo,
+        demoExpiraEm,
         plano,
         isSuperAdmin,
         senhaTemporaria,
@@ -1301,6 +1347,10 @@ export function AuthProvider({
                 igrejaNome,
 
                 igrejaLogoUrl,
+
+                modoDemo,
+
+                demoExpiraEm,
 
                 plano,
 

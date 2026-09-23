@@ -327,13 +327,21 @@ export function LoginPage() {
                                 }
 
                                 navigate(
-                                    "/cadastro"
+                                    "/cadastro-igreja"
                                 );
                             }}
                             className="text-sm text-blue-600 hover:underline"
                         >
-                            Criar minha conta
+                            {igrejaId
+                                ? "Criar minha conta nesta igreja"
+                                : "Testar o EBD Manager grátis"}
                         </button>
+
+                        {!igrejaId && (
+                            <p className="text-xs text-slate-400">
+                                Sem CNPJ, sem cartão e sem cadastro da igreja para começar.
+                            </p>
+                        )}
                     </div>
 
 
