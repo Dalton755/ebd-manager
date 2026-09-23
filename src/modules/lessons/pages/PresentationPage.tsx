@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 
 import {
+    useLocation,
     useNavigate,
     useParams,
     useSearchParams,
@@ -156,6 +157,9 @@ export function PresentationPage() {
     const navigate =
         useNavigate();
 
+    const location =
+        useLocation();
+
     const [searchParams] =
         useSearchParams();
 
@@ -192,6 +196,28 @@ export function PresentationPage() {
         useRef<HTMLDivElement | null>(
             null
         );
+
+    const gestoNavegacaoRef =
+        useRef<{
+            inicioX: number;
+            inicioY: number;
+            ignorar: boolean;
+        } | null>(
+            null
+        );
+
+    const estabilizacaoLayoutTimerRef =
+        useRef<number | null>(
+            null
+        );
+
+    /*
+     * Cada nova renderização recebe um ID.
+     * Isso evita que uma renderização antiga
+     * sobrescreva o canvas depois de uma rotação.
+     */
+    const renderizacaoIdRef =
+        useRef(0);
 
     const estadoRestauradoRef =
         useRef(false);
@@ -248,6 +274,13 @@ export function PresentationPage() {
     const [
         erro,
         setErro,
+    ] = useState<string | null>(
+        null
+    );
+
+    const [
+        erroRenderizacao,
+        setErroRenderizacao,
     ] = useState<string | null>(
         null
     );
@@ -1684,29 +1717,84 @@ const pdf =
             return;
         }
 
+        const renderizacaoId =
+            ++renderizacaoIdRef.current;
+
         let cancelado = false;
+
         let tarefaRenderizacao:
             ReturnType<
                 pdfjsLib.PDFPageProxy["render"]
             > | null = null;
 
-        async function renderizarPagina() {
+
+        function aindaEhRenderizacaoAtual() {
+
+            return (
+                !cancelado &&
+                renderizacaoIdRef.current ===
+                    renderizacaoId
+            );
+        }
+
+
+        async function aguardarLayoutEstavel() {
+
+            await new Promise<void>(
+                (resolve) => {
+
+                    window.requestAnimationFrame(
+                        () =>
+                            window.requestAnimationFrame(
+                                () =>
+                                    resolve()
+                            )
+                    );
+                }
+            );
+        }
+
+
+        async function renderizarPagina(
+            tentativa = 0
+        ) {
 
             try {
 
-                setRenderizando(true);
+                setRenderizando(
+                    true
+                );
+
+                await aguardarLayoutEstavel();
+
+                if (
+                    !aindaEhRenderizacaoAtual()
+                ) {
+                    return;
+                }
+
 
                 const pagina =
                     await documento.getPage(
                         paginaAtual
                     );
 
-                if (cancelado) {
+                if (
+                    !aindaEhRenderizacaoAtual()
+                ) {
                     return;
                 }
 
+
                 const conteudoTexto =
                     await pagina.getTextContent();
+
+
+                if (
+                    !aindaEhRenderizacaoAtual()
+                ) {
+                    return;
+                }
 
 
                 const canvas =
@@ -1722,10 +1810,12 @@ const pdf =
                     return;
                 }
 
+
                 const viewportBase =
                     pagina.getViewport({
                         scale: 1,
                     });
+
 
                 const margemInterna =
                     telaCheiaAtiva
@@ -1767,8 +1857,10 @@ const pdf =
 
                 const viewport =
                     pagina.getViewport({
-                        scale: escala,
+                        scale:
+                            escala,
                     });
+
 
                 const novosOverlays:
                     ReferenciaOverlay[] = [];
@@ -1776,19 +1868,28 @@ const pdf =
                 const novosTextosPdf:
                     TextoPdfOverlay[] = [];
 
-                conteudoTexto.items.forEach(
-                    (item, indice) => {
 
-                        if (!("str" in item)) {
+                conteudoTexto.items.forEach(
+                    (
+                        item,
+                        indice
+                    ) => {
+
+                        if (
+                            !("str" in item)
+                        ) {
                             return;
                         }
 
                         const textoItem =
                             item.str.trim();
 
-                        if (!textoItem) {
+                        if (
+                            !textoItem
+                        ) {
                             return;
                         }
+
 
                         const transformacao =
                             pdfjsLib.Util.transform(
@@ -1812,6 +1913,7 @@ const pdf =
                         const larguraItem =
                             item.width *
                             escala;
+
 
                         novosTextosPdf.push({
                             id:
@@ -1856,10 +1958,12 @@ const pdf =
                             return;
                         }
 
+
                         for (
                             const referencia
                             of referenciasItem
                         ) {
+
                             const versiculos =
                                 referencia
                                     .versiculoInicial ===
@@ -1875,15 +1979,7 @@ const pdf =
                                         ? `:${referencia.versiculoInicial}-${referencia.versiculoFinal}`
                                         : `:${referencia.versiculoInicial}`;
 
-                            /*
-                             * Descobre onde a referência
-                             * começa dentro do TextItem.
-                             *
-                             * Exemplo:
-                             *
-                             * "cruz (Fp 2.8)."
-                             *       ^^^^^^^^
-                             */
+
                             const proporcaoInicio =
                                 referencia.inicioTexto /
                                 textoItem.length;
@@ -1903,87 +1999,142 @@ const pdf =
                             const widthReferencia =
                                 Math.max(
                                     larguraItem *
-                                    proporcaoLargura,
+                                        proporcaoLargura,
                                     18
                                 );
 
+                            const alturaReferencia =
+                                Math.max(
+                                    altura,
+                                    item.height *
+                                        escala
+                                );
+
+
+                            /*
+                             * Hotspots em proporção ao slide,
+                             * não em pixels. Assim continuam
+                             * no lugar certo ao girar a tela.
+                             */
                             novosOverlays.push({
                                 id:
                                     `${paginaAtual}-${indice}-${referencia.original}`,
+
                                 original:
                                     referencia.original,
+
                                 rotulo:
                                     `${referencia.livro} ${referencia.capitulo}${versiculos}`,
+
                                 referencia,
+
                                 left:
-                                    leftReferencia,
-                                top,
+                                    Math.max(
+                                        0,
+                                        Math.min(
+                                            leftReferencia /
+                                                viewport.width,
+                                            1
+                                        )
+                                    ),
+
+                                top:
+                                    Math.max(
+                                        0,
+                                        Math.min(
+                                            top /
+                                                viewport.height,
+                                            1
+                                        )
+                                    ),
+
                                 width:
-                                    widthReferencia,
+                                    Math.max(
+                                        0.012,
+                                        Math.min(
+                                            widthReferencia /
+                                                viewport.width,
+                                            1
+                                        )
+                                    ),
+
                                 height:
                                     Math.max(
-                                        altura,
-                                        item.height *
-                                        escala
+                                        0.018,
+                                        Math.min(
+                                            alturaReferencia /
+                                                viewport.height,
+                                            1
+                                        )
                                     ),
                             });
                         }
                     }
                 );
 
-                if (!cancelado) {
 
-                    setReferenciasOverlay(
-                        novosOverlays
+                /*
+                 * Renderiza primeiro em um canvas temporário.
+                 * O PDF.js não permite duas renderizações no
+                 * mesmo canvas ao mesmo tempo; fullscreen e
+                 * rotação podem disparar vários resizes.
+                 */
+                const canvasTemporario =
+                    document.createElement(
+                        "canvas"
                     );
-
-                    setTextosPdfOverlay(
-                        novosTextosPdf
-                    );
-                }
 
                 const pixelRatio =
-                    window.devicePixelRatio || 1;
-
-                canvas.width =
-                    Math.floor(
-                        viewport.width *
-                        pixelRatio
+                    Math.min(
+                        window.devicePixelRatio ||
+                            1,
+                        2
                     );
 
-                canvas.height =
-                    Math.floor(
-                        viewport.height *
-                        pixelRatio
+                canvasTemporario.width =
+                    Math.max(
+                        1,
+                        Math.floor(
+                            viewport.width *
+                                pixelRatio
+                        )
                     );
 
-                canvas.style.width =
-                    `${Math.floor(
-                        viewport.width
-                    )}px`;
-
-                canvas.style.height =
-                    `${Math.floor(
-                        viewport.height
-                    )}px`;
-
-                const contexto =
-                    canvas.getContext(
-                        "2d"
+                canvasTemporario.height =
+                    Math.max(
+                        1,
+                        Math.floor(
+                            viewport.height *
+                                pixelRatio
+                        )
                     );
 
-                if (!contexto) {
+
+                const contextoTemporario =
+                    canvasTemporario
+                        .getContext(
+                            "2d"
+                        );
+
+                if (
+                    !contextoTemporario
+                ) {
                     throw new Error(
                         "Não foi possível preparar o visualizador."
                     );
                 }
 
+
                 tarefaRenderizacao =
                     pagina.render({
-                        canvas,
+                        canvas:
+                            canvasTemporario,
+
                         canvasContext:
-                            contexto,
+                            contextoTemporario,
+
                         viewport,
+
                         transform:
                             pixelRatio !== 1
                                 ? [
@@ -1997,73 +2148,217 @@ const pdf =
                                 : undefined,
                     });
 
+
                 await tarefaRenderizacao
                     .promise;
 
-            } catch (error) {
 
                 if (
-                    error instanceof Error &&
-                    error.name ===
-                    "RenderingCancelledException"
+                    !aindaEhRenderizacaoAtual()
                 ) {
                     return;
                 }
+
+
+                canvas.width =
+                    canvasTemporario.width;
+
+                canvas.height =
+                    canvasTemporario.height;
+
+                canvas.style.width =
+                    `${Math.floor(
+                        viewport.width
+                    )}px`;
+
+                canvas.style.height =
+                    `${Math.floor(
+                        viewport.height
+                    )}px`;
+
+
+                const contextoFinal =
+                    canvas.getContext(
+                        "2d"
+                    );
+
+                if (
+                    !contextoFinal
+                ) {
+                    throw new Error(
+                        "Não foi possível exibir a página renderizada."
+                    );
+                }
+
+
+                contextoFinal.setTransform(
+                    1,
+                    0,
+                    0,
+                    1,
+                    0,
+                    0
+                );
+
+                contextoFinal.clearRect(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+                contextoFinal.drawImage(
+                    canvasTemporario,
+                    0,
+                    0
+                );
+
+
+                setReferenciasOverlay(
+                    novosOverlays
+                );
+
+                setTextosPdfOverlay(
+                    novosTextosPdf
+                );
+
+                setErroRenderizacao(
+                    null
+                );
+
+
+            } catch (error) {
+
+                const cancelamento =
+                    error instanceof Error &&
+                    error.name ===
+                        "RenderingCancelledException";
+
+
+                if (
+                    cancelamento ||
+                    !aindaEhRenderizacaoAtual()
+                ) {
+                    return;
+                }
+
+
+                /*
+                 * Uma troca de orientação pode gerar um
+                 * estado intermediário de viewport. Fazemos
+                 * uma única nova tentativa antes de mostrar
+                 * qualquer erro ao usuário.
+                 */
+                if (
+                    tentativa === 0
+                ) {
+
+                    await new Promise<void>(
+                        (resolve) =>
+                            window.setTimeout(
+                                resolve,
+                                140
+                            )
+                    );
+
+                    if (
+                        aindaEhRenderizacaoAtual()
+                    ) {
+                        await renderizarPagina(
+                            1
+                        );
+                    }
+
+                    return;
+                }
+
 
                 console.error(
                     "[APRESENTAÇÃO] Erro ao renderizar página:",
                     error
                 );
 
-                setErro(
-                    "Não foi possível renderizar esta página."
+                setErroRenderizacao(
+                    "Não foi possível atualizar esta página. Toque em tentar novamente."
                 );
+
 
             } finally {
 
-                if (!cancelado) {
-                    setRenderizando(false);
+                if (
+                    aindaEhRenderizacaoAtual()
+                ) {
+                    setRenderizando(
+                        false
+                    );
                 }
             }
         }
 
+
         void renderizarPagina();
+
 
         return () => {
 
-            cancelado = true;
+            cancelado =
+                true;
 
-            if (tarefaRenderizacao) {
-                tarefaRenderizacao.cancel();
+            if (
+                renderizacaoIdRef.current ===
+                renderizacaoId
+            ) {
+                renderizacaoIdRef.current =
+                    renderizacaoId + 1;
+            }
+
+            if (
+                tarefaRenderizacao
+            ) {
+                tarefaRenderizacao
+                    .cancel();
             }
         };
 
     }, [
         documento,
         paginaAtual,
-        telaCheiaAtiva,
         versaoLayout,
     ]);
 
 
     useEffect(() => {
 
-        let frame = 0;
+        let timer:
+            number | null =
+            null;
+
 
         const atualizarLayout =
             () => {
 
-                window.cancelAnimationFrame(
-                    frame
-                );
+                if (
+                    timer !==
+                    null
+                ) {
+                    window.clearTimeout(
+                        timer
+                    );
+                }
 
-                frame =
-                    window.requestAnimationFrame(
-                        () =>
+                timer =
+                    window.setTimeout(
+                        () => {
+
                             setVersaoLayout(
                                 (versao) =>
                                     versao + 1
-                            )
+                            );
+
+                            timer =
+                                null;
+                        },
+                        220
                     );
             };
 
@@ -2088,9 +2383,14 @@ const pdf =
 
         return () => {
 
-            window.cancelAnimationFrame(
-                frame
-            );
+            if (
+                timer !==
+                null
+            ) {
+                window.clearTimeout(
+                    timer
+                );
+            }
 
             window.removeEventListener(
                 "resize",
@@ -2113,6 +2413,200 @@ const pdf =
     }, []);
 
 
+    function agendarEstabilizacaoLayout(
+        atraso = 280
+    ) {
+
+        if (
+            estabilizacaoLayoutTimerRef
+                .current !==
+            null
+        ) {
+            window.clearTimeout(
+                estabilizacaoLayoutTimerRef
+                    .current
+            );
+        }
+
+
+        estabilizacaoLayoutTimerRef
+            .current =
+            window.setTimeout(
+                () => {
+
+                    setVersaoLayout(
+                        (versao) =>
+                            versao + 1
+                    );
+
+                    estabilizacaoLayoutTimerRef
+                        .current =
+                        null;
+                },
+                atraso
+            );
+    }
+
+
+    function iniciarArrastoApresentacao(
+        event:
+            React.TouchEvent<HTMLElement>
+    ) {
+
+        if (
+            !telaCheiaAtiva ||
+            modoEdicao ||
+            referenciaSelecionada
+        ) {
+            gestoNavegacaoRef.current =
+                null;
+
+            return;
+        }
+
+
+        const toque =
+            event.touches[0];
+
+        if (!toque) {
+            return;
+        }
+
+
+        const alvo =
+            event.target instanceof
+                Element
+                ? event.target
+                : null;
+
+        const ignorar =
+            Boolean(
+                alvo?.closest(
+                    "button, a, input, textarea, select, [role='button']"
+                )
+            );
+
+
+        gestoNavegacaoRef.current = {
+            inicioX:
+                toque.clientX,
+
+            inicioY:
+                toque.clientY,
+
+            ignorar,
+        };
+    }
+
+
+    function finalizarArrastoApresentacao(
+        event:
+            React.TouchEvent<HTMLElement>
+    ) {
+
+        const gesto =
+            gestoNavegacaoRef.current;
+
+        gestoNavegacaoRef.current =
+            null;
+
+
+        if (
+            !gesto ||
+            gesto.ignorar ||
+            !telaCheiaAtiva ||
+            modoEdicao ||
+            referenciaSelecionada
+        ) {
+            return;
+        }
+
+
+        const toque =
+            event.changedTouches[0];
+
+        if (!toque) {
+            return;
+        }
+
+
+        const deltaX =
+            toque.clientX -
+            gesto.inicioX;
+
+        const deltaY =
+            toque.clientY -
+            gesto.inicioY;
+
+
+        const movimentoHorizontal =
+            Math.abs(
+                deltaX
+            ) >= 56 &&
+            Math.abs(
+                deltaX
+            ) >
+                Math.abs(
+                    deltaY
+                ) * 1.2;
+
+
+        if (
+            !movimentoHorizontal
+        ) {
+            return;
+        }
+
+
+        if (
+            deltaX < 0
+        ) {
+
+            setPaginaAtual(
+                (pagina) =>
+                    Math.min(
+                        totalPaginas,
+                        pagina + 1
+                    )
+            );
+
+            return;
+        }
+
+
+        setPaginaAtual(
+            (pagina) =>
+                Math.max(
+                    1,
+                    pagina - 1
+                )
+        );
+    }
+
+
+    useEffect(
+        () => {
+
+            return () => {
+
+                if (
+                    estabilizacaoLayoutTimerRef
+                        .current !==
+                    null
+                ) {
+
+                    window.clearTimeout(
+                        estabilizacaoLayoutTimerRef
+                            .current
+                    );
+                }
+            };
+
+        },
+        []
+    );
+
+
     useEffect(() => {
 
         function aoAlterarTelaCheia() {
@@ -2125,9 +2619,15 @@ const pdf =
                 ativa
             );
 
-            setVersaoLayout(
-                (versao) =>
-                    versao + 1
+            /*
+             * Android passa por dimensões intermediárias
+             * ao entrar/sair do fullscreen e ao liberar
+             * a orientação. Esperamos o layout parar.
+             */
+            agendarEstabilizacaoLayout(
+                ativa
+                    ? 260
+                    : 380
             );
 
 
@@ -2220,18 +2720,76 @@ const pdf =
             }
 
 
-            setVersaoLayout(
-                (versao) =>
-                    versao + 1
-            );
-
         } catch (error) {
 
             console.error(
                 "[APRESENTAÇÃO] Não foi possível alternar tela cheia:",
                 error
             );
+
+            agendarEstabilizacaoLayout(
+                120
+            );
         }
+    }
+
+
+    async function sairDaApresentacao() {
+
+        try {
+
+            if (
+                document.fullscreenElement
+            ) {
+                await document
+                    .exitFullscreen();
+            }
+
+        } catch (error) {
+
+            console.info(
+                "[APRESENTAÇÃO] Não foi possível sair do fullscreen antes de voltar:",
+                error
+            );
+        }
+
+
+        const orientacao =
+            screen.orientation as unknown as {
+                unlock?: () => void;
+            };
+
+        try {
+            orientacao.unlock?.();
+        } catch {
+            // Sem suporte neste navegador.
+        }
+
+
+        /*
+         * Volta exatamente para a tela que abriu
+         * a apresentação. Se a rota foi aberta
+         * diretamente, usa Minhas Aulas como fallback.
+         */
+        if (
+            location.key !==
+            "default"
+        ) {
+            navigate(
+                -1
+            );
+
+            return;
+        }
+
+
+        navigate(
+            "/minhas-aulas",
+            {
+                replace:
+                    true,
+            }
+        );
     }
 
 
@@ -2271,13 +2829,11 @@ const pdf =
                     <button
                         type="button"
                         onClick={() =>
-                            navigate(
-                                "/minhas-aulas"
-                            )
+                            void sairDaApresentacao()
                         }
                         className="mt-5 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
                     >
-                        Voltar para minhas aulas
+                        Voltar
                     </button>
 
                 </div>
@@ -2311,9 +2867,7 @@ const pdf =
                 <button
                     type="button"
                     onClick={() =>
-                        navigate(
-                            "/minhas-aulas"
-                        )
+                        void sairDaApresentacao()
                     }
                     className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
                 >
@@ -2327,22 +2881,41 @@ const pdf =
                 <div
                     className={
                         telaCheiaAtiva
-                            ? "pointer-events-none min-w-0 text-center opacity-0"
+                            ? "pointer-events-none min-w-0 flex-1"
                             : "min-w-0 text-center"
                     }
                 >
 
-                    <p className="text-sm font-semibold">
-                        Apresentação
-                    </p>
+                    {!telaCheiaAtiva && (
 
-                    <p className="text-sm font-semibold">
-                        {modoAula
-                            ? "Ver aula"
-                            : "Apresentação"}
-                    </p>
+                        <>
+
+                            <p className="text-sm font-semibold">
+                                Apresentação
+                            </p>
+
+                            <p className="text-sm font-semibold">
+                                {modoAula
+                                    ? "Ver aula"
+                                    : "Apresentação"}
+                            </p>
+
+                        </>
+
+                    )}
 
                 </div>
+
+
+                {telaCheiaAtiva && (
+
+                    <span className="pointer-events-none absolute right-12 top-2 z-50 rounded-md bg-black/30 px-2 py-1 text-[10px] font-semibold text-white/70 backdrop-blur">
+                        {paginaAtual}
+                        {" / "}
+                        {totalPaginas}
+                    </span>
+
+                )}
 
                 <button
                     type="button"
@@ -2643,9 +3216,19 @@ const pdf =
 
             <main
                 ref={containerRef}
+                onTouchStart={
+                    iniciarArrastoApresentacao
+                }
+                onTouchEnd={
+                    finalizarArrastoApresentacao
+                }
+                onTouchCancel={() =>
+                    gestoNavegacaoRef.current =
+                        null
+                }
                 className={
                     telaCheiaAtiva
-                        ? "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-0"
+                        ? "relative flex min-h-0 flex-1 touch-pan-y items-center justify-center overflow-hidden p-0"
                         : "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4"
                 }
             >
@@ -2714,19 +3297,25 @@ const pdf =
                                 aria-label={
                                     `Abrir ${referencia.rotulo}`
                                 }
-                                className="absolute z-10 cursor-pointer rounded border border-blue-400/70 bg-blue-400/15 transition hover:bg-blue-400/30"
+                                className="absolute z-30 cursor-pointer touch-manipulation rounded border border-blue-300/80 bg-blue-400/20 transition active:bg-blue-400/40 hover:bg-blue-400/30"
                                 style={{
                                     left:
-                                        referencia.left,
+                                        `${referencia.left * 100}%`,
+
                                     top:
-                                        referencia.top,
+                                        `${referencia.top * 100}%`,
+
                                     width:
-                                        referencia.width,
+                                        `${referencia.width * 100}%`,
+
                                     height:
-                                        Math.max(
-                                            referencia.height,
-                                            18
-                                        ),
+                                        `${referencia.height * 100}%`,
+
+                                    minWidth:
+                                        "28px",
+
+                                    minHeight:
+                                        "28px",
                                 }}
                             />
                         )
@@ -2905,16 +3494,48 @@ const pdf =
                 </div>
 
                 {renderizando && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-slate-950/20">
+                    <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center bg-slate-950/20">
                         <Loader2 className="h-8 w-8 animate-spin text-white" />
                     </div>
+                )}
+
+
+                {erroRenderizacao &&
+                    !renderizando && (
+
+                    <div className="absolute bottom-3 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-xl bg-red-600/95 px-3 py-2 text-xs font-semibold text-white shadow-xl">
+
+                        <span>
+                            {erroRenderizacao}
+                        </span>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+
+                                setErroRenderizacao(
+                                    null
+                                );
+
+                                setVersaoLayout(
+                                    (versao) =>
+                                        versao + 1
+                                );
+                            }}
+                            className="shrink-0 rounded-lg bg-white/15 px-2 py-1 text-white"
+                        >
+                            Tentar novamente
+                        </button>
+
+                    </div>
+
                 )}
 
             </main>
 
             {referenciaSelecionada && (
                 <div
-                    className="absolute inset-0 z-50 flex items-center justify-center bg-black/75 p-3 sm:p-6"
+                    className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-2 sm:p-6"
                     onClick={() =>
                         setReferenciaSelecionada(null)
                     }
@@ -3088,70 +3709,76 @@ const pdf =
             )}
 
 
-            <footer
-                className={
-                    telaCheiaAtiva
-                        ? "absolute inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8"
-                        : "flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5"
-                }
-            >
+            {!telaCheiaAtiva && (
 
-                <button
-                    type="button"
-                    disabled={
-                        paginaAtual <= 1
-                    }
-                    onClick={() =>
-                        setPaginaAtual(
-                            (pagina) =>
-                                Math.max(
-                                    1,
-                                    pagina - 1
-                                )
-                        )
-                    }
-                    className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-30"
+                <footer
+                    className={[
+                        "flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5",
+                        pessoa?.perfil &&
+                        pessoa.perfil !== "ADMIN"
+                            ? "mb-[4.75rem] md:mb-0"
+                            : "",
+                    ].join(" ")}
                 >
-                    <ChevronLeft className="h-5 w-5" />
 
-                    <span className="hidden sm:inline">
-                        Anterior
-                    </span>
-                </button>
+                    <button
+                        type="button"
+                        disabled={
+                            paginaAtual <= 1
+                        }
+                        onClick={() =>
+                            setPaginaAtual(
+                                (pagina) =>
+                                    Math.max(
+                                        1,
+                                        pagina - 1
+                                    )
+                            )
+                        }
+                        className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+
+                        <span className="hidden sm:inline">
+                            Anterior
+                        </span>
+                    </button>
 
 
-                <div className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold">
-                    {paginaAtual}
-                    {" / "}
-                    {totalPaginas}
-                </div>
+                    <div className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold">
+                        {paginaAtual}
+                        {" / "}
+                        {totalPaginas}
+                    </div>
 
 
-                <button
-                    type="button"
-                    disabled={
-                        paginaAtual >=
-                        totalPaginas
-                    }
-                    onClick={() =>
-                        setPaginaAtual(
-                            (pagina) =>
-                                Math.min(
-                                    totalPaginas,
-                                    pagina + 1
-                                )
-                        )
-                    }
-                    className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
-                >
-                    <span className="hidden sm:inline">
-                        Próximo
-                    </span>
+                    <button
+                        type="button"
+                        disabled={
+                            paginaAtual >=
+                            totalPaginas
+                        }
+                        onClick={() =>
+                            setPaginaAtual(
+                                (pagina) =>
+                                    Math.min(
+                                        totalPaginas,
+                                        pagina + 1
+                                    )
+                            )
+                        }
+                        className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                        <span className="hidden sm:inline">
+                            Próximo
+                        </span>
 
-                    <ChevronRight className="h-5 w-5" />
-                </button>
+                        <ChevronRight className="h-5 w-5" />
+                    </button>
 
-            </footer>
+                </footer>
+
+            )}
 
         </div>
     );
