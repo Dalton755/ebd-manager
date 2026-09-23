@@ -1367,7 +1367,7 @@ export function ClassLessonsPage() {
 
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
 
-                <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                     <div className="flex items-start gap-4">
 
@@ -1718,7 +1718,7 @@ export function ClassLessonsPage() {
 
                     <div className="max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
 
-                        <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
 
                             <div>
 
@@ -2064,7 +2064,7 @@ export function ClassLessonsPage() {
                         </div>
 
 
-                        <div className="space-y-4 p-6">
+                        <div className="space-y-4 p-4 sm:p-6">
 
                             {aulaSelecionada.imagem_path && (
 

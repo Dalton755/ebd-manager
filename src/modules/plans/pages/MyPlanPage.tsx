@@ -828,7 +828,7 @@ export function MyPlanPage() {
 
     return (
 
-        <div className="mx-auto w-full max-w-7xl space-y-6 p-3 sm:p-6">
+        <div className="mx-auto w-full max-w-7xl space-y-4 sm:space-y-6 p-3 sm:p-6">
 
             <PageHeader
                 title="Meu Plano"

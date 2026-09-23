@@ -187,7 +187,7 @@ export function UserApprovalPage() {
     return (
         <>
             <div className="mx-auto w-full max-w-5xl">
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                     <h1 className="text-2xl font-bold text-slate-800">
                         Aprovação de usuários
                     </h1>
@@ -197,7 +197,7 @@ export function UserApprovalPage() {
                     </p>
                 </div>
 
-                <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 p-5">
+                <div className="mb-4 rounded-2xl sm:mb-6 border border-blue-200 bg-blue-50 p-4 sm:p-5">
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
                         <div className="flex gap-3">
@@ -240,7 +240,7 @@ export function UserApprovalPage() {
                 </div>
 
                 {!recursoLiberado && (
-                    <div className="mb-6 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-5">
+                    <div className="mb-6 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
                         <AlertTriangle
                             size={21}
                             className="mt-0.5 shrink-0 text-amber-600"

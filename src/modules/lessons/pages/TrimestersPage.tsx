@@ -758,7 +758,7 @@ export function TrimestersPage() {
 
                                     <div className="p-4 sm:p-6">
 
-                                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                                        <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
 
                                             {classes.map(
                                                 (classe) => (

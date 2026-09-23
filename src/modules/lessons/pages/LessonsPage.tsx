@@ -1029,8 +1029,8 @@ export function LessonsPage() {
             <div
                 className={
                     podeGerenciarAulas
-                        ? "grid gap-6 lg:grid-cols-[380px_1fr]"
-                        : "grid gap-6"
+                        ? "grid gap-4 sm:gap-6 lg:grid-cols-[380px_1fr]"
+                        : "grid gap-4 sm:gap-6"
                 }
             >
 
