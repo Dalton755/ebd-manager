@@ -15,7 +15,6 @@ import {
 
 import {
     Link,
-    useNavigate,
 } from "react-router-dom";
 
 import {
@@ -32,9 +31,6 @@ import {
 
 
 export function DemoRegistrationPage() {
-
-    const navigate =
-        useNavigate();
 
     const [nome, setNome] =
         useState("");
