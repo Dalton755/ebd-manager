@@ -3712,11 +3712,13 @@ const pdf =
             {!telaCheiaAtiva && (
 
                 <footer
-                    className={
-                        telaCheiaAtiva
-                            ? "absolute inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8"
-                            : "flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5"
-                    }
+                    className={[
+                        "flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5",
+                        pessoa?.perfil &&
+                        pessoa.perfil !== "ADMIN"
+                            ? "mb-[4.75rem] md:mb-0"
+                            : "",
+                    ].join(" ")}
                 >
 
                     <button

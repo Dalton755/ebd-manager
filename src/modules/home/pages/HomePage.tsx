@@ -37,6 +37,34 @@ function formatarData(data: string) {
     );
 }
 
+
+function obterDataHojeLocal() {
+
+    const hoje =
+        new Date();
+
+    const ano =
+        hoje.getFullYear();
+
+    const mes =
+        String(
+            hoje.getMonth() + 1
+        ).padStart(
+            2,
+            "0"
+        );
+
+    const dia =
+        String(
+            hoje.getDate()
+        ).padStart(
+            2,
+            "0"
+        );
+
+    return `${ano}-${mes}-${dia}`;
+}
+
 export function HomePage() {
 
     const {
@@ -64,6 +92,21 @@ export function HomePage() {
 
     const ehProfessor =
         pessoa?.perfil === "PROFESSOR";
+
+    const ehAdmin =
+        pessoa?.perfil === "ADMIN";
+
+    const ehDiaDaAula =
+        proximaAula?.data ===
+        obterDataHojeLocal();
+
+    const priorizarApresentacaoHoje =
+        Boolean(
+            proximaAula &&
+            !ehAdmin &&
+            ehDiaDaAula &&
+            proximaAula.tem_apresentacao
+        );
 
     useEffect(() => {
 
@@ -353,7 +396,23 @@ export function HomePage() {
 
                     <div className="flex flex-wrap gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
 
-                        {proximaAula.apresentacao_publicada ? (
+                        {priorizarApresentacaoHoje ? (
+
+                            <Link
+                                to={
+                                    `/minhas-aulas/${proximaAula.id}/apresentacao?modo=aula`
+                                }
+                                className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                            >
+                                <BookOpen
+                                    className="h-4 w-4"
+                                />
+
+                                Ver apresentação
+
+                            </Link>
+
+                        ) : proximaAula.apresentacao_publicada ? (
 
                             <Link
                                 to={

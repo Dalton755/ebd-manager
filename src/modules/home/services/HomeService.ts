@@ -9,6 +9,7 @@ export type ProximaAulaHome = {
     link_drive: string | null;
     professor: string | null;
     apresentacao_publicada: boolean;
+    tem_apresentacao: boolean;
 };
 
 export type AulaEscalaHome = {
@@ -147,7 +148,7 @@ export class HomeService {
                 .schema("ebd")
                 .from("apresentacoes_aula")
                 .select(
-                    "versao_publicada_id"
+                    "id, versao_publicada_id"
                 )
                 .eq(
                     "aula_id",
@@ -165,6 +166,11 @@ export class HomeService {
             Boolean(
                 apresentacao
                     ?.versao_publicada_id
+            );
+
+        const temApresentacao =
+            Boolean(
+                apresentacao?.id
             );
 
 
@@ -202,6 +208,9 @@ export class HomeService {
 
             apresentacao_publicada:
                 apresentacaoPublicada,
+
+            tem_apresentacao:
+                temApresentacao,
         };
     }
 
