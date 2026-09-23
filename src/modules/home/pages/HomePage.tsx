@@ -15,6 +15,10 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { HomeService } from "../services/HomeService";
 
+import {
+    LessonImage,
+} from "@/modules/lessons/components/LessonImage";
+
 import type {
     ProximaAulaHome,
     AulaEscalaHome,
@@ -318,6 +322,23 @@ export function HomePage() {
                         </div>
 
                     </div>
+
+
+                    {proximaAula.imagem_path && (
+
+                        <div className="px-4 pt-4 sm:px-6">
+
+                            <LessonImage
+                                aula={
+                                    proximaAula
+                                }
+                                downloadable
+                                className="aspect-video rounded-2xl"
+                            />
+
+                        </div>
+
+                    )}
 
 
                     <div className="grid gap-6 p-6 md:grid-cols-3">
@@ -698,7 +719,20 @@ export function HomePage() {
                                             className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"
                                         >
 
-                                            <div>
+                                            {aula.imagem_path && (
+
+                                                <LessonImage
+                                                    aula={
+                                                        aula
+                                                    }
+                                                    downloadable
+                                                    className="aspect-video w-full rounded-xl md:w-36 md:shrink-0"
+                                                />
+
+                                            )}
+
+
+                                            <div className="min-w-0 flex-1">
 
                                                 <div className="flex items-center gap-2">
 

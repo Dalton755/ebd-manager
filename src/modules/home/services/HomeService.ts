@@ -7,6 +7,11 @@ export type ProximaAulaHome = {
     data: string;
     horario: string;
     link_drive: string | null;
+    imagem_path: string | null;
+    imagem_nome: string | null;
+    imagem_posicao_x: number;
+    imagem_posicao_y: number;
+    imagem_zoom: number;
     professor: string | null;
     apresentacao_publicada: boolean;
     tem_apresentacao: boolean;
@@ -19,6 +24,11 @@ export type AulaEscalaHome = {
     data: string;
     horario: string;
     link_drive: string | null;
+    imagem_path: string | null;
+    imagem_nome: string | null;
+    imagem_posicao_x: number;
+    imagem_posicao_y: number;
+    imagem_zoom: number;
 };
 
 export type FrequenciaHome = {
@@ -61,6 +71,11 @@ export class HomeService {
                 hora_inicio,
                 hora_fim,
                 link_drive,
+                imagem_path,
+                imagem_nome,
+                imagem_posicao_x,
+                imagem_posicao_y,
+                imagem_zoom,
                 classe_id,
 
                 professor:pessoas!aulas_professor_id_fkey (
@@ -202,6 +217,24 @@ export class HomeService {
             link_drive:
                 data.link_drive,
 
+            imagem_path:
+                data.imagem_path,
+
+            imagem_nome:
+                data.imagem_nome,
+
+            imagem_posicao_x:
+                data.imagem_posicao_x ?? 50,
+
+            imagem_posicao_y:
+                data.imagem_posicao_y ?? 50,
+
+            imagem_zoom:
+                Number(
+                    data.imagem_zoom ??
+                    1
+                ),
+
             professor:
                 professor?.nome ??
                 null,
@@ -243,6 +276,11 @@ export class HomeService {
                     hora_inicio,
                     hora_fim,
                     link_drive,
+                    imagem_path,
+                    imagem_nome,
+                    imagem_posicao_x,
+                    imagem_posicao_y,
+                    imagem_zoom,
                     trimestre:trimestres!aulas_trimestre_id_fkey (
                         ativo
                     )
@@ -281,6 +319,24 @@ export class HomeService {
                         : "Horário não definido",
                 link_drive:
                     aula.link_drive,
+
+                imagem_path:
+                    aula.imagem_path,
+
+                imagem_nome:
+                    aula.imagem_nome,
+
+                imagem_posicao_x:
+                    aula.imagem_posicao_x ?? 50,
+
+                imagem_posicao_y:
+                    aula.imagem_posicao_y ?? 50,
+
+                imagem_zoom:
+                    Number(
+                        aula.imagem_zoom ??
+                        1
+                    ),
             })
         );
     }
