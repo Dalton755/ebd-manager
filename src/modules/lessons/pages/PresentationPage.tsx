@@ -197,6 +197,20 @@ export function PresentationPage() {
             null
         );
 
+    const gestoNavegacaoRef =
+        useRef<{
+            inicioX: number;
+            inicioY: number;
+            ignorar: boolean;
+        } | null>(
+            null
+        );
+
+    const estabilizacaoLayoutTimerRef =
+        useRef<number | null>(
+            null
+        );
+
     /*
      * Cada nova renderização recebe um ID.
      * Isso evita que uma renderização antiga
@@ -2309,7 +2323,6 @@ const pdf =
     }, [
         documento,
         paginaAtual,
-        telaCheiaAtiva,
         versaoLayout,
     ]);
 
@@ -2345,7 +2358,7 @@ const pdf =
                             timer =
                                 null;
                         },
-                        90
+                        220
                     );
             };
 
@@ -2400,6 +2413,200 @@ const pdf =
     }, []);
 
 
+    function agendarEstabilizacaoLayout(
+        atraso = 280
+    ) {
+
+        if (
+            estabilizacaoLayoutTimerRef
+                .current !==
+            null
+        ) {
+            window.clearTimeout(
+                estabilizacaoLayoutTimerRef
+                    .current
+            );
+        }
+
+
+        estabilizacaoLayoutTimerRef
+            .current =
+            window.setTimeout(
+                () => {
+
+                    setVersaoLayout(
+                        (versao) =>
+                            versao + 1
+                    );
+
+                    estabilizacaoLayoutTimerRef
+                        .current =
+                        null;
+                },
+                atraso
+            );
+    }
+
+
+    function iniciarArrastoApresentacao(
+        event:
+            React.TouchEvent<HTMLElement>
+    ) {
+
+        if (
+            !telaCheiaAtiva ||
+            modoEdicao ||
+            referenciaSelecionada
+        ) {
+            gestoNavegacaoRef.current =
+                null;
+
+            return;
+        }
+
+
+        const toque =
+            event.touches[0];
+
+        if (!toque) {
+            return;
+        }
+
+
+        const alvo =
+            event.target instanceof
+                Element
+                ? event.target
+                : null;
+
+        const ignorar =
+            Boolean(
+                alvo?.closest(
+                    "button, a, input, textarea, select, [role='button']"
+                )
+            );
+
+
+        gestoNavegacaoRef.current = {
+            inicioX:
+                toque.clientX,
+
+            inicioY:
+                toque.clientY,
+
+            ignorar,
+        };
+    }
+
+
+    function finalizarArrastoApresentacao(
+        event:
+            React.TouchEvent<HTMLElement>
+    ) {
+
+        const gesto =
+            gestoNavegacaoRef.current;
+
+        gestoNavegacaoRef.current =
+            null;
+
+
+        if (
+            !gesto ||
+            gesto.ignorar ||
+            !telaCheiaAtiva ||
+            modoEdicao ||
+            referenciaSelecionada
+        ) {
+            return;
+        }
+
+
+        const toque =
+            event.changedTouches[0];
+
+        if (!toque) {
+            return;
+        }
+
+
+        const deltaX =
+            toque.clientX -
+            gesto.inicioX;
+
+        const deltaY =
+            toque.clientY -
+            gesto.inicioY;
+
+
+        const movimentoHorizontal =
+            Math.abs(
+                deltaX
+            ) >= 56 &&
+            Math.abs(
+                deltaX
+            ) >
+                Math.abs(
+                    deltaY
+                ) * 1.2;
+
+
+        if (
+            !movimentoHorizontal
+        ) {
+            return;
+        }
+
+
+        if (
+            deltaX < 0
+        ) {
+
+            setPaginaAtual(
+                (pagina) =>
+                    Math.min(
+                        totalPaginas,
+                        pagina + 1
+                    )
+            );
+
+            return;
+        }
+
+
+        setPaginaAtual(
+            (pagina) =>
+                Math.max(
+                    1,
+                    pagina - 1
+                )
+        );
+    }
+
+
+    useEffect(
+        () => {
+
+            return () => {
+
+                if (
+                    estabilizacaoLayoutTimerRef
+                        .current !==
+                    null
+                ) {
+
+                    window.clearTimeout(
+                        estabilizacaoLayoutTimerRef
+                            .current
+                    );
+                }
+            };
+
+        },
+        []
+    );
+
+
     useEffect(() => {
 
         function aoAlterarTelaCheia() {
@@ -2410,6 +2617,17 @@ const pdf =
 
             setTelaCheiaAtiva(
                 ativa
+            );
+
+            /*
+             * Android passa por dimensões intermediárias
+             * ao entrar/sair do fullscreen e ao liberar
+             * a orientação. Esperamos o layout parar.
+             */
+            agendarEstabilizacaoLayout(
+                ativa
+                    ? 260
+                    : 380
             );
 
 
@@ -2507,6 +2725,10 @@ const pdf =
             console.error(
                 "[APRESENTAÇÃO] Não foi possível alternar tela cheia:",
                 error
+            );
+
+            agendarEstabilizacaoLayout(
+                120
             );
         }
     }
@@ -2607,13 +2829,11 @@ const pdf =
                     <button
                         type="button"
                         onClick={() =>
-                            navigate(
-                                "/minhas-aulas"
-                            )
+                            void sairDaApresentacao()
                         }
                         className="mt-5 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
                     >
-                        Voltar para minhas aulas
+                        Voltar
                     </button>
 
                 </div>
@@ -2661,20 +2881,36 @@ const pdf =
                 <div
                     className={
                         telaCheiaAtiva
-                            ? "pointer-events-none min-w-0 text-center opacity-0"
+                            ? "pointer-events-none min-w-0 text-center"
                             : "min-w-0 text-center"
                     }
                 >
 
-                    <p className="text-sm font-semibold">
-                        Apresentação
-                    </p>
+                    {telaCheiaAtiva ? (
 
-                    <p className="text-sm font-semibold">
-                        {modoAula
-                            ? "Ver aula"
-                            : "Apresentação"}
-                    </p>
+                        <span className="inline-flex rounded-full bg-black/35 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur">
+                            {paginaAtual}
+                            {" / "}
+                            {totalPaginas}
+                        </span>
+
+                    ) : (
+
+                        <>
+
+                            <p className="text-sm font-semibold">
+                                Apresentação
+                            </p>
+
+                            <p className="text-sm font-semibold">
+                                {modoAula
+                                    ? "Ver aula"
+                                    : "Apresentação"}
+                            </p>
+
+                        </>
+
+                    )}
 
                 </div>
 
@@ -2977,12 +3213,32 @@ const pdf =
 
             <main
                 ref={containerRef}
+                onTouchStart={
+                    iniciarArrastoApresentacao
+                }
+                onTouchEnd={
+                    finalizarArrastoApresentacao
+                }
+                onTouchCancel={() =>
+                    gestoNavegacaoRef.current =
+                        null
+                }
                 className={
                     telaCheiaAtiva
-                        ? "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-0"
+                        ? "relative flex min-h-0 flex-1 touch-pan-y items-center justify-center overflow-hidden p-0"
                         : "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4"
                 }
             >
+
+                {telaCheiaAtiva &&
+                    !referenciaSelecionada && (
+
+                    <div className="pointer-events-none absolute bottom-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/25 px-3 py-1 text-[10px] font-semibold text-white/60 backdrop-blur">
+                        Deslize para trocar de página
+                    </div>
+
+                )}
+
 
                 <div className="relative inline-block">
 
@@ -3460,70 +3716,74 @@ const pdf =
             )}
 
 
-            <footer
-                className={
-                    telaCheiaAtiva
-                        ? "absolute inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8"
-                        : "flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5"
-                }
-            >
+            {!telaCheiaAtiva && (
 
-                <button
-                    type="button"
-                    disabled={
-                        paginaAtual <= 1
+                <footer
+                    className={
+                        telaCheiaAtiva
+                            ? "absolute inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8"
+                            : "flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5"
                     }
-                    onClick={() =>
-                        setPaginaAtual(
-                            (pagina) =>
-                                Math.max(
-                                    1,
-                                    pagina - 1
-                                )
-                        )
-                    }
-                    className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-30"
                 >
-                    <ChevronLeft className="h-5 w-5" />
 
-                    <span className="hidden sm:inline">
-                        Anterior
-                    </span>
-                </button>
+                    <button
+                        type="button"
+                        disabled={
+                            paginaAtual <= 1
+                        }
+                        onClick={() =>
+                            setPaginaAtual(
+                                (pagina) =>
+                                    Math.max(
+                                        1,
+                                        pagina - 1
+                                    )
+                            )
+                        }
+                        className="flex items-center gap-2 rounded-xl bg-white/10 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+
+                        <span className="hidden sm:inline">
+                            Anterior
+                        </span>
+                    </button>
 
 
-                <div className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold">
-                    {paginaAtual}
-                    {" / "}
-                    {totalPaginas}
-                </div>
+                    <div className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold">
+                        {paginaAtual}
+                        {" / "}
+                        {totalPaginas}
+                    </div>
 
 
-                <button
-                    type="button"
-                    disabled={
-                        paginaAtual >=
-                        totalPaginas
-                    }
-                    onClick={() =>
-                        setPaginaAtual(
-                            (pagina) =>
-                                Math.min(
-                                    totalPaginas,
-                                    pagina + 1
-                                )
-                        )
-                    }
-                    className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
-                >
-                    <span className="hidden sm:inline">
-                        Próximo
-                    </span>
+                    <button
+                        type="button"
+                        disabled={
+                            paginaAtual >=
+                            totalPaginas
+                        }
+                        onClick={() =>
+                            setPaginaAtual(
+                                (pagina) =>
+                                    Math.min(
+                                        totalPaginas,
+                                        pagina + 1
+                                    )
+                            )
+                        }
+                        className="flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                        <span className="hidden sm:inline">
+                            Próximo
+                        </span>
 
-                    <ChevronRight className="h-5 w-5" />
-                </button>
+                        <ChevronRight className="h-5 w-5" />
+                    </button>
 
-            </footer>
+                </footer>
+
+            )}
 
         </div>
     );
