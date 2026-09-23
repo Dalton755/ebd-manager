@@ -331,7 +331,7 @@ export function MainLayout() {
                     </div>
 
                     {/* CONTEÚDO */}
-                    <div className="relative z-10 mx-auto w-full max-w-[1600px] p-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6">
+                    <div className="ebd-app-content relative z-10 mx-auto w-full max-w-[1600px] p-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6">
                         <Outlet />
                     </div>
 
