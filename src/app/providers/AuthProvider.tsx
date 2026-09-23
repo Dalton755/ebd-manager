@@ -63,6 +63,97 @@ type Props = {
 };
 
 
+const AUTH_VISUAL_CACHE_KEY =
+    "ebd_auth_visual_v1";
+
+const AUTH_VISUAL_CACHE_TTL =
+    12 * 60 * 60 * 1000;
+
+type AuthVisualCache = {
+    userId: string;
+    pessoa: Pessoa;
+    igrejaId: string | null;
+    igrejaNome: string | null;
+    igrejaLogoUrl: string | null;
+    plano: PlanoCompleto | null;
+    isSuperAdmin: boolean;
+    senhaTemporaria: boolean;
+    assinaturaExpirada: boolean;
+    salvoEm: number;
+};
+
+function lerAuthVisualCache():
+    AuthVisualCache | null {
+
+    if (
+        typeof window ===
+        "undefined"
+    ) {
+        return null;
+    }
+
+    try {
+
+        const bruto =
+            window.sessionStorage
+                .getItem(
+                    AUTH_VISUAL_CACHE_KEY
+                );
+
+        if (!bruto) {
+            return null;
+        }
+
+        const cache =
+            JSON.parse(
+                bruto
+            ) as AuthVisualCache;
+
+        if (
+            !cache?.userId ||
+            !cache?.pessoa?.id ||
+            Date.now() -
+                cache.salvoEm >
+                AUTH_VISUAL_CACHE_TTL
+        ) {
+
+            window.sessionStorage
+                .removeItem(
+                    AUTH_VISUAL_CACHE_KEY
+                );
+
+            return null;
+        }
+
+        return cache;
+
+    } catch {
+
+        window.sessionStorage
+            .removeItem(
+                AUTH_VISUAL_CACHE_KEY
+            );
+
+        return null;
+    }
+}
+
+function limparAuthVisualCache() {
+
+    if (
+        typeof window ===
+        "undefined"
+    ) {
+        return;
+    }
+
+    window.sessionStorage
+        .removeItem(
+            AUTH_VISUAL_CACHE_KEY
+        );
+}
+
+
 // =========================================================
 // CALCULA A DATA DE EXPIRAÇÃO DO TESTE GRATUITO
 // =========================================================
@@ -287,11 +378,24 @@ export function AuthProvider({
     children,
 }: Props) {
 
+    /*
+     * Cache apenas visual, mantido na sessão da aba.
+     *
+     * Ele não substitui a autenticação nem as RLS.
+     * Serve somente para evitar que a interface suma
+     * quando o Android recria a aba do navegador.
+     */
+    const cacheInicial =
+        useRef(
+            lerAuthVisualCache()
+        ).current;
+
     const [user, setUser] =
         useState<User | null>(null);
 
     const usuarioAutenticadoRef =
         useRef<string | null>(
+            cacheInicial?.userId ??
             null
         );
 
@@ -302,30 +406,54 @@ export function AuthProvider({
         useState(true);
 
     const [pessoa, setPessoa] =
-        useState<Pessoa | null>(null);
+        useState<Pessoa | null>(
+            cacheInicial?.pessoa ??
+            null
+        );
 
     const [igrejaId, setIgrejaId] =
-        useState<string | null>(null);
+        useState<string | null>(
+            cacheInicial?.igrejaId ??
+            null
+        );
 
     const [igrejaNome, setIgrejaNome] =
-        useState<string | null>(null);
+        useState<string | null>(
+            cacheInicial?.igrejaNome ??
+            null
+        );
 
     const [igrejaLogoUrl, setIgrejaLogoUrl] =
-        useState<string | null>(null);
+        useState<string | null>(
+            cacheInicial?.igrejaLogoUrl ??
+            null
+        );
 
     const [senhaTemporaria, setSenhaTemporaria] =
-        useState(false);
+        useState(
+            cacheInicial?.senhaTemporaria ??
+            false
+        );
 
     const [plano, setPlano] =
-        useState<PlanoCompleto | null>(null);
+        useState<PlanoCompleto | null>(
+            cacheInicial?.plano ??
+            null
+        );
 
     const [isSuperAdmin, setIsSuperAdmin] =
-        useState(false);
+        useState(
+            cacheInicial?.isSuperAdmin ??
+            false
+        );
 
     const [
         assinaturaExpirada,
         setAssinaturaExpirada,
-    ] = useState(false);
+    ] = useState(
+        cacheInicial?.assinaturaExpirada ??
+        false
+    );
 
 
     // =====================================================
@@ -514,10 +642,13 @@ export function AuthProvider({
     // =====================================================
 
     async function atualizarAutenticacao(
-        novaSession: Session | null
+        novaSession: Session | null,
+        silencioso = false
     ) {
 
-        setLoading(true);
+        if (!silencioso) {
+            setLoading(true);
+        }
 
         setSession(
             novaSession
@@ -584,6 +715,8 @@ export function AuthProvider({
         // =================================================
 
         if (!usuario) {
+
+            limparAuthVisualCache();
 
             setPessoa(null);
 
@@ -886,8 +1019,35 @@ export function AuthProvider({
             }
 
 
+            const cacheEhDoMesmoUsuario =
+                Boolean(
+                    session?.user?.id &&
+                    cacheInicial?.userId ===
+                        session.user.id
+                );
+
+
+            if (
+                cacheInicial &&
+                !cacheEhDoMesmoUsuario
+            ) {
+
+                limparAuthVisualCache();
+
+                setPessoa(null);
+                setIgrejaId(null);
+                setIgrejaNome(null);
+                setIgrejaLogoUrl(null);
+                setPlano(null);
+                setIsSuperAdmin(false);
+                setSenhaTemporaria(false);
+                setAssinaturaExpirada(false);
+            }
+
+
             await atualizarAutenticacao(
-                session
+                session,
+                cacheEhDoMesmoUsuario
             );
         }
 
@@ -914,6 +1074,20 @@ export function AuthProvider({
                         "Evento de autenticação:",
                         event
                     );
+
+
+                    /*
+                     * A sessão inicial já é tratada por
+                     * carregarUsuario(). Ignorar este evento
+                     * evita uma segunda validação completa e
+                     * uma piscada de "Verificando acesso".
+                     */
+                    if (
+                        event ===
+                        "INITIAL_SESSION"
+                    ) {
+                        return;
+                    }
 
 
                     /*
@@ -1008,6 +1182,8 @@ export function AuthProvider({
 
         await AuthService.logout();
 
+        limparAuthVisualCache();
+
 
         setSession(null);
 
@@ -1032,6 +1208,78 @@ export function AuthProvider({
 
         setIsSuperAdmin(false);
     }
+
+
+    /*
+     * Salva somente o estado visual necessário
+     * para reconstruir a interface sem tela branca
+     * caso o navegador descarregue a aba no mobile.
+     */
+    useEffect(() => {
+
+        if (
+            loading ||
+            !user?.id ||
+            !pessoa?.id
+        ) {
+            return;
+        }
+
+        const cache: AuthVisualCache = {
+            userId:
+                user.id,
+
+            pessoa,
+
+            igrejaId,
+
+            igrejaNome,
+
+            igrejaLogoUrl,
+
+            plano,
+
+            isSuperAdmin,
+
+            senhaTemporaria,
+
+            assinaturaExpirada,
+
+            salvoEm:
+                Date.now(),
+        };
+
+
+        try {
+
+            window.sessionStorage
+                .setItem(
+                    AUTH_VISUAL_CACHE_KEY,
+                    JSON.stringify(
+                        cache
+                    )
+                );
+
+        } catch {
+
+            /*
+             * Sem impacto funcional se o
+             * navegador bloquear o storage.
+             */
+        }
+
+    }, [
+        loading,
+        user?.id,
+        pessoa,
+        igrejaId,
+        igrejaNome,
+        igrejaLogoUrl,
+        plano,
+        isSuperAdmin,
+        senhaTemporaria,
+        assinaturaExpirada,
+    ]);
 
 
     // =====================================================

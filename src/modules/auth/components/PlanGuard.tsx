@@ -14,9 +14,16 @@ export function PlanGuard({
     children,
     fallback = null,
 }: Props) {
-    const { temRecurso, loading } = usePlan();
+    const {
+        temRecurso,
+        loading,
+        plano,
+    } = usePlan();
 
-    if (loading) {
+    if (
+        loading &&
+        !plano
+    ) {
         return null;
     }
 

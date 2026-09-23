@@ -7,6 +7,7 @@ import {
     BookOpen,
     CalendarDays,
     CheckCircle2,
+    Clock3,
     Loader2,
     Presentation,
     Upload,
@@ -24,6 +25,12 @@ import { PresentationService } from "../services/PresentationService";
 import type { Aula } from "../types/Aula";
 import type { ApresentacaoAula } from "../types/ApresentacaoAula";
 import type { Trimestre } from "../types/Trimestre";
+
+import {
+    obterAulaEmFoco,
+    obterEstadoAula,
+    ordenarAulasPorRelevancia,
+} from "../utils/lessonFocus";
 
 export function MinhasAulasPage() {
 
@@ -473,6 +480,47 @@ export function MinhasAulasPage() {
     }
 
 
+    function formatarHora(
+        hora?: string | null
+    ) {
+
+        return hora
+            ? hora.slice(
+                0,
+                5
+            )
+            : "";
+    }
+
+
+    const aulaEmFoco =
+        aulas.find(
+            (aula) =>
+                aula.id ===
+                aulaDestaqueId
+        ) ??
+        obterAulaEmFoco(
+            aulas
+        );
+
+    const estadoAulaEmFoco =
+        aulaEmFoco
+            ? obterEstadoAula(
+                aulaEmFoco
+            )
+            : null;
+
+    const aulasRestantes =
+        ordenarAulasPorRelevancia(
+            aulas
+        )
+            .filter(
+                (aula) =>
+                    aula.id !==
+                    aulaEmFoco?.id
+            );
+
+
     if (loading) {
 
         return (
@@ -511,7 +559,7 @@ export function MinhasAulasPage() {
 
     return (
 
-        <div className="space-y-6">
+        <div className="mx-auto w-full max-w-6xl space-y-4 sm:space-y-6">
 
             {/* CABEÇALHO */}
 
@@ -529,7 +577,7 @@ export function MinhasAulasPage() {
 
                     <div>
 
-                        <h1 className="text-2xl font-bold text-slate-800">
+                        <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">
                             Minhas aulas
                         </h1>
 
@@ -550,7 +598,7 @@ export function MinhasAulasPage() {
 
             {trimestre && (
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
@@ -667,21 +715,255 @@ export function MinhasAulasPage() {
             )}
 
 
+            {/* AULA EM FOCO */}
+
+            {aulaEmFoco &&
+                estadoAulaEmFoco && (
+
+                <section
+                    data-aula-id={
+                        aulaEmFoco.id
+                    }
+                    className={
+                        aulaEmFoco.id ===
+                            aulaDestaqueId
+                            ? "rounded-3xl border-2 border-emerald-400 bg-gradient-to-br from-emerald-600 to-emerald-700 p-4 text-white shadow-xl shadow-emerald-100 ring-4 ring-emerald-100 sm:p-5"
+                            : "rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-600 to-blue-700 p-4 text-white shadow-xl shadow-blue-100 sm:p-5"
+                    }
+                >
+
+                    <div className="flex items-center justify-between gap-3">
+
+                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wide">
+                            {estadoAulaEmFoco.rotulo}
+                        </span>
+
+                        <span className="text-xs font-semibold text-white/80">
+                            Aula {aulaEmFoco.numero}
+                        </span>
+
+                    </div>
+
+
+                    {aulaEmFoco.id ===
+                        aulaDestaqueId &&
+                        destacarMaterial && (
+
+                        <div className="mt-4 flex items-center gap-2 rounded-2xl bg-white/15 px-3 py-3 text-sm font-bold">
+
+                            <CheckCircle2
+                                className="h-5 w-5 shrink-0"
+                            />
+
+                            Presença registrada. Seu material está aqui.
+
+                        </div>
+
+                    )}
+
+
+                    <div className="mt-4">
+
+                        <h2 className="text-xl font-extrabold leading-snug sm:text-2xl">
+                            {aulaEmFoco.titulo}
+                        </h2>
+
+
+                        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-blue-50">
+
+                            <span className="inline-flex items-center gap-1.5">
+                                <CalendarDays className="h-4 w-4" />
+                                {formatarData(
+                                    aulaEmFoco.data
+                                )}
+                            </span>
+
+
+                            {(aulaEmFoco.hora_inicio ||
+                                aulaEmFoco.hora_fim) && (
+
+                                <span className="inline-flex items-center gap-1.5">
+
+                                    <Clock3 className="h-4 w-4" />
+
+                                    {formatarHora(
+                                        aulaEmFoco.hora_inicio
+                                    )}
+
+                                    {aulaEmFoco.hora_fim
+                                        ? ` às ${formatarHora(
+                                            aulaEmFoco.hora_fim
+                                        )}`
+                                        : ""}
+
+                                </span>
+
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="mt-5 grid gap-2 sm:flex sm:flex-wrap">
+
+                        {possuiRecursoApresentacoes &&
+                            apresentacoes[
+                                aulaEmFoco.id
+                            ] && (
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    navigate(
+                                        `/minhas-aulas/${aulaEmFoco.id}/apresentacao?modo=${podeEditarApresentacao ? "apresentacao" : "aula"}`
+                                    )
+                                }
+                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-extrabold text-blue-700 shadow-sm transition active:scale-[0.99]"
+                            >
+                                <Presentation className="h-4 w-4" />
+
+                                {podeEditarApresentacao
+                                    ? "Apresentar agora"
+                                    : "Abrir apresentação"}
+                            </button>
+
+                        )}
+
+
+                        {aulaEmFoco.link_drive && (
+
+                            <a
+                                href={
+                                    aulaEmFoco.link_drive
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-3 text-sm font-bold text-white transition active:scale-[0.99]"
+                            >
+                                <BookOpen className="h-4 w-4" />
+                                Material original
+                            </a>
+
+                        )}
+
+
+                        {possuiRecursoApresentacoes &&
+                            podeEditarApresentacao && (
+
+                            <label className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-4 py-3 text-sm font-bold text-white transition active:scale-[0.99]">
+
+                                {aulaEnviandoPdf ===
+                                    aulaEmFoco.id ? (
+
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+
+                                ) : (
+
+                                    <Upload className="h-4 w-4" />
+
+                                )}
+
+
+                                {aulaEnviandoPdf ===
+                                    aulaEmFoco.id
+                                    ? "Enviando..."
+                                    : apresentacoes[
+                                        aulaEmFoco.id
+                                    ]
+                                        ? "Substituir PDF"
+                                        : "Importar PDF"}
+
+
+                                <input
+                                    type="file"
+                                    accept="application/pdf,.pdf"
+                                    className="hidden"
+                                    disabled={
+                                        aulaEnviandoPdf ===
+                                        aulaEmFoco.id
+                                    }
+                                    onChange={async (
+                                        event
+                                    ) => {
+
+                                        const arquivo =
+                                            event.target
+                                                .files?.[0];
+
+                                        event.target.value =
+                                            "";
+
+                                        if (!arquivo) {
+                                            return;
+                                        }
+
+                                        await importarPdf(
+                                            aulaEmFoco,
+                                            arquivo
+                                        );
+                                    }}
+                                />
+
+                            </label>
+
+                        )}
+
+                    </div>
+
+
+                    {!aulaEmFoco.link_drive &&
+                        !apresentacoes[
+                            aulaEmFoco.id
+                        ] && (
+
+                        <p className="mt-4 rounded-xl bg-white/10 px-3 py-3 text-sm text-white/80">
+                            O material desta aula ainda não foi disponibilizado.
+                        </p>
+
+                    )}
+
+                </section>
+
+            )}
+
+
             {/* LISTA DE AULAS */}
 
-            {aulas.length > 0 && (
+            {aulasRestantes.length > 0 && (
 
-                <div className="space-y-4">
+                <div className="space-y-3">
 
-                    {aulas.map((aula) => (
+                    <div className="flex items-center justify-between px-1">
+
+                        <div>
+
+                            <h2 className="text-base font-bold text-slate-800">
+                                Outras aulas
+                            </h2>
+
+                            <p className="text-xs text-slate-500">
+                                Histórico e próximas aulas disponíveis
+                            </p>
+
+                        </div>
+
+                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">
+                            {aulasRestantes.length}
+                        </span>
+
+                    </div>
+
+
+                    {aulasRestantes.map((aula) => (
 
                         <div
                             key={aula.id}
                             data-aula-id={aula.id}
                             className={
                                 aula.id === aulaDestaqueId
-                                    ? "rounded-3xl border-2 border-emerald-400 bg-white p-5 shadow-lg ring-4 ring-emerald-100 transition sm:p-6"
-                                    : "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
+                                    ? "rounded-3xl border-2 border-emerald-400 bg-white p-4 shadow-lg ring-4 ring-emerald-100 transition sm:p-6"
+                                    : "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5"
                             }
                         >
 

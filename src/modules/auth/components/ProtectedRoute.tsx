@@ -22,15 +22,20 @@ export function ProtectedRoute({ children }: Props) {
     navigate("/login", { replace: true });
   }
 
-  if (loading) {
+  /*
+   * Quando existe um perfil visual em cache,
+   * mantemos a tela atual enquanto a sessão
+   * real é revalidada em segundo plano.
+   */
+  if (loading && !pessoa) {
     return (
-      <LoadingSpinner text="Verificando acesso..." />
+      <LoadingSpinner text="Abrindo EBD Manager..." />
     );
   }
 
-  if (!user) {
-  return <Navigate to="/login" replace />;
-}
+  if (!user && !loading) {
+    return <Navigate to="/login" replace />;
+  }
 
 if (!pessoa) {
   return (

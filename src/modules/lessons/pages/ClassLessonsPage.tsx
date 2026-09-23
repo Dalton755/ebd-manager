@@ -55,6 +55,12 @@ import { temPermissao } from "@/shared/auth/permissions";
 
 import { useFormDraft } from "@/shared/hooks/useFormDraft";
 
+import {
+    obterAulaEmFoco,
+    obterEstadoAula,
+    ordenarAulasPorRelevancia,
+} from "../utils/lessonFocus";
+
 
 function formatarData(
     data: string
@@ -1108,6 +1114,29 @@ export function ClassLessonsPage() {
     }
 
 
+    const aulaEmFoco =
+        obterAulaEmFoco(
+            aulas
+        );
+
+    const estadoAulaEmFoco =
+        aulaEmFoco
+            ? obterEstadoAula(
+                aulaEmFoco
+            )
+            : null;
+
+    const aulasRestantes =
+        ordenarAulasPorRelevancia(
+            aulas
+        )
+            .filter(
+                (aula) =>
+                    aula.id !==
+                    aulaEmFoco?.id
+            );
+
+
     if (loading) {
 
         return (
@@ -1143,11 +1172,11 @@ export function ClassLessonsPage() {
 
 
     return (
-        <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6">
+        <div className="mx-auto w-full max-w-7xl space-y-4 sm:space-y-6">
 
             {/* CABEÇALHO */}
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
 
                 <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
@@ -1171,7 +1200,7 @@ export function ClassLessonsPage() {
 
                             <div className="flex flex-wrap items-center gap-2">
 
-                                <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+                                <h1 className="text-xl font-bold text-slate-900 sm:text-3xl">
                                     {contexto.classe.classe_nome}
                                 </h1>
 
@@ -1225,6 +1254,81 @@ export function ClassLessonsPage() {
             </section>
 
 
+            {/* AULA EM FOCO */}
+
+            {aulaEmFoco && estadoAulaEmFoco && (
+
+                <button
+                    type="button"
+                    onClick={() =>
+                        setAulaSelecionada(
+                            aulaEmFoco
+                        )
+                    }
+                    className="w-full rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-600 to-blue-700 p-4 text-left text-white shadow-lg shadow-blue-100 transition active:scale-[0.99] sm:p-5"
+                >
+
+                    <div className="flex items-center justify-between gap-3">
+
+                        <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wide">
+                            {estadoAulaEmFoco.rotulo}
+                        </span>
+
+                        <span className="text-xs font-semibold text-blue-100">
+                            Toque para abrir
+                        </span>
+
+                    </div>
+
+
+                    <div className="mt-4 flex items-start gap-3">
+
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15 text-lg font-extrabold">
+                            {aulaEmFoco.numero}
+                        </div>
+
+
+                        <div className="min-w-0">
+
+                            <p className="text-xs font-semibold uppercase tracking-wide text-blue-100">
+                                Aula {aulaEmFoco.numero}
+                            </p>
+
+                            <h2 className="mt-1 text-lg font-bold leading-snug">
+                                {aulaEmFoco.titulo}
+                            </h2>
+
+                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-sm text-blue-50">
+
+                                <span className="inline-flex items-center gap-1.5">
+                                    <CalendarDays size={15} />
+                                    {formatarData(
+                                        aulaEmFoco.data
+                                    )}
+                                </span>
+
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Clock3 size={15} />
+                                    {formatarHora(
+                                        aulaEmFoco.hora_inicio
+                                    )}
+                                    {" às "}
+                                    {formatarHora(
+                                        aulaEmFoco.hora_fim
+                                    )}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </button>
+
+            )}
+
+
             {/* LISTA */}
 
             <section>
@@ -1239,10 +1343,10 @@ export function ClassLessonsPage() {
 
                         <p className="text-sm text-slate-500">
 
-                            {aulas.length}{" "}
-                            {aulas.length === 1
-                                ? "aula cadastrada"
-                                : "aulas cadastradas"}
+                            {aulasRestantes.length}{" "}
+                            {aulasRestantes.length === 1
+                                ? "outra aula"
+                                : "outras aulas"}
 
                         </p>
 
@@ -1267,11 +1371,17 @@ export function ClassLessonsPage() {
 
                     </div>
 
+                ) : aulasRestantes.length === 0 ? (
+
+                    <div className="rounded-2xl border border-blue-100 bg-blue-50/60 px-4 py-5 text-center text-sm text-blue-700">
+                        A aula em destaque acima é a única aula disponível nesta classe.
+                    </div>
+
                 ) : (
 
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
 
-                        {aulas.map(
+                        {aulasRestantes.map(
                             (
                                 aula
                             ) => (
@@ -1284,7 +1394,7 @@ export function ClassLessonsPage() {
                                             aula
                                         )
                                     }
-                                    className="group rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                                    className="group rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.99] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md sm:p-5"
                                 >
 
                                     <div className="flex items-start justify-between gap-4">
