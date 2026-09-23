@@ -151,12 +151,13 @@ export function DemoRegistrationPage() {
             );
 
 
-            navigate(
-                "/",
-                {
-                    replace:
-                        true,
-                }
+            /*
+             * Recarrega uma única vez para que o AuthProvider
+             * reconstrua a sessão já com a igreja demo criada,
+             * sem corrida entre o evento SIGNED_IN e a rota.
+             */
+            window.location.assign(
+                "/"
             );
 
 
