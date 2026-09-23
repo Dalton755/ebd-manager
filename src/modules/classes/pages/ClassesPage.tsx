@@ -36,6 +36,12 @@ export function ClassesPage() {
             "GERENCIAR_CLASSES"
         );
 
+    const mostrarCodigoAcesso =
+        pessoa?.perfil === "ADMIN" ||
+        pessoa?.perfil === "SUPERINTENDENTE" ||
+        pessoa?.perfil === "SECRETARIO" ||
+        pessoa?.perfil === "PROFESSOR";
+
     const listarClasses = useCallback(() => {
 
         if (!pessoa?.igreja_id) {
@@ -216,6 +222,7 @@ export function ClassesPage() {
                         <ClassTable
                             classes={classesFiltradas}
                             podeGerenciar={podeGerenciar}
+                            mostrarCodigoAcesso={mostrarCodigoAcesso}
                             onEditar={abrirEdicao}
                             onInativar={abrirInativacao}
                             onGerenciarAlunos={gerenciarAlunos}

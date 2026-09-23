@@ -57,6 +57,7 @@ import { AdhesionPage } from "@/modules/demo/pages/AdhesionPage";
 import { TermsOfUsePage } from "@/modules/legal/pages/TermsOfUsePage";
 import { PrivacyPolicyPage } from "@/modules/legal/pages/PrivacyPolicyPage";
 import { LgpdPage } from "@/modules/legal/pages/LgpdPage";
+import { JoinClassPage } from "@/modules/class-access/pages/JoinClassPage";
 
 
 function RotaInicial() {
@@ -311,6 +312,11 @@ export const router = createBrowserRouter([
     {
         path: "/login",
         element: <LoginPage />,
+    },
+
+    {
+        path: "/entrar-classe",
+        element: <JoinClassPage />,
     },
 
     {
