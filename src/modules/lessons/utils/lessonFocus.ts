@@ -56,10 +56,12 @@ function dataHoraAula(
     );
 }
 
-export function obterAulaEmFoco(
-    aulas: Aula[],
+export function obterAulaEmFoco<
+    T extends Aula
+>(
+    aulas: T[],
     agora = new Date()
-): Aula | null {
+): T | null {
 
     const disponiveis =
         aulas.filter(
@@ -181,8 +183,10 @@ export function obterAulaEmFoco(
         )[0];
 }
 
-export function obterEstadoAula(
-    aula: Aula,
+export function obterEstadoAula<
+    T extends Aula
+>(
+    aula: T,
     agora = new Date()
 ): {
     estado: EstadoAula;
@@ -265,10 +269,12 @@ export function obterEstadoAula(
     };
 }
 
-export function ordenarAulasPorRelevancia(
-    aulas: Aula[],
+export function ordenarAulasPorRelevancia<
+    T extends Aula
+>(
+    aulas: T[],
     agora = new Date()
-): Aula[] {
+): T[] {
 
     const foco =
         obterAulaEmFoco(
