@@ -271,8 +271,19 @@ export function MainLayout() {
         navigate,
     ]);
 
+    const previewUx =
+        window.location.hostname.includes(
+            "git-feat-mobile-ux-premium"
+        );
+
     return (
-        <div className="flex h-screen h-dvh min-h-0 w-full overflow-hidden bg-slate-50">
+        <div className="relative flex h-screen h-dvh min-h-0 w-full overflow-hidden bg-slate-50">
+
+            {previewUx && (
+                <div className="fixed right-3 top-3 z-[200] rounded-full bg-fuchsia-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-xl">
+                    Preview UX
+                </div>
+            )}
             {/* Sidebar desktop */}
             <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white p-6 md:block">
                 <Sidebar />
@@ -326,7 +337,7 @@ export function MainLayout() {
                     ref={
                         mainRef
                     }
-                    className="ebd-main-scroll relative min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-50"
+                    className="ebd-main-scroll relative min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[#f7f9fc]"
                 >
 
                     {/* MARCA D'ÁGUA */}
@@ -337,12 +348,12 @@ export function MainLayout() {
                         <img
                             src={marcaDagua}
                             alt=""
-                            className="w-[90%] max-w-[1100px] opacity-30"
+                            className="w-[88%] max-w-[1050px] opacity-[0.16]"
                         />
                     </div>
 
                     {/* CONTEÚDO */}
-                    <div className="ebd-app-content relative z-10 mx-auto w-full max-w-[1600px] p-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6">
+                    <div className="ebd-app-content relative z-10 mx-auto w-full max-w-[1540px] p-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:p-5 md:pb-6 lg:p-6">
                         {modoDemo && (
                             <DemoBanner />
                         )}

@@ -563,7 +563,7 @@ export function MinhasAulasPage() {
 
     return (
 
-        <div className="mx-auto w-full max-w-6xl space-y-4 sm:space-y-6">
+        <div className="mx-auto w-full max-w-6xl space-y-3 sm:space-y-5">
 
             {/* CABEÇALHO */}
 
@@ -602,7 +602,7 @@ export function MinhasAulasPage() {
 
             {trimestre && (
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+                <div className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-sm sm:p-5">
 
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 

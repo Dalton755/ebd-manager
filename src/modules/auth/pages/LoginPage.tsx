@@ -377,8 +377,19 @@ export function LoginPage() {
     }
 
 
+    const previewUx =
+        window.location.hostname.includes(
+            "git-feat-mobile-ux-premium"
+        );
+
     return (
-        <div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50/50 px-4 py-8">
+        <div className="relative flex min-h-dvh items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50/50 px-4 py-8">
+
+            {previewUx && (
+                <div className="fixed inset-x-0 top-0 z-50 bg-fuchsia-600 px-3 py-2 text-center text-xs font-black uppercase tracking-[0.18em] text-white shadow-lg">
+                    Preview UX — revisão mobile
+                </div>
+            )}
 
             <div className="w-full max-w-md">
 

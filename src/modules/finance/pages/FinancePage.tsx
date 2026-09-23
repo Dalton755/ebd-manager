@@ -186,7 +186,7 @@ export function FinancePage() {
 
     return (
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
 
             {/* CABEÇALHO */}
 
@@ -230,39 +230,39 @@ export function FinancePage() {
 
             ) : (
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
 
 
                     {/* SALDO */}
 
-                    <Card className="overflow-hidden">
+                    <Card className="col-span-2 overflow-hidden bg-gradient-to-br from-white to-blue-50/60 p-0 md:col-span-1">
 
-                        <CardContent className="p-5">
+                        <CardContent className="p-4 sm:p-5">
 
                             <div className="flex items-start justify-between gap-4">
 
-                                <div>
+                                <div className="min-w-0">
 
-                                    <p className="text-sm font-medium text-slate-500">
+                                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-slate-400">
                                         Saldo atual
                                     </p>
 
-                                    <p className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+                                    <p className="mt-2 whitespace-nowrap text-[1.8rem] font-black leading-none tracking-tight text-slate-950 sm:text-3xl">
                                         {formatarMoeda(
                                             resumo.saldo
                                         )}
                                     </p>
 
-                                    <p className="mt-2 text-xs text-slate-400">
-                                        Resultado entre receitas e despesas
+                                    <p className="mt-2 text-xs leading-5 text-slate-500">
+                                        Resultado entre entradas e saídas
                                     </p>
 
                                 </div>
 
 
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100/80 text-blue-700 sm:h-11 sm:w-11">
 
-                                    <Wallet size={21} />
+                                    <Wallet size={20} />
 
                                 </div>
 
@@ -275,38 +275,34 @@ export function FinancePage() {
 
                     {/* RECEITAS */}
 
-                    <Card className="overflow-hidden">
+                    <Card className="overflow-hidden p-0">
 
-                        <CardContent className="p-5">
+                        <CardContent className="p-3.5 sm:p-5">
 
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center justify-between gap-2">
 
-                                <div>
+                                <p className="whitespace-nowrap text-[11px] font-black uppercase tracking-[0.08em] text-slate-500 sm:text-sm sm:font-semibold sm:normal-case sm:tracking-normal">
+                                    Receitas
+                                </p>
 
-                                    <p className="text-sm font-medium text-slate-500">
-                                        Receitas
-                                    </p>
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 sm:h-10 sm:w-10 sm:rounded-xl">
 
-                                    <p className="mt-2 text-2xl font-bold tracking-tight text-emerald-600 sm:text-3xl">
-                                        {formatarMoeda(
-                                            resumo.receitas
-                                        )}
-                                    </p>
-
-                                    <p className="mt-2 text-xs text-slate-400">
-                                        Total de entradas registradas
-                                    </p>
-
-                                </div>
-
-
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-
-                                    <ArrowUpRight size={21} />
+                                    <ArrowUpRight size={18} />
 
                                 </div>
 
                             </div>
+
+
+                            <p className="mt-3 whitespace-nowrap text-[clamp(1.15rem,5.4vw,1.7rem)] font-black leading-none tracking-tight text-emerald-600 sm:text-3xl">
+                                {formatarMoeda(
+                                    resumo.receitas
+                                )}
+                            </p>
+
+                            <p className="mt-2 text-[11px] font-medium text-slate-400 sm:text-xs">
+                                Entradas
+                            </p>
 
                         </CardContent>
 
@@ -315,38 +311,34 @@ export function FinancePage() {
 
                     {/* DESPESAS */}
 
-                    <Card className="overflow-hidden">
+                    <Card className="overflow-hidden p-0">
 
-                        <CardContent className="p-5">
+                        <CardContent className="p-3.5 sm:p-5">
 
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-center justify-between gap-2">
 
-                                <div>
+                                <p className="whitespace-nowrap text-[11px] font-black uppercase tracking-[0.08em] text-slate-500 sm:text-sm sm:font-semibold sm:normal-case sm:tracking-normal">
+                                    Despesas
+                                </p>
 
-                                    <p className="text-sm font-medium text-slate-500">
-                                        Despesas
-                                    </p>
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-600 sm:h-10 sm:w-10 sm:rounded-xl">
 
-                                    <p className="mt-2 text-2xl font-bold tracking-tight text-red-600 sm:text-3xl">
-                                        {formatarMoeda(
-                                            resumo.despesas
-                                        )}
-                                    </p>
-
-                                    <p className="mt-2 text-xs text-slate-400">
-                                        Total de saídas registradas
-                                    </p>
-
-                                </div>
-
-
-                                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600">
-
-                                    <ArrowDownRight size={21} />
+                                    <ArrowDownRight size={18} />
 
                                 </div>
 
                             </div>
+
+
+                            <p className="mt-3 whitespace-nowrap text-[clamp(1.15rem,5.4vw,1.7rem)] font-black leading-none tracking-tight text-rose-600 sm:text-3xl">
+                                {formatarMoeda(
+                                    resumo.despesas
+                                )}
+                            </p>
+
+                            <p className="mt-2 text-[11px] font-medium text-slate-400 sm:text-xs">
+                                Saídas
+                            </p>
 
                         </CardContent>
 

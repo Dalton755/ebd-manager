@@ -9,8 +9,8 @@ export function Card({
     <div
       {...props}
       className={clsx(
-        "rounded-xl border bg-white shadow-sm",
-        "p-3 sm:p-6",
+        "rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_8px_24px_rgba(15,23,42,0.035)]",
+        "p-3.5 sm:p-5",
         className
       )}
     />
@@ -25,7 +25,7 @@ export function CardHeader({
     <div
       {...props}
       className={clsx(
-        "mb-4 border-b pb-4",
+        "mb-3 border-b border-slate-100 pb-3 sm:mb-4 sm:pb-4",
         className
       )}
     />
@@ -40,7 +40,7 @@ export function CardTitle({
     <h2
       {...props}
       className={clsx(
-        "text-lg font-semibold sm:text-xl",
+        "text-base font-bold tracking-tight text-slate-900 sm:text-xl",
         className
       )}
     />
@@ -55,7 +55,7 @@ export function CardContent({
     <div
       {...props}
       className={clsx(
-        "space-y-4",
+        "space-y-3 sm:space-y-4",
         className
       )}
     />

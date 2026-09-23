@@ -264,7 +264,7 @@ export function ChurchCustomizationPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
 
       {/* ================================================= */}
       {/* CABEÇALHO */}
@@ -299,13 +299,13 @@ export function ChurchCustomizationPage() {
       {/* CARD PRINCIPAL */}
       {/* ================================================= */}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
 
         {/* ================================================= */}
         {/* LOGO */}
         {/* ================================================= */}
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
 
           <div className="flex items-center gap-3">
 
@@ -385,7 +385,7 @@ export function ChurchCustomizationPage() {
         {/* NOME */}
         {/* ================================================= */}
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-2">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:col-span-2">
 
           <div className="flex items-center gap-3">
 

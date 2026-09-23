@@ -12,28 +12,24 @@ export function PageHeader({
   icon: Icon,
 }: Props) {
   return (
-    <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-3 flex min-w-0 items-start gap-3 sm:mb-5 sm:items-center">
 
-      <div className="flex items-center gap-3">
-
-        {Icon && (
-          <div className="rounded-lg bg-blue-100 p-3 text-blue-600">
-            <Icon size={20} />
-          </div>
-        )}
-
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">
-            {title}
-          </h1>
-
-          {subtitle && (
-            <p className="mt-1 text-sm text-gray-500 sm:text-base">
-              {subtitle}
-            </p>
-          )}
+      {Icon && (
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-600 shadow-sm sm:h-11 sm:w-11">
+          <Icon size={20} />
         </div>
+      )}
 
+      <div className="min-w-0">
+        <h1 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+          {title}
+        </h1>
+
+        {subtitle && (
+          <p className="mt-0.5 max-w-3xl text-sm leading-5 text-slate-500 sm:mt-1 sm:text-base">
+            {subtitle}
+          </p>
+        )}
       </div>
 
     </div>

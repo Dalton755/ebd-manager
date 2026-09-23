@@ -275,7 +275,7 @@ export function StudentAttendancePage() {
 
                 <div>
 
-                    <h1 className="text-3xl font-bold text-slate-900">
+                    <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
                         Minhas presenças
                     </h1>
 
@@ -290,11 +290,11 @@ export function StudentAttendancePage() {
 
             {/* RESUMO */}
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
 
                 {/* PRESENÇAS */}
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                     <div className="flex items-center gap-3">
 
@@ -313,7 +313,7 @@ export function StudentAttendancePage() {
                                 Presenças
                             </p>
 
-                            <p className="text-3xl font-bold text-slate-900">
+                            <p className="text-2xl font-bold text-slate-900 sm:text-3xl">
                                 {totalPresencas}
                             </p>
 
@@ -326,7 +326,7 @@ export function StudentAttendancePage() {
 
                 {/* SEQUÊNCIA */}
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                     <div className="flex items-center gap-3">
 
@@ -345,7 +345,7 @@ export function StudentAttendancePage() {
                                 Sequência atual
                             </p>
 
-                            <p className="text-3xl font-bold text-slate-900">
+                            <p className="text-2xl font-bold text-slate-900 sm:text-3xl">
                                 {sequenciaAtual}
                             </p>
 
@@ -362,7 +362,7 @@ export function StudentAttendancePage() {
 
                 {/* PENDENTES */}
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="col-span-2 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:col-span-1 sm:p-5">
 
                     <div className="flex items-center gap-3">
 
@@ -381,7 +381,7 @@ export function StudentAttendancePage() {
                                 Em validação
                             </p>
 
-                            <p className="text-3xl font-bold text-slate-900">
+                            <p className="text-2xl font-bold text-slate-900 sm:text-3xl">
                                 {totalPendentes}
                             </p>
 

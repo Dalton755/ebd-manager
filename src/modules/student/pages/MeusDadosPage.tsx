@@ -174,7 +174,7 @@ export function MeusDadosPage() {
 
     return (
 
-        <div className="mx-auto w-full max-w-4xl space-y-6">
+        <div className="mx-auto w-full max-w-4xl space-y-4 sm:space-y-6">
 
             {/* ================================================= */}
             {/* CABEÇALHO */}
@@ -184,7 +184,7 @@ export function MeusDadosPage() {
 
                 <div className="flex items-center gap-4">
 
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100">
+                    <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-blue-100">
 
                         <UserRound
                             size={28}
@@ -216,7 +216,7 @@ export function MeusDadosPage() {
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                <div className="border-b border-slate-200 p-6">
+                <div className="border-b border-slate-200 p-4 sm:p-6">
 
                     <div className="flex items-center gap-3">
 
@@ -246,7 +246,7 @@ export function MeusDadosPage() {
                 </div>
 
 
-                <div className="space-y-5 p-6">
+                <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
 
                     {/* NOME */}
 
@@ -413,7 +413,7 @@ export function MeusDadosPage() {
 
             <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                <div className="border-b border-slate-200 p-6">
+                <div className="border-b border-slate-200 p-4 sm:p-6">
 
                     <div className="flex items-center gap-3">
 
@@ -443,7 +443,7 @@ export function MeusDadosPage() {
                 </div>
 
 
-                <div className="space-y-5 p-6">
+                <div className="space-y-4 p-4 sm:space-y-5 sm:p-6">
 
                     <div className="flex items-center gap-4 rounded-xl border border-slate-200 p-4">
 

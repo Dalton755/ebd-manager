@@ -175,10 +175,10 @@ export function ClassesPage() {
     );
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
 
             {/* CABEÇALHO */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                 <PageHeader
                     title="Classes"
@@ -201,7 +201,7 @@ export function ClassesPage() {
 
             {/* PESQUISA */}
             <Card>
-                <CardContent className="pt-6">
+                <CardContent className="pt-3 sm:pt-5">
                     <SearchInput
                         value={search}
                         onChange={setSearch}
@@ -212,7 +212,7 @@ export function ClassesPage() {
 
             {/* LISTA */}
             <Card>
-                <CardContent className="pt-6">
+                <CardContent className="pt-3 sm:pt-5">
 
                     {loading ? (
                         <LoadingSpinner

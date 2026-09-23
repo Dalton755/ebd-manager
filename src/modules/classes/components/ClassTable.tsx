@@ -253,7 +253,7 @@ export function ClassTable({
 
 
   return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
 
       {classes.map(
         (
@@ -275,7 +275,7 @@ export function ClassTable({
               key={
                 classe.id
               }
-              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md sm:p-6"
+              className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-6"
             >
 
               <div className="flex items-start justify-between gap-4">

@@ -743,11 +743,11 @@ export function StudentCheckinPage() {
 
 
     return (
-        <div className="min-h-screen bg-slate-100 px-3 py-5 sm:px-5 sm:py-8">
+        <div className="min-h-full bg-transparent px-0 py-2 sm:px-2 sm:py-6">
 
             <div className="mx-auto w-full max-w-2xl">
 
-                <div className="mb-5 text-center sm:mb-7">
+                <div className="mb-4 text-center sm:mb-6">
 
                     <h1 className="text-2xl font-black tracking-tight text-blue-600 sm:text-3xl">
                         EBD Manager

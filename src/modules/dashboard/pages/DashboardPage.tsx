@@ -120,11 +120,11 @@ export function DashboardPage() {
         {/* INDICADORES BÁSICOS */}
         {/* ================================================= */}
 
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
 
           {/* ALUNOS */}
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
             <div className="flex items-center justify-between">
 
@@ -133,7 +133,7 @@ export function DashboardPage() {
                   Alunos
                 </p>
 
-                <p className="mt-2 text-3xl font-bold text-slate-900">
+                <p className="mt-1.5 text-2xl font-bold sm:mt-2 sm:text-3xl text-slate-900">
                   {resumo?.alunos ?? 0}
                 </p>
 
@@ -153,7 +153,7 @@ export function DashboardPage() {
 
           {/* PROFESSORES */}
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
             <div className="flex items-center justify-between">
 
@@ -162,7 +162,7 @@ export function DashboardPage() {
                   Professores
                 </p>
 
-                <p className="mt-2 text-3xl font-bold text-slate-900">
+                <p className="mt-1.5 text-2xl font-bold sm:mt-2 sm:text-3xl text-slate-900">
                   {resumo?.professores ?? 0}
                 </p>
 
@@ -182,7 +182,7 @@ export function DashboardPage() {
 
           {/* CLASSES */}
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
             <div className="flex items-center justify-between">
 
@@ -191,7 +191,7 @@ export function DashboardPage() {
                   Classes
                 </p>
 
-                <p className="mt-2 text-3xl font-bold text-slate-900">
+                <p className="mt-1.5 text-2xl font-bold sm:mt-2 sm:text-3xl text-slate-900">
                   {resumo?.classes ?? 0}
                 </p>
 
@@ -331,11 +331,11 @@ export function DashboardPage() {
       {/* VISÃO GERAL */}
       {/* ================================================= */}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 
         {/* ALUNOS */}
 
-        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
 
           <div className="flex items-start justify-between">
 
@@ -344,7 +344,7 @@ export function DashboardPage() {
                 Alunos ativos
               </p>
 
-              <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+              <p className="mt-1.5 text-2xl font-bold sm:mt-2 sm:text-3xl tracking-tight text-slate-900">
                 {resumo?.alunos ?? 0}
               </p>
 
@@ -366,7 +366,7 @@ export function DashboardPage() {
 
         {/* PROFESSORES */}
 
-        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
 
           <div className="flex items-start justify-between">
 
@@ -375,7 +375,7 @@ export function DashboardPage() {
                 Professores
               </p>
 
-              <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+              <p className="mt-1.5 text-2xl font-bold sm:mt-2 sm:text-3xl tracking-tight text-slate-900">
                 {resumo?.professores ?? 0}
               </p>
 
@@ -397,7 +397,7 @@ export function DashboardPage() {
 
         {/* CLASSES */}
 
-        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
 
           <div className="flex items-start justify-between">
 
@@ -406,7 +406,7 @@ export function DashboardPage() {
                 Classes
               </p>
 
-              <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+              <p className="mt-1.5 text-2xl font-bold sm:mt-2 sm:text-3xl tracking-tight text-slate-900">
                 {resumo?.classes ?? 0}
               </p>
 
@@ -437,7 +437,7 @@ export function DashboardPage() {
                 Frequência geral
               </p>
 
-              <p className="mt-2 text-3xl font-bold tracking-tight">
+              <p className="mt-1.5 text-2xl font-bold sm:mt-2 sm:text-3xl tracking-tight">
                 {frequencia}%
               </p>
 

@@ -474,7 +474,7 @@ export function CheckinConfigurationPage() {
 
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
 
             {/* CABEÇALHO */}
 
@@ -501,9 +501,9 @@ export function CheckinConfigurationPage() {
             </div>
 
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
 
-                <div className="grid gap-6 lg:grid-cols-2">
+                <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
 
                     {/* NOME */}
 

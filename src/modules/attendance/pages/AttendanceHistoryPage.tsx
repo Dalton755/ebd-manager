@@ -1126,14 +1126,14 @@ export function AttendanceHistoryPage() {
 
   return (
 
-    <div className="mx-auto w-full max-w-7xl space-y-6">
+    <div className="mx-auto w-full max-w-7xl space-y-4 sm:space-y-6">
 
 
       {/* CABEÇALHO */}
 
       <div className="flex items-start gap-4">
 
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-100">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-100 sm:h-14 sm:w-14">
 
           <ClipboardList
             size={28}
@@ -1163,7 +1163,7 @@ export function AttendanceHistoryPage() {
 
       {!mostrandoLegados && (
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
           <div className="grid gap-4 lg:grid-cols-3">
 
