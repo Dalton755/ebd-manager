@@ -271,8 +271,19 @@ export function MainLayout() {
         navigate,
     ]);
 
+    const previewUx =
+        window.location.hostname.includes(
+            "git-feat-mobile-ux-premium"
+        );
+
     return (
-        <div className="flex h-screen h-dvh min-h-0 w-full overflow-hidden bg-slate-50">
+        <div className="relative flex h-screen h-dvh min-h-0 w-full overflow-hidden bg-slate-50">
+
+            {previewUx && (
+                <div className="fixed right-3 top-3 z-[200] rounded-full bg-fuchsia-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-xl">
+                    Preview UX
+                </div>
+            )}
             {/* Sidebar desktop */}
             <aside className="hidden w-64 shrink-0 border-r border-slate-200 bg-white p-6 md:block">
                 <Sidebar />
