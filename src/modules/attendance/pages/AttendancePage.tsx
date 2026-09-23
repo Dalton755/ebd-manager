@@ -27,6 +27,10 @@ import {
 } from "@/modules/lessons/services/LessonService";
 
 import {
+    obterAulaEmFoco,
+} from "@/modules/lessons/utils/lessonFocus";
+
+import {
     AttendanceService,
 } from "../services/AttendanceService";
 
@@ -261,18 +265,36 @@ export function AttendancePage() {
 
 
     /*
-     * Escolhe uma aula útil automaticamente.
+     * Escolhe automaticamente a aula mais útil.
      *
      * Prioridade:
-     * 1. aula já salva no filtro;
-     * 2. aula de hoje;
-     * 3. primeira aula da classe.
+     * 1. aula em andamento / aula de hoje;
+     * 2. aula salva pelo usuário;
+     * 3. próxima aula;
+     * 4. primeira aula disponível.
      */
     function escolherAula(
         aulasDisponiveis:
             AulaComStatus[],
         aulaSalvaId?: string
     ) {
+
+        const hoje =
+            obterDataLocalHoje();
+
+        const aulaEmFoco =
+            obterAulaEmFoco(
+                aulasDisponiveis
+            );
+
+
+        if (
+            aulaEmFoco?.data ===
+            hoje
+        ) {
+            return aulaEmFoco.id;
+        }
+
 
         if (
             aulaSalvaId &&
@@ -288,22 +310,8 @@ export function AttendancePage() {
         }
 
 
-        const hoje =
-            obterDataLocalHoje();
-
-
-        const aulaDeHoje =
-            aulasDisponiveis.find(
-                (
-                    aula
-                ) =>
-                    aula.data ===
-                    hoje
-            );
-
-
         return (
-            aulaDeHoje?.id ??
+            aulaEmFoco?.id ??
             aulasDisponiveis[0]?.id ??
             ""
         );
@@ -915,18 +923,18 @@ export function AttendancePage() {
 
     return (
 
-        <div className="mx-auto w-full max-w-7xl space-y-6">
+        <div className="mx-auto w-full max-w-7xl space-y-4 sm:space-y-6">
 
 
             {/* CABEÇALHO */}
 
             <div className="flex items-start gap-4">
 
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-100">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-100 sm:h-14 sm:w-14 sm:rounded-2xl">
 
                     <Users
-                        size={28}
-                        className="text-blue-600"
+                        size={24}
+                        className="text-blue-600 sm:h-7 sm:w-7"
                     />
 
                 </div>
@@ -934,7 +942,7 @@ export function AttendancePage() {
 
                 <div>
 
-                    <h1 className="text-3xl font-bold text-slate-900">
+                    <h1 className="text-xl font-bold text-slate-900 sm:text-3xl">
                         Registrar presença
                     </h1>
 
@@ -950,7 +958,7 @@ export function AttendancePage() {
 
             {/* FILTROS */}
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                 <div className="grid gap-4 lg:grid-cols-3">
 
