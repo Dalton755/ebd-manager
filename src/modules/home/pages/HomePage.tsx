@@ -245,14 +245,303 @@ export function HomePage() {
         );
     }
 
+    const percentualFrequencia =
+        frequencia &&
+        frequencia.totalAulas > 0
+            ? Math.round(
+                (
+                    frequencia.presencas /
+                    frequencia.totalAulas
+                ) * 100
+            )
+            : 0;
+
     return (
-        <div className="mx-auto max-w-6xl space-y-8">
+        <div className="mx-auto max-w-6xl space-y-4 sm:space-y-8">
 
             {/* ================================================= */}
-            {/* SAUDAÇÃO */}
+            {/* MOBILE — HOME ASSISTIDA */}
             {/* ================================================= */}
 
-            <section>
+            <section className="space-y-3 md:hidden">
+
+                <div className="relative overflow-hidden rounded-[1.6rem] bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-950 p-5 text-white shadow-xl shadow-blue-900/15">
+
+                    <div className="absolute -right-12 -top-12 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+
+                    <div className="relative">
+
+                        <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-200">
+                            {ehProfessor
+                                ? "Área do professor"
+                                : "Minha EBD"}
+                        </p>
+
+                        <h1 className="mt-1.5 text-2xl font-black tracking-tight">
+                            Olá,{" "}
+                            {pessoa?.nome
+                                ?.split(" ")[0]}
+                        </h1>
+
+                        <p className="mt-1 text-sm leading-5 text-blue-100">
+                            {ehProfessor
+                                ? "Sua próxima aula e o que você precisa preparar."
+                                : "Sua aula, presença e materiais em um só lugar."}
+                        </p>
+
+
+                        {frequencia && (
+
+                            <div className="mt-4 grid grid-cols-3 gap-2">
+
+                                <div className="rounded-xl border border-white/10 bg-white/10 p-3 text-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-blue-200">
+                                        Frequência
+                                    </p>
+                                    <p className="mt-1 text-lg font-black">
+                                        {percentualFrequencia}%
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl border border-white/10 bg-white/10 p-3 text-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-blue-200">
+                                        Presenças
+                                    </p>
+                                    <p className="mt-1 text-lg font-black">
+                                        {frequencia.presencas}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl border border-white/10 bg-white/10 p-3 text-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-blue-200">
+                                        Sequência
+                                    </p>
+                                    <p className="mt-1 text-lg font-black">
+                                        {frequencia.sequencia}
+                                    </p>
+                                </div>
+
+                            </div>
+
+                        )}
+
+                    </div>
+
+                </div>
+
+
+                {proximaAula ? (
+
+                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                        {proximaAula.imagem_path && (
+
+                            <LessonImage
+                                aula={
+                                    proximaAula
+                                }
+                                downloadable
+                                className="aspect-[16/7] rounded-none"
+                            />
+
+                        )}
+
+
+                        <div className="p-4">
+
+                            <div className="flex items-start justify-between gap-3">
+
+                                <div className="min-w-0">
+
+                                    <p className="text-[10px] font-black uppercase tracking-[0.14em] text-blue-600">
+                                        {ehProfessor
+                                            ? "Sua próxima aula"
+                                            : "Próxima aula"}
+                                    </p>
+
+                                    <h2 className="mt-1 line-clamp-2 text-lg font-black leading-snug text-slate-900">
+                                        Aula {proximaAula.numero} — {proximaAula.titulo}
+                                    </h2>
+
+                                </div>
+
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                    <BookOpen className="h-4.5 w-4.5" />
+                                </div>
+
+                            </div>
+
+
+                            <div className="mt-4 grid grid-cols-2 gap-2">
+
+                                <div className="rounded-xl bg-slate-50 p-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                        Quando
+                                    </p>
+                                    <p className="mt-1 text-sm font-black capitalize text-slate-800">
+                                        {formatarData(
+                                            proximaAula.data
+                                        )}
+                                    </p>
+                                    <p className="mt-0.5 text-xs font-medium text-slate-500">
+                                        {proximaAula.horario}
+                                    </p>
+                                </div>
+
+                                <div className="rounded-xl bg-slate-50 p-3">
+                                    <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                        Professor
+                                    </p>
+                                    <p className="mt-1 line-clamp-2 text-sm font-black text-slate-800">
+                                        {proximaAula.professor ??
+                                            "Não informado"}
+                                    </p>
+                                </div>
+
+                            </div>
+
+
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+
+                                {proximaAula.apresentacao_publicada ? (
+
+                                    <Link
+                                        to={
+                                            `/minhas-aulas/${proximaAula.id}/apresentacao?modo=aula`
+                                        }
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-3 text-xs font-black text-white"
+                                    >
+                                        <BookOpen className="h-4 w-4" />
+                                        Apresentação
+                                    </Link>
+
+                                ) : proximaAula.link_drive ? (
+
+                                    <a
+                                        href={
+                                            proximaAula.link_drive
+                                        }
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-3 text-xs font-black text-white"
+                                    >
+                                        <ExternalLink className="h-4 w-4" />
+                                        Material
+                                    </a>
+
+                                ) : (
+
+                                    <Link
+                                        to="/minhas-aulas"
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-3 py-3 text-xs font-black text-white"
+                                    >
+                                        <BookOpen className="h-4 w-4" />
+                                        Minhas aulas
+                                    </Link>
+
+                                )}
+
+
+                                {pessoa?.perfil === "ALUNO" ? (
+
+                                    <Link
+                                        to="/aluno/checkin"
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-black text-slate-700"
+                                    >
+                                        <MapPin className="h-4 w-4" />
+                                        Check-in
+                                    </Link>
+
+                                ) : (
+
+                                    <Link
+                                        to="/minhas-aulas"
+                                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-xs font-black text-slate-700"
+                                    >
+                                        Minha agenda
+                                    </Link>
+
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                ) : (
+
+                    <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-center">
+
+                        <BookOpen className="mx-auto h-8 w-8 text-slate-300" />
+
+                        <p className="mt-2 font-black text-slate-700">
+                            Nenhuma próxima aula
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                            Quando houver uma aula programada ela aparecerá aqui.
+                        </p>
+
+                    </div>
+
+                )}
+
+
+                <div className="grid grid-cols-3 gap-2">
+
+                    <Link
+                        to="/minhas-aulas"
+                        className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
+                    >
+                        <BookOpen className="h-5 w-5 text-blue-600" />
+                        <span className="text-[10px] font-black text-slate-700">
+                            Aulas
+                        </span>
+                    </Link>
+
+                    {pessoa?.perfil === "ALUNO" ? (
+                        <Link
+                            to="/aluno/presencas"
+                            className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
+                        >
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                            <span className="text-[10px] font-black text-slate-700">
+                                Presenças
+                            </span>
+                        </Link>
+                    ) : (
+                        <Link
+                            to="/aulas"
+                            className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
+                        >
+                            <CalendarDays className="h-5 w-5 text-emerald-600" />
+                            <span className="text-[10px] font-black text-slate-700">
+                                Agenda
+                            </span>
+                        </Link>
+                    )}
+
+                    <Link
+                        to="/meus-dados"
+                        className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
+                    >
+                        <UserRound className="h-5 w-5 text-violet-600" />
+                        <span className="text-[10px] font-black text-slate-700">
+                            Meus dados
+                        </span>
+                    </Link>
+
+                </div>
+
+            </section>
+
+
+            {/* ================================================= */}
+            {/* SAUDAÇÃO — DESKTOP */}
+            {/* ================================================= */}
+
+            <section className="hidden md:block">
 
                 <p className="text-sm font-medium text-blue-600">
                     Escola Bíblica Dominical
@@ -286,7 +575,7 @@ export function HomePage() {
 
             {proximaAula ? (
 
-                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <section className="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm md:block">
 
                     <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
 
@@ -492,7 +781,7 @@ export function HomePage() {
 
             ) : (
 
-                <section className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+                <section className="hidden rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm md:block">
 
                     <BookOpen
                         className="mx-auto h-10 w-10 text-slate-300"
@@ -519,7 +808,7 @@ export function HomePage() {
             {pessoa?.perfil === "ALUNO" &&
                 frequencia && (
 
-                    <section className="grid gap-6 md:grid-cols-2">
+                    <section className="hidden gap-6 md:grid md:grid-cols-2">
 
                         {/* SEQUÊNCIA */}
 

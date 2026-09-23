@@ -4,6 +4,10 @@ import {
 } from "react";
 
 import {
+    Link,
+} from "react-router-dom";
+
+import {
     Activity,
     ArrowUpRight,
     BookOpen,
@@ -619,7 +623,7 @@ export function DashboardIgrejaPage({
                 {/* NAVEGAÇÃO */}
                 {/* ================================================= */}
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+                <div className="hidden rounded-2xl border border-slate-200 bg-white p-2 shadow-sm md:block">
 
                     <div className="grid grid-cols-2 gap-2">
 
@@ -656,7 +660,7 @@ export function DashboardIgrejaPage({
                 {/* HERO */}
                 {/* ================================================= */}
 
-                <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-5 text-white shadow-xl sm:p-7">
+                <div className="hidden relative overflow-hidden rounded-3xl bg-slate-950 p-5 text-white shadow-xl sm:p-7 md:block">
 
                     <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-2xl" />
 
@@ -1701,7 +1705,410 @@ export function DashboardIgrejaPage({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
+
+            {/* ================================================= */}
+            {/* MOBILE — RESUMO EXECUTIVO */}
+            {/* ================================================= */}
+
+            <section className="space-y-3 md:hidden">
+
+                <div className="relative overflow-hidden rounded-[1.6rem] bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-900 p-5 text-white shadow-xl shadow-blue-950/15">
+
+                    <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-blue-400/15 blur-3xl" />
+                    <div className="absolute -bottom-16 -left-12 h-36 w-36 rounded-full bg-indigo-400/15 blur-3xl" />
+
+                    <div className="relative">
+
+                        <div className="flex items-start justify-between gap-3">
+
+                            <div>
+
+                                <p className="text-[11px] font-black uppercase tracking-[0.16em] text-blue-200">
+                                    Painel da EBD
+                                </p>
+
+                                <h1 className="mt-1.5 text-2xl font-black tracking-tight">
+                                    Sua EBD hoje
+                                </h1>
+
+                                <p className="mt-1 text-sm leading-5 text-slate-300">
+                                    O que importa para você decidir e agir agora.
+                                </p>
+
+                            </div>
+
+                            <div
+                                className={
+                                    sistemaOk
+                                        ? "rounded-full border border-emerald-300/20 bg-emerald-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-300"
+                                        : "rounded-full border border-amber-300/20 bg-amber-400/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-amber-300"
+                                }
+                            >
+                                {sistemaOk
+                                    ? "Tudo em ordem"
+                                    : "Atenção"}
+                            </div>
+
+                        </div>
+
+
+                        <div className="mt-5 grid grid-cols-2 gap-2.5">
+
+                            <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-3.5 backdrop-blur">
+
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-[11px] font-semibold text-slate-300">
+                                        Alunos ativos
+                                    </p>
+                                    <Users size={16} className="text-blue-300" />
+                                </div>
+
+                                <p className="mt-2 text-2xl font-black tracking-tight">
+                                    {resumo?.alunos ?? 0}
+                                </p>
+
+                            </div>
+
+                            <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-3.5 backdrop-blur">
+
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-[11px] font-semibold text-slate-300">
+                                        Frequência
+                                    </p>
+                                    <TrendingUp size={16} className="text-emerald-300" />
+                                </div>
+
+                                <p className="mt-2 text-2xl font-black tracking-tight">
+                                    {frequencia}%
+                                </p>
+
+                            </div>
+
+                            <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-3.5 backdrop-blur">
+
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-[11px] font-semibold text-slate-300">
+                                        Classes
+                                    </p>
+                                    <BookOpen size={16} className="text-violet-300" />
+                                </div>
+
+                                <p className="mt-2 text-2xl font-black tracking-tight">
+                                    {resumo?.classes ?? 0}
+                                </p>
+
+                            </div>
+
+                            <div className="rounded-2xl border border-white/10 bg-white/[0.07] p-3.5 backdrop-blur">
+
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-[11px] font-semibold text-slate-300">
+                                        Professores
+                                    </p>
+                                    <GraduationCap size={16} className="text-amber-300" />
+                                </div>
+
+                                <p className="mt-2 text-2xl font-black tracking-tight">
+                                    {resumo?.professores ?? 0}
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+
+                    <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setAbaAtiva(
+                                    "GERAL"
+                                )
+                            }
+                            className="rounded-lg bg-white px-3 py-2.5 text-xs font-black text-slate-900 shadow-sm"
+                        >
+                            Visão geral
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setAbaAtiva(
+                                    "INDIVIDUAL"
+                                )
+                            }
+                            className="rounded-lg px-3 py-2.5 text-xs font-bold text-slate-500"
+                        >
+                            Por aluno
+                        </button>
+
+                    </div>
+
+
+                    <div className="mt-3">
+
+                        <label className="mb-1.5 block text-[10px] font-black uppercase tracking-[0.12em] text-slate-400">
+                            Período analisado
+                        </label>
+
+                        <select
+                            value={
+                                trimestreSelecionado
+                            }
+                            onChange={(event) =>
+                                alterarPeriodo(
+                                    event.target.value
+                                )
+                            }
+                            disabled={
+                                carregandoPeriodo
+                            }
+                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-bold text-slate-700 outline-none focus:border-blue-500"
+                        >
+                            <option value="">
+                                Geral — todos os períodos
+                            </option>
+
+                            {trimestres.map(
+                                (trimestre) => (
+                                    <option
+                                        key={
+                                            trimestre.id
+                                        }
+                                        value={
+                                            trimestre.id
+                                        }
+                                    >
+                                        {trimestre.numero}º trimestre de{" "}
+                                        {trimestre.ano}
+                                        {trimestre.ativo
+                                            ? " • Atual"
+                                            : ""}
+                                    </option>
+                                )
+                            )}
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div className="grid gap-3">
+
+                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+
+                        <div className="flex items-center justify-between gap-3 px-4 pt-4">
+
+                            <div>
+
+                                <p className="text-[10px] font-black uppercase tracking-[0.12em] text-blue-600">
+                                    Próxima aula
+                                </p>
+
+                                <h2 className="mt-1 text-base font-black text-slate-900">
+                                    {resumo?.proximaAula
+                                        ? `Aula ${resumo.proximaAula.numero ?? "-"} — ${resumo.proximaAula.titulo}`
+                                        : "Nenhuma aula programada"}
+                                </h2>
+
+                            </div>
+
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                                <CalendarDays size={18} />
+                            </div>
+
+                        </div>
+
+                        {resumo?.proximaAula ? (
+
+                            <div className="p-4">
+
+                                <div className="grid grid-cols-2 gap-2">
+
+                                    <div className="rounded-xl bg-slate-50 p-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                            Data
+                                        </p>
+                                        <p className="mt-1 text-sm font-black text-slate-800">
+                                            {formatarData(
+                                                resumo.proximaAula.data
+                                            )}
+                                        </p>
+                                    </div>
+
+                                    <div className="rounded-xl bg-slate-50 p-3">
+                                        <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                            Professor
+                                        </p>
+                                        <p className="mt-1 truncate text-sm font-black text-slate-800">
+                                            {resumo.proximaAula.professor}
+                                        </p>
+                                    </div>
+
+                                </div>
+
+                                <Link
+                                    to="/aulas"
+                                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white"
+                                >
+                                    Ver programação
+                                    <ArrowUpRight size={16} />
+                                </Link>
+
+                            </div>
+
+                        ) : (
+
+                            <div className="p-4">
+                                <Link
+                                    to="/aulas"
+                                    className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3 text-sm font-black text-white"
+                                >
+                                    Organizar aulas
+                                </Link>
+                            </div>
+
+                        )}
+
+                    </div>
+
+
+                    <div
+                        className={
+                            aulasSemProfessor > 0 ||
+                            (analise?.alunosAtencao ?? 0) > 0
+                                ? "rounded-2xl border border-amber-200 bg-amber-50 p-4"
+                                : "rounded-2xl border border-emerald-200 bg-emerald-50 p-4"
+                        }
+                    >
+
+                        <div className="flex items-start gap-3">
+
+                            <div
+                                className={
+                                    aulasSemProfessor > 0 ||
+                                    (analise?.alunosAtencao ?? 0) > 0
+                                        ? "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700"
+                                        : "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700"
+                                }
+                            >
+                                {aulasSemProfessor > 0 ||
+                                (analise?.alunosAtencao ?? 0) > 0 ? (
+                                    <AlertTriangle size={20} />
+                                ) : (
+                                    <CheckCircle2 size={20} />
+                                )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+
+                                <p
+                                    className={
+                                        aulasSemProfessor > 0 ||
+                                        (analise?.alunosAtencao ?? 0) > 0
+                                            ? "font-black text-amber-950"
+                                            : "font-black text-emerald-950"
+                                    }
+                                >
+                                    {aulasSemProfessor > 0 ||
+                                    (analise?.alunosAtencao ?? 0) > 0
+                                        ? "Precisa da sua atenção"
+                                        : "Sua EBD está organizada"}
+                                </p>
+
+                                <div className="mt-2 space-y-1.5 text-sm">
+
+                                    {aulasSemProfessor > 0 && (
+                                        <p className="font-semibold text-amber-800">
+                                            • {aulasSemProfessor} aula
+                                            {aulasSemProfessor !== 1
+                                                ? "s"
+                                                : ""} sem professor
+                                        </p>
+                                    )}
+
+                                    {(analise?.alunosAtencao ?? 0) > 0 && (
+                                        <p className="font-semibold text-amber-800">
+                                            • {analise?.alunosAtencao ?? 0} aluno
+                                            {(analise?.alunosAtencao ?? 0) !== 1
+                                                ? "s"
+                                                : ""} com baixa participação
+                                        </p>
+                                    )}
+
+                                    {aulasSemProfessor === 0 &&
+                                        (analise?.alunosAtencao ?? 0) === 0 && (
+                                            <p className="font-semibold text-emerald-800">
+                                                Programação e participação sem alertas críticos.
+                                            </p>
+                                        )}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div className="grid grid-cols-4 gap-2">
+
+                        <Link
+                            to="/pessoas"
+                            className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
+                        >
+                            <Users size={18} className="text-blue-600" />
+                            <span className="text-[10px] font-black text-slate-700">
+                                Pessoas
+                            </span>
+                        </Link>
+
+                        <Link
+                            to="/classes"
+                            className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
+                        >
+                            <BookOpen size={18} className="text-violet-600" />
+                            <span className="text-[10px] font-black text-slate-700">
+                                Classes
+                            </span>
+                        </Link>
+
+                        <Link
+                            to="/aulas"
+                            className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
+                        >
+                            <CalendarDays size={18} className="text-emerald-600" />
+                            <span className="text-[10px] font-black text-slate-700">
+                                Aulas
+                            </span>
+                        </Link>
+
+                        <Link
+                            to="/chamada"
+                            className="flex min-w-0 flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-3 text-center shadow-sm"
+                        >
+                            <CheckCircle2 size={18} className="text-amber-600" />
+                            <span className="text-[10px] font-black text-slate-700">
+                                Chamada
+                            </span>
+                        </Link>
+
+                    </div>
+
+                </div>
+
+            </section>
+
 
             {/* ================================================= */}
             {/* NAVEGAÇÃO DO DASHBOARD AVANÇADO */}
@@ -1744,7 +2151,7 @@ export function DashboardIgrejaPage({
             {/* FILTRO DE PERÍODO */}
             {/* ================================================= */}
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+            <div className="hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 md:block">
 
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
@@ -1905,7 +2312,7 @@ export function DashboardIgrejaPage({
             {/* INDICADORES DE DECISÃO */}
             {/* ================================================= */}
 
-            <div>
+            <div className="hidden md:block">
 
                 <div className="mb-4 flex flex-col gap-1">
 
