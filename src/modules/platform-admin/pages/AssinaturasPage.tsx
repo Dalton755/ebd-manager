@@ -730,6 +730,8 @@ EBD Manager`;
 
                     ) : (
 
+                        <>
+
                         <div className="grid gap-3 md:hidden">
 
                             {assinaturasFiltradas.map(
@@ -1103,6 +1105,8 @@ EBD Manager`;
                             </table>
 
                         </div>
+
+                        </>
 
                     )}
 

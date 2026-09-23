@@ -905,6 +905,8 @@ export function PlanosPage() {
 
                     ) : (
 
+                        <>
+
                         <div className="grid gap-3 md:hidden">
 
                             {planos.map(
@@ -1310,6 +1312,8 @@ export function PlanosPage() {
                             </table>
 
                         </div>
+
+                        </>
 
                     )}
 

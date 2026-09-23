@@ -526,6 +526,8 @@ export function IgrejasPage() {
 
                     ) : (
 
+                        <>
+
                         <div className="grid gap-3 md:hidden">
 
                             {igrejasFiltradas.map(
@@ -770,6 +772,8 @@ export function IgrejasPage() {
                             </table>
 
                         </div>
+
+                        </>
 
                     )}
 

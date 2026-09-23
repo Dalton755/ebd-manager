@@ -295,6 +295,8 @@ export function RecursosPage() {
 
                     ) : (
 
+                        <>
+
                         <div className="grid gap-3 md:hidden">
 
                             {recursos.map(
@@ -518,6 +520,8 @@ export function RecursosPage() {
                             </table>
 
                         </div>
+
+                        </>
 
                     )}
 

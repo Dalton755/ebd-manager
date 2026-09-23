@@ -272,6 +272,8 @@ export function AttendanceRecordsPage() {
                             Nenhum registro encontrado.
                         </div>
                     ) : (
+                        <>
+
                         <div className="grid gap-3 md:hidden">
 
                             {registrosFiltrados.map(
@@ -432,6 +434,8 @@ export function AttendanceRecordsPage() {
                                 </tbody>
                             </table>
                         </div>
+
+                        </>
                     )}
                 </div>
             </div>
