@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 
 import { toast } from "sonner";
 import {
+    LogOut,
+    Menu,
     Share2,
 } from "lucide-react";
 
@@ -11,7 +13,13 @@ import { NotificationBell } from "@/shared/components/notifications/Notification
 import { useClassroomStatus } from "@/shared/hooks/useClassroomStatus";
 
 
-export function Header() {
+type Props = {
+    onOpenMenu?: () => void;
+};
+
+export function Header({
+    onOpenMenu,
+}: Props) {
 
     const navigate =
         useNavigate();
@@ -174,9 +182,24 @@ export function Header() {
 
     return (
 
-        <header className="flex h-16 items-center justify-between border-b bg-background px-6">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-3 sm:h-16 sm:px-4 md:px-6">
 
-            <div className="flex min-w-0 items-center gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+
+                {onOpenMenu && (
+
+                    <button
+                        type="button"
+                        onClick={
+                            onOpenMenu
+                        }
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-600 transition active:bg-slate-100 md:hidden"
+                        aria-label="Abrir menu"
+                    >
+                        <Menu size={22} />
+                    </button>
+
+                )}
 
                 {plano?.plano?.nome === "Igreja" && igrejaLogoUrl && (
 
@@ -194,7 +217,7 @@ export function Header() {
                 )}
 
 
-                <h2 className="truncate text-lg font-semibold">
+                <h2 className="truncate text-sm font-bold text-slate-800 sm:text-lg">
 
                     {plano?.plano?.nome === "Igreja" &&
                     igrejaNome
@@ -206,11 +229,11 @@ export function Header() {
             </div>
 
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-3">
 
                 {emAula && (
 
-                    <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 shadow-sm">
+                    <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm sm:gap-2 sm:px-3 sm:text-sm">
 
                         <span className="relative flex h-2.5 w-2.5">
 
@@ -221,7 +244,7 @@ export function Header() {
                         </span>
 
 
-                        <span>
+                        <span className="hidden xs:inline sm:inline">
                             Em aula
                         </span>
 
@@ -237,7 +260,7 @@ export function Header() {
                         onClick={
                             compartilharApp
                         }
-                        className="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+                        className="hidden items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 sm:inline-flex"
                         title="Compartilhar app"
                     >
 
@@ -263,12 +286,22 @@ export function Header() {
                 {mostrarLogout && (
 
                     <button
+                        type="button"
                         onClick={
                             sair
                         }
-                        className="rounded-md bg-red-600 px-4 py-2 text-white hover:bg-red-700"
+                        className="inline-flex h-10 items-center justify-center gap-2 rounded-xl px-2.5 text-red-600 transition hover:bg-red-50 sm:bg-red-600 sm:px-4 sm:text-white sm:hover:bg-red-700"
+                        aria-label="Sair"
                     >
-                        Sair
+                        <LogOut
+                            size={
+                                18
+                            }
+                        />
+
+                        <span className="hidden sm:inline">
+                            Sair
+                        </span>
                     </button>
 
                 )}
