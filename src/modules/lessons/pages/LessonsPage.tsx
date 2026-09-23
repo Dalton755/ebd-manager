@@ -40,6 +40,12 @@ import type { Pessoa } from "../../people/types/Pessoa";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
 import { temPermissao } from "@/shared/auth/permissions";
 
+import {
+    obterAulaEmFoco,
+    obterEstadoAula,
+    ordenarAulasPorRelevancia,
+} from "../utils/lessonFocus";
+
 import { ClassService } from "@/modules/classes/services/ClassService";
 import type { Classe } from "@/modules/classes/types/Classe";
 
@@ -915,9 +921,23 @@ export function LessonsPage() {
     }
 
     const aulasVisiveis =
-        aulas.filter(
-            podeVisualizarAula
+        ordenarAulasPorRelevancia(
+            aulas.filter(
+                podeVisualizarAula
+            )
         );
+
+    const aulaEmFoco =
+        obterAulaEmFoco(
+            aulasVisiveis
+        );
+
+    const estadoAulaEmFoco =
+        aulaEmFoco
+            ? obterEstadoAula(
+                aulaEmFoco
+            )
+            : null;
 
     if (loading) {
 
@@ -936,7 +956,7 @@ export function LessonsPage() {
 
     return (
 
-        <div className="mx-auto max-w-6xl space-y-6">
+        <div className="mx-auto max-w-6xl space-y-4 sm:space-y-6">
 
             <div className="flex items-start gap-4">
 
@@ -955,7 +975,7 @@ export function LessonsPage() {
 
                 <div>
 
-                    <h1 className="text-2xl font-bold text-slate-800">
+                    <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">
 
                         {trimestre
                             ? `${trimestre.numero}Âº Trimestre de ${trimestre.ano}`
@@ -1016,7 +1036,7 @@ export function LessonsPage() {
 
                 {podeGerenciarAulas && (
 
-                    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <section className="order-2 rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:order-1 lg:p-5">
 
                         <div className="mb-5 flex items-center gap-2">
 
@@ -1226,9 +1246,9 @@ export function LessonsPage() {
                 )}
 
 
-                <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <section className="order-1 rounded-xl border border-slate-200 bg-white shadow-sm lg:order-2">
 
-                    <div className="border-b border-slate-200 px-5 py-4">
+                    <div className="border-b border-slate-200 px-4 py-3 sm:px-5 sm:py-4">
 
                         <h2 className="font-semibold text-slate-800">
 
@@ -1256,7 +1276,12 @@ export function LessonsPage() {
 
                                     <div
                                         key={aula.id}
-                                        className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between"
+                                        className={
+                                            aula.id ===
+                                                aulaEmFoco?.id
+                                                ? "flex flex-col gap-4 bg-blue-50/70 p-4 ring-1 ring-inset ring-blue-100 md:flex-row md:items-center md:justify-between sm:p-5"
+                                                : "flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between sm:p-5"
+                                        }
                                     >
 
                                         <div className="flex items-start gap-4">
@@ -1269,6 +1294,16 @@ export function LessonsPage() {
 
 
                                             <div>
+
+                                                {aula.id ===
+                                                    aulaEmFoco?.id &&
+                                                    estadoAulaEmFoco && (
+
+                                                    <span className="mb-1 inline-flex rounded-full bg-blue-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                                                        {estadoAulaEmFoco.rotulo}
+                                                    </span>
+
+                                                )}
 
                                                 <h3 className="font-semibold text-slate-800">
 
