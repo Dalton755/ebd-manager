@@ -13,6 +13,7 @@ import {
     ImagePlus,
     Loader2,
     Maximize,
+    Minimize,
     Save,
     Square,
     RotateCcw,
@@ -187,6 +188,11 @@ export function PresentationPage() {
             null
         );
 
+    const presentationRootRef =
+        useRef<HTMLDivElement | null>(
+            null
+        );
+
     const estadoRestauradoRef =
         useRef(false);
 
@@ -221,6 +227,16 @@ export function PresentationPage() {
         renderizando,
         setRenderizando,
     ] = useState(false);
+
+    const [
+        telaCheiaAtiva,
+        setTelaCheiaAtiva,
+    ] = useState(false);
+
+    const [
+        versaoLayout,
+        setVersaoLayout,
+    ] = useState(0);
 
     const [
         urlsImagensEditor,
@@ -1711,16 +1727,28 @@ const pdf =
                         scale: 1,
                     });
 
+                const margemInterna =
+                    telaCheiaAtiva
+                        ? 0
+                        : 32;
+
+                const minimoVisual =
+                    telaCheiaAtiva
+                        ? 120
+                        : 280;
+
                 const larguraDisponivel =
                     Math.max(
-                        container.clientWidth - 32,
-                        280
+                        container.clientWidth -
+                            margemInterna,
+                        minimoVisual
                     );
 
                 const alturaDisponivel =
                     Math.max(
-                        container.clientHeight - 32,
-                        280
+                        container.clientHeight -
+                            margemInterna,
+                        minimoVisual
                     );
 
                 const escalaLargura =
@@ -2013,13 +2041,136 @@ const pdf =
     }, [
         documento,
         paginaAtual,
+        telaCheiaAtiva,
+        versaoLayout,
     ]);
+
+
+    useEffect(() => {
+
+        let frame = 0;
+
+        const atualizarLayout =
+            () => {
+
+                window.cancelAnimationFrame(
+                    frame
+                );
+
+                frame =
+                    window.requestAnimationFrame(
+                        () =>
+                            setVersaoLayout(
+                                (versao) =>
+                                    versao + 1
+                            )
+                    );
+            };
+
+
+        window.addEventListener(
+            "resize",
+            atualizarLayout
+        );
+
+        window.visualViewport
+            ?.addEventListener(
+                "resize",
+                atualizarLayout
+            );
+
+        screen.orientation
+            ?.addEventListener(
+                "change",
+                atualizarLayout
+            );
+
+
+        return () => {
+
+            window.cancelAnimationFrame(
+                frame
+            );
+
+            window.removeEventListener(
+                "resize",
+                atualizarLayout
+            );
+
+            window.visualViewport
+                ?.removeEventListener(
+                    "resize",
+                    atualizarLayout
+                );
+
+            screen.orientation
+                ?.removeEventListener(
+                    "change",
+                    atualizarLayout
+                );
+        };
+
+    }, []);
+
+
+    useEffect(() => {
+
+        function aoAlterarTelaCheia() {
+
+            const ativa =
+                document.fullscreenElement ===
+                presentationRootRef.current;
+
+            setTelaCheiaAtiva(
+                ativa
+            );
+
+            setVersaoLayout(
+                (versao) =>
+                    versao + 1
+            );
+
+
+            if (!ativa) {
+
+                const orientacao =
+                    screen.orientation as unknown as {
+                        unlock?: () => void;
+                    };
+
+                try {
+                    orientacao.unlock?.();
+                } catch {
+                    // Navegador sem suporte a desbloqueio de orientação.
+                }
+            }
+        }
+
+
+        document.addEventListener(
+            "fullscreenchange",
+            aoAlterarTelaCheia
+        );
+
+        return () => {
+
+            document.removeEventListener(
+                "fullscreenchange",
+                aoAlterarTelaCheia
+            );
+        };
+
+    }, []);
 
 
     async function alternarTelaCheia() {
 
         const elemento =
-            document.documentElement;
+            presentationRootRef.current;
+
+        if (!elemento) {
+            return;
+        }
 
         try {
 
@@ -2033,7 +2184,46 @@ const pdf =
             }
 
             await elemento
-                .requestFullscreen();
+                .requestFullscreen({
+                    navigationUI:
+                        "hide",
+                });
+
+
+            const orientacao =
+                screen.orientation as unknown as {
+                    lock?: (
+                        orientacao:
+                            "landscape"
+                    ) => Promise<void>;
+                };
+
+
+            if (
+                orientacao.lock
+            ) {
+
+                try {
+
+                    await orientacao
+                        .lock(
+                            "landscape"
+                        );
+
+                } catch (error) {
+
+                    console.info(
+                        "[APRESENTAÇÃO] O navegador não permitiu travar a orientação:",
+                        error
+                    );
+                }
+            }
+
+
+            setVersaoLayout(
+                (versao) =>
+                    versao + 1
+            );
 
         } catch (error) {
 
@@ -2097,9 +2287,24 @@ const pdf =
 
 
     return (
-        <div className="flex h-[calc(100dvh-1rem)] min-h-[520px] flex-col overflow-hidden rounded-2xl bg-slate-950 text-white">
+        <div
+            ref={
+                presentationRootRef
+            }
+            className={
+                telaCheiaAtiva
+                    ? "relative flex h-dvh w-screen flex-col overflow-hidden bg-slate-950 text-white"
+                    : "relative flex h-[calc(100dvh-1rem)] min-h-[520px] flex-col overflow-hidden rounded-2xl bg-slate-950 text-white"
+            }
+        >
 
-            <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-3 py-3 sm:px-5">
+            <header
+                className={
+                    telaCheiaAtiva
+                        ? "absolute inset-x-0 top-0 z-40 flex items-center justify-between gap-2 bg-gradient-to-b from-black/70 via-black/30 to-transparent px-2 py-2"
+                        : "flex shrink-0 items-center justify-between gap-3 border-b border-white/10 px-3 py-3 sm:px-5"
+                }
+            >
 
 
 
@@ -2119,7 +2324,13 @@ const pdf =
                     </span>
                 </button>
 
-                <div className="min-w-0 text-center">
+                <div
+                    className={
+                        telaCheiaAtiva
+                            ? "pointer-events-none min-w-0 text-center opacity-0"
+                            : "min-w-0 text-center"
+                    }
+                >
 
                     <p className="text-sm font-semibold">
                         Apresentação
@@ -2139,9 +2350,22 @@ const pdf =
                         alternarTelaCheia
                     }
                     className="rounded-lg p-2.5 text-slate-200 transition hover:bg-white/10"
-                    title="Tela cheia"
+                    title={
+                        telaCheiaAtiva
+                            ? "Sair da tela cheia"
+                            : "Tela cheia"
+                    }
+                    aria-label={
+                        telaCheiaAtiva
+                            ? "Sair da tela cheia"
+                            : "Abrir em tela cheia"
+                    }
                 >
-                    <Maximize className="h-5 w-5" />
+                    {telaCheiaAtiva ? (
+                        <Minimize className="h-5 w-5" />
+                    ) : (
+                        <Maximize className="h-5 w-5" />
+                    )}
                 </button>
 
             </header>
@@ -2419,7 +2643,11 @@ const pdf =
 
             <main
                 ref={containerRef}
-                className="relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4"
+                className={
+                    telaCheiaAtiva
+                        ? "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-0"
+                        : "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4"
+                }
             >
 
                 <div className="relative inline-block">
@@ -2860,7 +3088,13 @@ const pdf =
             )}
 
 
-            <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5">
+            <footer
+                className={
+                    telaCheiaAtiva
+                        ? "absolute inset-x-0 bottom-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-8"
+                        : "flex shrink-0 items-center justify-between gap-3 border-t border-white/10 px-3 py-3 sm:px-5"
+                }
+            >
 
                 <button
                     type="button"
