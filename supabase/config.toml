@@ -64,3 +64,16 @@ entrypoint = "./functions/get-my-plan/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/get-my-plan/*.html" ]
+
+
+[functions.demo-register]
+enabled = true
+verify_jwt = false
+import_map = "./functions/demo-register/deno.json"
+entrypoint = "./functions/demo-register/index.ts"
+
+[functions.demo-convert]
+enabled = true
+verify_jwt = false
+import_map = "./functions/demo-convert/deno.json"
+entrypoint = "./functions/demo-convert/index.ts"

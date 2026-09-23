@@ -28,6 +28,14 @@ import {
     OnboardingService,
 } from "@/modules/onboarding/services/OnboardingService";
 
+import {
+    DemoBanner,
+} from "@/modules/demo/components/DemoBanner";
+
+import {
+    DemoOfferModal,
+} from "@/modules/demo/components/DemoOfferModal";
+
 export function MainLayout() {
 
     const [
@@ -39,6 +47,7 @@ export function MainLayout() {
 
     const {
         pessoa,
+        modoDemo,
     } =
         useAuth();
 
@@ -156,7 +165,8 @@ export function MainLayout() {
         async function verificarPrimeiroAcesso() {
 
             if (
-                !pessoa?.id
+                !pessoa?.id ||
+                modoDemo
             ) {
                 return;
             }
@@ -257,6 +267,7 @@ export function MainLayout() {
     }, [
         pessoa?.id,
         pessoa?.perfil,
+        modoDemo,
         navigate,
     ]);
 
@@ -332,7 +343,13 @@ export function MainLayout() {
 
                     {/* CONTEÚDO */}
                     <div className="ebd-app-content relative z-10 mx-auto w-full max-w-[1600px] p-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6">
-                        <Outlet />
+                        {modoDemo && (
+                            <DemoBanner />
+                        )}
+
+                        <div className={modoDemo ? "mt-3" : ""}>
+                            <Outlet />
+                        </div>
                     </div>
 
                 </main>
@@ -344,6 +361,10 @@ export function MainLayout() {
                         )
                     }
                 />
+
+                {modoDemo && (
+                    <DemoOfferModal />
+                )}
             </div>
         </div>
     );

@@ -170,6 +170,47 @@ Deno.serve(async (req: Request) => {
             admin.igreja_id;
 
         // =====================================================
+        // DEMO NÃO CRIA CONTAS REAIS DE TERCEIROS
+        // =====================================================
+
+        const {
+            data: igreja,
+            error: igrejaError,
+        } =
+            await supabase
+                .schema("ebd")
+                .from("igrejas")
+                .select(
+                    "modo_demo"
+                )
+                .eq(
+                    "id",
+                    igrejaId
+                )
+                .maybeSingle();
+
+
+        if (igrejaError) {
+            throw igrejaError;
+        }
+
+
+        if (
+            igreja?.modo_demo ===
+            true
+        ) {
+            return resposta(
+                {
+                    error:
+                        "Na demonstração, explore os usuários fictícios já preparados. A criação de contas reais fica disponível após a adesão.",
+                    codigo:
+                        "ACAO_INDISPONIVEL_NA_DEMO",
+                },
+                403
+            );
+        }
+
+        // =====================================================
         // BUSCA A ASSINATURA ATIVA
         // =====================================================
 
