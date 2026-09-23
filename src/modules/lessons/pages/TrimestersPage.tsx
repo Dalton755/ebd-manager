@@ -245,12 +245,44 @@ export function TrimestersPage() {
 
 
     const trimestresVisiveis =
-        perfilUsuario === "ALUNO"
-            ? trimestres.filter(
-                (trimestre) =>
-                    trimestre.ativo
-            )
-            : trimestres;
+        (
+            perfilUsuario === "ALUNO"
+                ? trimestres.filter(
+                    (trimestre) =>
+                        trimestre.ativo
+                )
+                : [
+                    ...trimestres,
+                ]
+        )
+            .sort(
+                (a, b) => {
+
+                    if (
+                        a.ativo !==
+                        b.ativo
+                    ) {
+                        return a.ativo
+                            ? -1
+                            : 1;
+                    }
+
+                    if (
+                        a.ano !==
+                        b.ano
+                    ) {
+                        return (
+                            b.ano -
+                            a.ano
+                        );
+                    }
+
+                    return (
+                        b.numero -
+                        a.numero
+                    );
+                }
+            );
 
 
     function obterClassesVisiveis(
@@ -523,7 +555,7 @@ export function TrimestersPage() {
 
 
     return (
-        <div className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:p-6">
+        <div className="mx-auto w-full max-w-7xl space-y-4 sm:space-y-6">
 
 
             {/* CABEÇALHO */}
@@ -606,7 +638,7 @@ export function TrimestersPage() {
 
                                     {/* TÍTULO DO TRIMESTRE */}
 
-                                    <div className="flex flex-col gap-4 border-b border-slate-100 bg-slate-50/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                    <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
 
                                         <div className="flex flex-wrap items-center gap-3">
 
@@ -675,7 +707,7 @@ export function TrimestersPage() {
 
                                     {/* CARDS DAS CLASSES */}
 
-                                    <div className="p-5 sm:p-6">
+                                    <div className="p-4 sm:p-6">
 
                                         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 
@@ -714,7 +746,7 @@ export function TrimestersPage() {
                                                             }
                                                         }}
 
-                                                        className="group cursor-pointer rounded-2xl border border-slate-200 bg-white p-5 transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                                                        className="group cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 transition active:scale-[0.99] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md sm:p-5"
                                                     >
 
 
