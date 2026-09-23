@@ -128,3 +128,44 @@
     @apply font-sans;
     }
 }
+
+/* =========================================================
+   EXPERIÊNCIA MOBILE
+   ========================================================= */
+
+html,
+body,
+#root {
+    min-height: 100%;
+}
+
+body {
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 767px) {
+    /*
+     * Mantém títulos proporcionais em todas as páginas,
+     * inclusive nas telas antigas que usam text-3xl/4xl.
+     */
+    .ebd-app-content h1 {
+        font-size: 1.375rem;
+        line-height: 1.75rem;
+        letter-spacing: -0.02em;
+    }
+
+    /*
+     * Evita zoom automático em campos no mobile e melhora
+     * a leitura dos filtros/formulários.
+     */
+    .ebd-app-content input,
+    .ebd-app-content select,
+    .ebd-app-content textarea {
+        font-size: 16px;
+    }
+
+    .ebd-app-content {
+        overflow-wrap: anywhere;
+    }
+}
