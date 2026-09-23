@@ -172,4 +172,33 @@ body {
     .ebd-app-content {
         overflow-wrap: anywhere;
     }
+
+    /*
+     * Os modais das páginas são renderizados dentro de
+     * .ebd-app-content, enquanto a navegação inferior mobile
+     * é um elemento fixo fora dessa camada.
+     *
+     * Quando existe um overlay fixo aberto, elevamos somente
+     * naquele momento a camada da página acima do menu inferior.
+     * Assim o menu continua acima do conteúdo normal, mas nunca
+     * cobre modal, confirmação, referência bíblica ou formulário.
+     */
+    .ebd-app-content:has(.fixed.inset-0) {
+        z-index: 60;
+    }
+
+    /*
+     * Mantém o painel do modal inteiramente dentro da área útil
+     * da tela, inclusive em aparelhos com safe area inferior.
+     * Modais altos passam a rolar internamente em vez de ficarem
+     * escondidos atrás da navegação do aparelho.
+     */
+    .ebd-app-content .fixed.inset-0 > * {
+        max-height: calc(
+            100dvh -
+            2rem -
+            env(safe-area-inset-bottom)
+        );
+        overflow-y: auto;
+    }
 }
