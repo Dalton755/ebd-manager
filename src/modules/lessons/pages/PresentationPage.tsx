@@ -2881,20 +2881,12 @@ const pdf =
                 <div
                     className={
                         telaCheiaAtiva
-                            ? "pointer-events-none min-w-0 text-center"
+                            ? "pointer-events-none min-w-0 flex-1"
                             : "min-w-0 text-center"
                     }
                 >
 
-                    {telaCheiaAtiva ? (
-
-                        <span className="inline-flex rounded-full bg-black/35 px-3 py-1 text-xs font-bold text-white/90 backdrop-blur">
-                            {paginaAtual}
-                            {" / "}
-                            {totalPaginas}
-                        </span>
-
-                    ) : (
+                    {!telaCheiaAtiva && (
 
                         <>
 
@@ -2913,6 +2905,17 @@ const pdf =
                     )}
 
                 </div>
+
+
+                {telaCheiaAtiva && (
+
+                    <span className="pointer-events-none absolute right-12 top-2 z-50 rounded-md bg-black/30 px-2 py-1 text-[10px] font-semibold text-white/70 backdrop-blur">
+                        {paginaAtual}
+                        {" / "}
+                        {totalPaginas}
+                    </span>
+
+                )}
 
                 <button
                     type="button"
@@ -3229,16 +3232,6 @@ const pdf =
                         : "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden p-4"
                 }
             >
-
-                {telaCheiaAtiva &&
-                    !referenciaSelecionada && (
-
-                    <div className="pointer-events-none absolute bottom-2 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/25 px-3 py-1 text-[10px] font-semibold text-white/60 backdrop-blur">
-                        Deslize para trocar de página
-                    </div>
-
-                )}
-
 
                 <div className="relative inline-block">
 
