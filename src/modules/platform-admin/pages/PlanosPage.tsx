@@ -905,7 +905,143 @@ export function PlanosPage() {
 
                     ) : (
 
-                        <div className="overflow-x-auto">
+                        <div className="grid gap-3 md:hidden">
+
+                            {planos.map(
+                                (plano) => {
+
+                                    const oferta =
+                                        obterOfertaAtiva(
+                                            plano.id
+                                        );
+
+                                    return (
+                                        <div
+                                            key={
+                                                plano.id
+                                            }
+                                            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                                        >
+
+                                            <div className="flex items-start justify-between gap-3">
+
+                                                <div className="min-w-0">
+                                                    <p className="font-bold text-slate-900">
+                                                        {plano.nome}
+                                                    </p>
+                                                    {plano.descricao && (
+                                                        <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                                                            {plano.descricao}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <span className={
+                                                    plano.ativo
+                                                        ? "shrink-0 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700"
+                                                        : "shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-500"
+                                                }>
+                                                    {plano.ativo ? "Ativo" : "Inativo"}
+                                                </span>
+
+                                            </div>
+
+                                            <div className="mt-4 rounded-xl bg-gradient-to-br from-emerald-50 to-blue-50 p-3">
+
+                                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                                    Oferta atual
+                                                </p>
+
+                                                <p className="mt-1 text-lg font-black text-slate-900">
+                                                    {oferta
+                                                        ? formatarPreco(
+                                                            oferta.preco_recorrente
+                                                        )
+                                                        : "Sem oferta"}
+                                                </p>
+
+                                                {oferta && (
+                                                    <p className="text-xs text-slate-500">
+                                                        por {formatarPeriodo(
+                                                            oferta.periodo_recorrente
+                                                        )}
+                                                        {oferta.gratuito
+                                                            ? ` • ${oferta.duracao_gratuita_dias} dias grátis`
+                                                            : ""}
+                                                    </p>
+                                                )}
+
+                                            </div>
+
+                                            <div className="mt-3 grid grid-cols-3 gap-2">
+
+                                                <div className="rounded-xl bg-slate-50 p-2.5 text-center">
+                                                    <p className="text-[10px] uppercase text-slate-400">Pessoas</p>
+                                                    <p className="mt-1 font-black text-slate-800">
+                                                        {formatarLimite(
+                                                            plano.limites?.max_pessoas ?? null
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                                <div className="rounded-xl bg-slate-50 p-2.5 text-center">
+                                                    <p className="text-[10px] uppercase text-slate-400">Classes</p>
+                                                    <p className="mt-1 font-black text-slate-800">
+                                                        {formatarLimite(
+                                                            plano.limites?.max_classes ?? null
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                                <div className="rounded-xl bg-slate-50 p-2.5 text-center">
+                                                    <p className="text-[10px] uppercase text-slate-400">Prof.</p>
+                                                    <p className="mt-1 font-black text-slate-800">
+                                                        {formatarLimite(
+                                                            plano.limites?.max_professores ?? null
+                                                        )}
+                                                    </p>
+                                                </div>
+
+                                            </div>
+
+                                            <div className="mt-3 grid grid-cols-2 gap-2">
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        abrirEditorOferta(
+                                                            plano
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-3 py-2.5 text-xs font-bold text-white"
+                                                >
+                                                    <Tag size={15} />
+                                                    Oferta
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        abrirEdicao(
+                                                            plano
+                                                        )
+                                                    }
+                                                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs font-bold text-slate-700"
+                                                >
+                                                    <Edit3 size={15} />
+                                                    Editar
+                                                </button>
+
+                                            </div>
+
+                                        </div>
+                                    );
+                                }
+                            )}
+
+                        </div>
+
+                        <div className="hidden overflow-x-auto md:block">
 
                             <table className="w-full min-w-[1150px] text-sm">
 

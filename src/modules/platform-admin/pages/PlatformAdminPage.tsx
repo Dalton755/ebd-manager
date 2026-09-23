@@ -88,7 +88,7 @@ function Indicador({
         >
             <Card className="h-full transition hover:-translate-y-0.5 hover:shadow-md">
 
-                <CardContent className="p-5">
+                <CardContent className="p-4 sm:p-5">
 
                     <div className="flex items-start justify-between gap-4">
 
@@ -772,7 +772,7 @@ export function PlatformAdminPage() {
                     icon={Building2}
                 />
 
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 
                     {Array.from(
                         { length: 8 }
@@ -784,7 +784,7 @@ export function PlatformAdminPage() {
                                 className="animate-pulse"
                             >
 
-                                <CardContent className="p-5">
+                                <CardContent className="p-4 sm:p-5">
 
                                     <div className="h-4 w-28 rounded bg-slate-200" />
 
@@ -875,7 +875,7 @@ export function PlatformAdminPage() {
 
             {/* INDICADORES */}
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 
                 <Indicador
                     titulo="Igrejas cadastradas"
@@ -985,7 +985,7 @@ export function PlatformAdminPage() {
 
                 <Card>
 
-                    <CardContent className="p-5">
+                    <CardContent className="p-4 sm:p-5">
 
                         <div className="flex items-start justify-between gap-4">
 
@@ -1151,7 +1151,7 @@ export function PlatformAdminPage() {
 
                 <Card>
 
-                    <CardContent className="p-5">
+                    <CardContent className="p-4 sm:p-5">
 
                         <div className="flex items-start justify-between">
 
@@ -1281,7 +1281,7 @@ export function PlatformAdminPage() {
 
             <Card>
 
-                <CardContent className="p-5">
+                <CardContent className="p-4 sm:p-5">
 
                     <div className="grid gap-4 sm:grid-cols-2">
 
@@ -1343,7 +1343,7 @@ export function PlatformAdminPage() {
 
             <Card>
 
-                <CardContent className="p-5">
+                <CardContent className="p-4 sm:p-5">
 
                     <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
@@ -1373,7 +1373,156 @@ export function PlatformAdminPage() {
 
                     </div>
 
-                    <div className="mt-5 overflow-x-auto">
+                    <div className="mt-4 grid gap-3 md:hidden">
+
+                        {igrejasFiltradas.map(
+                            (igreja) => {
+
+                                const situacao =
+                                    obterSituacao(
+                                        igreja
+                                    );
+
+                                return (
+                                    <div
+                                        key={
+                                            igreja.id
+                                        }
+                                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                                    >
+
+                                        <div className="flex items-start justify-between gap-3">
+
+                                            <div className="min-w-0">
+
+                                                <p className="truncate font-bold text-slate-900">
+                                                    {igreja.nome}
+                                                </p>
+
+                                                <p className="mt-0.5 text-xs text-slate-400">
+                                                    {igreja.sigla ?? "Sem sigla"}
+                                                    {" • "}
+                                                    {igreja.assinatura?.plano?.nome ?? "Sem plano"}
+                                                </p>
+
+                                            </div>
+
+                                            <span
+                                                className={
+                                                    `inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-bold ` +
+                                                    (
+                                                        situacao.tipo === "success"
+                                                            ? "bg-emerald-100 text-emerald-700"
+                                                            : situacao.tipo === "warning"
+                                                                ? "bg-amber-100 text-amber-700"
+                                                                : "bg-red-100 text-red-700"
+                                                    )
+                                                }
+                                            >
+                                                {situacao.texto}
+                                            </span>
+
+                                        </div>
+
+                                        <div className="mt-4 grid grid-cols-3 gap-2">
+
+                                            <div className="rounded-xl bg-slate-50 p-3">
+                                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                                    Pessoas
+                                                </p>
+                                                <p className="mt-1 text-lg font-black text-slate-900">
+                                                    {igreja.pessoas}
+                                                </p>
+                                            </div>
+
+                                            <div className="rounded-xl bg-slate-50 p-3">
+                                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                                    Classes
+                                                </p>
+                                                <p className="mt-1 text-lg font-black text-slate-900">
+                                                    {igreja.classes}
+                                                </p>
+                                            </div>
+
+                                            <div className="rounded-xl bg-slate-50 p-3">
+                                                <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                                                    Vence
+                                                </p>
+                                                <p className="mt-1 text-xs font-bold leading-5 text-slate-700">
+                                                    {formatarData(
+                                                        igreja.assinatura?.fim_em ?? null
+                                                    )}
+                                                </p>
+                                            </div>
+
+                                        </div>
+
+                                        <div className="mt-3 flex items-center gap-2">
+
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    abrirIgreja(
+                                                        igreja.id
+                                                    )
+                                                }
+                                                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-slate-900 px-3 py-2.5 text-xs font-bold text-white"
+                                            >
+                                                <ExternalLink size={15} />
+                                                Abrir
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={
+                                                    abrirAssinaturas
+                                                }
+                                                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-blue-600"
+                                                title="Assinaturas"
+                                            >
+                                                <CreditCard size={16} />
+                                            </button>
+
+                                            {igreja.telefone && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        enviarWhatsApp(
+                                                            igreja
+                                                        )
+                                                    }
+                                                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200 text-emerald-600"
+                                                    title="WhatsApp"
+                                                >
+                                                    <MessageCircle size={16} />
+                                                </button>
+                                            )}
+
+                                            {igreja.email && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        enviarEmail(
+                                                            igreja
+                                                        )
+                                                    }
+                                                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-blue-200 text-blue-600"
+                                                    title="E-mail"
+                                                >
+                                                    <Mail size={16} />
+                                                </button>
+                                            )}
+
+                                        </div>
+
+                                    </div>
+                                );
+                            }
+                        )}
+
+                    </div>
+
+                    <div className="mt-5 hidden overflow-x-auto md:block">
 
                         <table className="w-full min-w-[1050px] text-sm">
 
