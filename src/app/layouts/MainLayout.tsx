@@ -315,7 +315,7 @@ export function MainLayout() {
                     ref={
                         mainRef
                     }
-                    className="relative min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-50"
+                    className="ebd-main-scroll relative min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-50"
                 >
 
                     {/* MARCA D'ÁGUA */}
