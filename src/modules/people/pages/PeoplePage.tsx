@@ -1048,7 +1048,7 @@ export function PeoplePage() {
 
     <div className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:p-6">
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
         <PageHeader
           title="Pessoas"

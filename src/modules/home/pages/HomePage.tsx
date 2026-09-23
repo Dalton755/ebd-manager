@@ -288,7 +288,7 @@ export function HomePage() {
 
                 <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-                    <div className="border-b border-slate-100 px-6 py-5">
+                    <div className="border-b border-slate-100 px-4 py-4 sm:px-6 sm:py-5">
 
                         <div className="flex items-center gap-3">
 
@@ -341,7 +341,7 @@ export function HomePage() {
                     )}
 
 
-                    <div className="grid gap-6 p-6 md:grid-cols-3">
+                    <div className="grid gap-4 p-4 sm:gap-6 sm:p-6 md:grid-cols-3">
 
                         <div className="flex items-center gap-3">
 
@@ -415,7 +415,7 @@ export function HomePage() {
                     </div>
 
 
-                    <div className="flex flex-wrap gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+                    <div className="flex flex-wrap gap-3 border-t border-slate-100 bg-slate-50 px-4 py-3 sm:px-6 sm:py-4">
 
                         {priorizarApresentacaoHoje ? (
 
@@ -823,13 +823,13 @@ export function HomePage() {
                     Acesso rápido
                 </h2>
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 
                     {pessoa?.perfil === "ALUNO" && (
 
                         <Link
                             to="/aluno/checkin"
-                            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition sm:p-5 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
                         >
 
                             <MapPin
@@ -851,7 +851,7 @@ export function HomePage() {
 
                     <Link
                         to="/aulas"
-                        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition sm:p-5 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
                     >
 
                         <BookOpen
@@ -871,7 +871,7 @@ export function HomePage() {
 
                     <Link
                         to="/presencas"
-                        className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
+                        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition sm:p-5 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md"
                     >
 
                         <CheckCircle2

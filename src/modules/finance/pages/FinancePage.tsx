@@ -230,12 +230,12 @@ export function FinancePage() {
 
             ) : (
 
-                <div className="grid gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3">
 
 
                     {/* SALDO */}
 
-                    <Card className="overflow-hidden">
+                    <Card className="col-span-2 overflow-hidden md:col-span-1">
 
                         <CardContent className="p-5">
 

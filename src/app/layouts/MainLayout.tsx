@@ -326,7 +326,7 @@ export function MainLayout() {
                     ref={
                         mainRef
                     }
-                    className="ebd-main-scroll relative min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-50"
+                    className="ebd-main-scroll relative min-h-0 min-w-0 flex-1 touch-pan-y overflow-x-hidden overflow-y-auto overscroll-y-contain bg-[#f7f9fc]"
                 >
 
                     {/* MARCA D'ÁGUA */}
@@ -337,12 +337,12 @@ export function MainLayout() {
                         <img
                             src={marcaDagua}
                             alt=""
-                            className="w-[90%] max-w-[1100px] opacity-30"
+                            className="w-[88%] max-w-[1050px] opacity-[0.16]"
                         />
                     </div>
 
                     {/* CONTEÚDO */}
-                    <div className="ebd-app-content relative z-10 mx-auto w-full max-w-[1600px] p-3 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5.75rem+env(safe-area-inset-bottom))] md:p-6 md:pb-6">
+                    <div className="ebd-app-content relative z-10 mx-auto w-full max-w-[1540px] p-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:p-4 sm:pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:p-5 md:pb-6 lg:p-6">
                         {modoDemo && (
                             <DemoBanner />
                         )}

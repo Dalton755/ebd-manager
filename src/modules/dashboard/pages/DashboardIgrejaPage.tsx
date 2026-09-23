@@ -621,7 +621,7 @@ export function DashboardIgrejaPage({
 
                 <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="grid grid-cols-2 gap-2">
 
                         <button
                             type="button"
@@ -656,7 +656,7 @@ export function DashboardIgrejaPage({
                 {/* HERO */}
                 {/* ================================================= */}
 
-                <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-7 text-white shadow-xl">
+                <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-5 text-white shadow-xl sm:p-7">
 
                     <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-2xl" />
 
@@ -699,7 +699,7 @@ export function DashboardIgrejaPage({
                 {/* FILTROS */}
                 {/* ================================================= */}
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                     <div className="grid gap-4 md:grid-cols-2">
 
@@ -966,7 +966,7 @@ export function DashboardIgrejaPage({
 
                                 {/* PRESENÇAS */}
 
-                                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                                     <CheckCircle2
                                         size={21}
@@ -992,7 +992,7 @@ export function DashboardIgrejaPage({
 
                                 {/* FALTAS */}
 
-                                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                                     <AlertTriangle
                                         size={21}
@@ -1014,7 +1014,7 @@ export function DashboardIgrejaPage({
 
                                 {/* MÉDIA DA CLASSE */}
 
-                                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                                     <Users
                                         size={21}
@@ -1036,7 +1036,7 @@ export function DashboardIgrejaPage({
 
                                 {/* COMPARAÇÃO */}
 
-                                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                                     <TrendingUp
                                         size={21}
@@ -1106,7 +1106,7 @@ export function DashboardIgrejaPage({
 
                                 {/* SEQUÊNCIA */}
 
-                                <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                                     <Activity
                                         size={21}
@@ -1381,7 +1381,7 @@ export function DashboardIgrejaPage({
                                                                 }
                                                             >
 
-                                                                <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                                                                <div className="mb-2 grid grid-cols-2 gap-2 sm:items-end sm:justify-between">
 
                                                                     <div>
 
@@ -1709,7 +1709,7 @@ export function DashboardIgrejaPage({
 
             <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
 
-                <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="grid grid-cols-2 gap-2">
 
                     <button
                         type="button"
@@ -1744,7 +1744,7 @@ export function DashboardIgrejaPage({
             {/* FILTRO DE PERÍODO */}
             {/* ================================================= */}
 
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
@@ -1832,7 +1832,7 @@ export function DashboardIgrejaPage({
             {/* HERO */}
             {/* ================================================= */}
 
-            <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-7 text-white shadow-xl">
+            <div className="relative overflow-hidden rounded-3xl bg-slate-950 p-5 text-white shadow-xl sm:p-7">
 
                 <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-500/10 blur-2xl" />
 
@@ -1921,7 +1921,7 @@ export function DashboardIgrejaPage({
                 </div>
 
 
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 
                     {/* FREQUÊNCIA */}
 
@@ -1975,7 +1975,7 @@ export function DashboardIgrejaPage({
 
                     {/* EVOLUÇÃO */}
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                         <div className="flex items-start justify-between">
 
@@ -2059,7 +2059,7 @@ export function DashboardIgrejaPage({
 
                     {/* ASSÍDUOS */}
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                         <div className="flex items-start justify-between">
 
@@ -2094,7 +2094,7 @@ export function DashboardIgrejaPage({
 
                     {/* ATENÇÃO */}
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                         <div className="flex items-start justify-between">
 
@@ -2133,7 +2133,7 @@ export function DashboardIgrejaPage({
 
                     {/* SEM PARTICIPAÇÃO */}
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                         <div className="flex items-center justify-between">
 
@@ -2167,7 +2167,7 @@ export function DashboardIgrejaPage({
 
                     {/* MÉDIA POR AULA */}
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                         <div className="flex items-center justify-between">
 
@@ -2210,7 +2210,7 @@ export function DashboardIgrejaPage({
 
                     {/* COBERTURA PROFESSORES */}
 
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
 
                         <div className="flex items-center justify-between">
 
