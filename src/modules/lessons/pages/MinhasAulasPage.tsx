@@ -22,6 +22,10 @@ import { temPermissao } from "@/shared/auth/permissions";
 import { LessonService } from "../services/LessonService";
 import { PresentationService } from "../services/PresentationService";
 
+import {
+    LessonImage,
+} from "../components/LessonImage";
+
 import type { Aula } from "../types/Aula";
 import type { ApresentacaoAula } from "../types/ApresentacaoAula";
 import type { Trimestre } from "../types/Trimestre";
@@ -732,6 +736,20 @@ export function MinhasAulasPage() {
                     }
                 >
 
+                    {aulaEmFoco.imagem_path && (
+
+                        <LessonImage
+                            aula={
+                                aulaEmFoco
+                            }
+                            downloadable
+                            className="mb-4 aspect-video rounded-2xl border border-white/15"
+                            downloadClassName="absolute bottom-2 right-2 inline-flex h-9 items-center gap-1.5 rounded-xl bg-white/90 px-3 text-xs font-extrabold text-blue-700 shadow-lg backdrop-blur"
+                        />
+
+                    )}
+
+
                     <div className="flex items-center justify-between gap-3">
 
                         <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wide">
@@ -966,6 +984,19 @@ export function MinhasAulasPage() {
                                     : "rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:shadow-md sm:p-5"
                             }
                         >
+
+                            {aula.imagem_path && (
+
+                                <LessonImage
+                                    aula={
+                                        aula
+                                    }
+                                    downloadable
+                                    className="mb-4 aspect-video rounded-2xl"
+                                />
+
+                            )}
+
 
                             {aula.id === aulaDestaqueId &&
                                 destacarMaterial && (

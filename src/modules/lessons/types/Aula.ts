@@ -29,6 +29,16 @@ export type Aula = {
 
     link_drive: string | null;
 
+    imagem_path?: string | null;
+
+    imagem_nome?: string | null;
+
+    imagem_posicao_x?: number | null;
+
+    imagem_posicao_y?: number | null;
+
+    imagem_zoom?: number | null;
+
     cancelada?: boolean;
 
     cancelada_em?: string | null;

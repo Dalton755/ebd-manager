@@ -6,7 +6,9 @@
 import {
     BookOpen,
     CheckCircle2,
+    ChevronDown,
     ChevronRight,
+    ChevronUp,
     Loader2,
     Pencil,
     Plus,
@@ -128,6 +130,14 @@ export function TrimestersPage() {
             null
         );
 
+    const [
+        mostrarOutrosTrimestres,
+        setMostrarOutrosTrimestres,
+    ] =
+        useState(
+            false
+        );
+
 
     /*
      * RASCUNHO - NOVO TRIMESTRE
@@ -244,7 +254,7 @@ export function TrimestersPage() {
     ]);
 
 
-    const trimestresVisiveis =
+    const trimestresOrdenados =
         (
             perfilUsuario === "ALUNO"
                 ? trimestres.filter(
@@ -283,6 +293,45 @@ export function TrimestersPage() {
                     );
                 }
             );
+
+
+    const trimestrePrincipal =
+        trimestresOrdenados.find(
+            (trimestre) =>
+                trimestre.ativo
+        ) ??
+        trimestresOrdenados[0] ??
+        null;
+
+
+    const outrosTrimestres =
+        perfilUsuario === "ALUNO"
+            ? []
+            : trimestresOrdenados.filter(
+                (trimestre) =>
+                    trimestre.id !==
+                    trimestrePrincipal?.id
+            );
+
+
+    const trimestresVisiveis =
+        perfilUsuario === "ALUNO"
+            ? trimestresOrdenados
+            : [
+                ...(
+                    trimestrePrincipal
+                        ? [
+                            trimestrePrincipal,
+                        ]
+                        : []
+                ),
+
+                ...(
+                    mostrarOutrosTrimestres
+                        ? outrosTrimestres
+                        : []
+                ),
+            ];
 
 
     function obterClassesVisiveis(
@@ -869,6 +918,46 @@ export function TrimestersPage() {
                                 </section>
                             );
                         }
+                    )}
+
+
+                    {perfilUsuario !== "ALUNO" &&
+                        outrosTrimestres.length > 0 && (
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                setMostrarOutrosTrimestres(
+                                    (atual) =>
+                                        !atual
+                                )
+                            }
+                            className="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-4 text-left shadow-sm transition hover:border-blue-200 hover:bg-blue-50/30 sm:px-6"
+                        >
+
+                            <div>
+
+                                <p className="font-bold text-slate-800">
+                                    {mostrarOutrosTrimestres
+                                        ? "Ocultar outros trimestres"
+                                        : "Ver outros trimestres"}
+                                </p>
+
+                                <p className="mt-1 text-xs text-slate-500">
+                                    {outrosTrimestres.length} trimestre{outrosTrimestres.length === 1 ? "" : "s"} anterior{outrosTrimestres.length === 1 ? "" : "es"}
+                                </p>
+
+                            </div>
+
+
+                            {mostrarOutrosTrimestres ? (
+                                <ChevronUp className="h-5 w-5 text-blue-600" />
+                            ) : (
+                                <ChevronDown className="h-5 w-5 text-blue-600" />
+                            )}
+
+                        </button>
+
                     )}
 
                 </div>

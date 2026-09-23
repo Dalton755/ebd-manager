@@ -29,6 +29,18 @@ import { toast } from "sonner";
 import { LessonService } from "../services/LessonService";
 
 import {
+    LessonImageService,
+} from "../services/LessonImageService";
+
+import {
+    LessonImage,
+} from "../components/LessonImage";
+
+import {
+    LessonImageEditor,
+} from "../components/LessonImageEditor";
+
+import {
     PresentationService,
 } from "../services/PresentationService";
 
@@ -43,6 +55,10 @@ import type { Pessoa } from "../../people/types/Pessoa";
 import type {
     AulaComStatus,
 } from "../services/LessonService";
+
+import type {
+    Aula,
+} from "../types/Aula";
 
 import type {
     ClasseNoTrimestre,
@@ -240,6 +256,47 @@ export function ClassLessonsPage() {
         );
 
     const [
+        imagemArquivo,
+        setImagemArquivo,
+    ] =
+        useState<File | null>(
+            null
+        );
+
+    const [
+        imagemRemovida,
+        setImagemRemovida,
+    ] =
+        useState(
+            false
+        );
+
+    const [
+        imagemPosicaoX,
+        setImagemPosicaoX,
+    ] =
+        useState(
+            50
+        );
+
+    const [
+        imagemPosicaoY,
+        setImagemPosicaoY,
+    ] =
+        useState(
+            50
+        );
+
+    const [
+        imagemZoom,
+        setImagemZoom,
+    ] =
+        useState(
+            1
+        );
+
+
+    const [
         professores,
         setProfessores,
     ] =
@@ -330,6 +387,37 @@ export function ClassLessonsPage() {
         aulaParaEditar
             ? formularioEdicao
             : formulario;
+
+
+    function prepararImagemFormulario(
+        aula?: Aula | null
+    ) {
+
+        setImagemArquivo(
+            null
+        );
+
+        setImagemRemovida(
+            false
+        );
+
+        setImagemPosicaoX(
+            aula?.imagem_posicao_x ??
+            50
+        );
+
+        setImagemPosicaoY(
+            aula?.imagem_posicao_y ??
+            50
+        );
+
+        setImagemZoom(
+            Number(
+                aula?.imagem_zoom ??
+                1
+            )
+        );
+    }
 
 
     async function importarPdf(
@@ -642,6 +730,10 @@ export function ClassLessonsPage() {
             null
         );
 
+        prepararImagemFormulario(
+            null
+        );
+
         setModalNovaAula(
             true
         );
@@ -688,6 +780,11 @@ export function ClassLessonsPage() {
         });
 
 
+        prepararImagemFormulario(
+            aulaSelecionada
+        );
+
+
         setAulaParaEditar(
             aulaSelecionada
         );
@@ -721,6 +818,11 @@ export function ClassLessonsPage() {
                 formularioVazio
             );
         }
+
+
+        prepararImagemFormulario(
+            null
+        );
     }
 
     async function abrirSelecaoProfessor() {
@@ -1012,27 +1114,133 @@ export function ClassLessonsPage() {
             };
 
 
+            let aulaSalva:
+                Aula;
+
+
             /*
              * EDIÇÃO
              */
             if (aulaParaEditar) {
 
-                await LessonService
-                    .atualizarAula(
-                        aulaParaEditar.id,
-                        dadosAula
-                    );
+                aulaSalva =
+                    await LessonService
+                        .atualizarAula(
+                            aulaParaEditar.id,
+                            dadosAula
+                        );
 
+            } else {
+
+                /*
+                 * NOVA AULA
+                 */
+                aulaSalva =
+                    await LessonService
+                        .criarAula(
+                            {
+                                trimestre_id:
+                                    trimestreId,
+
+                                classe_id:
+                                    classeId,
+
+                                ...dadosAula,
+
+                                professor_id:
+                                    null,
+
+                                imagem_path:
+                                    null,
+
+                                imagem_nome:
+                                    null,
+
+                                imagem_posicao_x:
+                                    50,
+
+                                imagem_posicao_y:
+                                    50,
+
+                                imagem_zoom:
+                                    1,
+                            },
+
+                            pessoa.igreja_id
+                        );
+            }
+
+
+            if (
+                imagemRemovida &&
+                aulaSalva.imagem_path
+            ) {
+
+                aulaSalva =
+                    await LessonImageService
+                        .removerImagem(
+                            aulaSalva
+                        );
+
+            } else if (
+                imagemArquivo
+            ) {
+
+                aulaSalva =
+                    await LessonImageService
+                        .salvarImagem({
+                            aula:
+                                aulaSalva,
+
+                            igrejaId:
+                                pessoa.igreja_id,
+
+                            arquivo:
+                                imagemArquivo,
+
+                            ajuste: {
+                                posicaoX:
+                                    imagemPosicaoX,
+
+                                posicaoY:
+                                    imagemPosicaoY,
+
+                                zoom:
+                                    imagemZoom,
+                            },
+                        });
+
+            } else if (
+                aulaSalva.imagem_path
+            ) {
+
+                aulaSalva =
+                    await LessonImageService
+                        .atualizarAjuste(
+                            aulaSalva.id,
+                            {
+                                posicaoX:
+                                    imagemPosicaoX,
+
+                                posicaoY:
+                                    imagemPosicaoY,
+
+                                zoom:
+                                    imagemZoom,
+                            }
+                        );
+            }
+
+
+            if (aulaParaEditar) {
 
                 toast.success(
                     "Aula atualizada com sucesso!"
                 );
 
-
                 setAulaParaEditar(
                     null
                 );
-
 
                 setFormularioEdicao(
                     formularioVazio
@@ -1040,40 +1248,21 @@ export function ClassLessonsPage() {
 
             } else {
 
-                /*
-                 * NOVA AULA
-                 */
-                await LessonService
-                    .criarAula(
-                        {
-                            trimestre_id:
-                                trimestreId,
-
-                            classe_id:
-                                classeId,
-
-                            ...dadosAula,
-
-                            professor_id:
-                                null,
-                        },
-
-                        pessoa.igreja_id
-                    );
-
-
                 limparRascunho();
-
 
                 setFormulario(
                     formularioVazio
                 );
 
-
                 toast.success(
                     "Aula cadastrada com sucesso!"
                 );
             }
+
+
+            prepararImagemFormulario(
+                null
+            );
 
 
             setModalNovaAula(
@@ -1268,6 +1457,18 @@ export function ClassLessonsPage() {
                     className="w-full rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-600 to-blue-700 p-4 text-left text-white shadow-lg shadow-blue-100 transition active:scale-[0.99] sm:p-5"
                 >
 
+                    {aulaEmFoco.imagem_path && (
+
+                        <LessonImage
+                            aula={
+                                aulaEmFoco
+                            }
+                            className="mb-4 aspect-video rounded-xl border border-white/15"
+                        />
+
+                    )}
+
+
                     <div className="flex items-center justify-between gap-3">
 
                         <span className="rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-wide">
@@ -1396,6 +1597,18 @@ export function ClassLessonsPage() {
                                     }
                                     className="group rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition active:scale-[0.99] hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md sm:p-5"
                                 >
+
+                                    {aula.imagem_path && (
+
+                                        <LessonImage
+                                            aula={
+                                                aula
+                                            }
+                                            className="mb-4 aspect-video rounded-xl"
+                                        />
+
+                                    )}
+
 
                                     <div className="flex items-start justify-between gap-4">
 
@@ -1609,6 +1822,48 @@ export function ClassLessonsPage() {
                             </div>
 
 
+                            <LessonImageEditor
+                                existingPath={
+                                    aulaParaEditar
+                                        ?.imagem_path ??
+                                    null
+                                }
+                                arquivo={
+                                    imagemArquivo
+                                }
+                                onArquivoChange={
+                                    setImagemArquivo
+                                }
+                                removida={
+                                    imagemRemovida
+                                }
+                                onRemovidaChange={
+                                    setImagemRemovida
+                                }
+                                posicaoX={
+                                    imagemPosicaoX
+                                }
+                                posicaoY={
+                                    imagemPosicaoY
+                                }
+                                zoom={
+                                    imagemZoom
+                                }
+                                onPosicaoXChange={
+                                    setImagemPosicaoX
+                                }
+                                onPosicaoYChange={
+                                    setImagemPosicaoY
+                                }
+                                onZoomChange={
+                                    setImagemZoom
+                                }
+                                disabled={
+                                    saving
+                                }
+                            />
+
+
                             <div>
 
                                 <label className="mb-1 block text-sm font-medium text-slate-700">
@@ -1810,6 +2065,19 @@ export function ClassLessonsPage() {
 
 
                         <div className="space-y-4 p-6">
+
+                            {aulaSelecionada.imagem_path && (
+
+                                <LessonImage
+                                    aula={
+                                        aulaSelecionada
+                                    }
+                                    downloadable
+                                    className="aspect-video rounded-2xl"
+                                />
+
+                            )}
+
 
                             <div className="flex items-center gap-3 text-sm text-slate-600">
                                 <CalendarDays size={18} />
