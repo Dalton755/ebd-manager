@@ -1,104 +1,196 @@
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useState,
+} from "react";
+
+import {
+    ChevronDown,
+    ChevronUp,
+    Eye,
+    EyeOff,
+    ShieldCheck,
+} from "lucide-react";
+
 import {
     useNavigate,
-    useSearchParams,
 } from "react-router-dom";
-import { AuthService } from "../services/AuthService";
-import { toast } from "sonner";
-import { Modal } from "@/shared/components/ui/Modal";
-import { Input } from "@/shared/components/ui/Input";
-import { Button } from "@/shared/components/ui/Button";
-import { useAuth } from "../hooks/useAuth";
-import { PasswordRecoveryService } from "@/modules/password-recovery/services/PasswordRecoveryService";
-import { Eye, EyeOff } from "lucide-react";
+
+import {
+    toast,
+} from "sonner";
+
+import {
+    AuthService,
+} from "../services/AuthService";
+
+import {
+    useAuth,
+} from "../hooks/useAuth";
+
+import {
+    PasswordRecoveryService,
+} from "@/modules/password-recovery/services/PasswordRecoveryService";
+
+import {
+    Modal,
+} from "@/shared/components/ui/Modal";
+
+import {
+    Input,
+} from "@/shared/components/ui/Input";
+
+import {
+    Button,
+} from "@/shared/components/ui/Button";
+
 
 export function LoginPage() {
 
-    const navigate = useNavigate();
-
-    const [
-        searchParams,
-    ] = useSearchParams();
-
-    const igrejaId =
-        searchParams.get(
-            "igreja_id"
-        );
+    const navigate =
+        useNavigate();
 
     const {
         user,
         pessoa,
-    } = useAuth();
+        loading:
+            authLoading,
+    } =
+        useAuth();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [modalOpen, setModalOpen] = useState(false);
-    const [recoveryEmail, setRecoveryEmail] = useState("");
-    const [sendingRecovery, setSendingRecovery] = useState(false);
+    const [
+        email,
+        setEmail,
+    ] =
+        useState("");
+
+    const [
+        password,
+        setPassword,
+    ] =
+        useState("");
+
+    const [
+        showPassword,
+        setShowPassword,
+    ] =
+        useState(false);
+
+    const [
+        mostrarSenha,
+        setMostrarSenha,
+    ] =
+        useState(false);
+
+    const [
+        loading,
+        setLoading,
+    ] =
+        useState(false);
+
+    const [
+        modalOpen,
+        setModalOpen,
+    ] =
+        useState(false);
+
+    const [
+        recoveryEmail,
+        setRecoveryEmail,
+    ] =
+        useState("");
+
+    const [
+        sendingRecovery,
+        setSendingRecovery,
+    ] =
+        useState(false);
+
 
     useEffect(() => {
 
-        if (!user || !pessoa) {
-            return;
-        }
-
-        const perfil =
-            pessoa.perfil;
-
         if (
-            perfil === "PROFESSOR"
+            authLoading
         ) {
-
-            navigate("/inicio", {
-                replace: true,
-            });
-
             return;
         }
 
 
         if (
-            perfil === "ALUNO"
+            user &&
+            !pessoa
         ) {
 
-            /*
-             * O aluno passa pela rota inicial inteligente.
-             *
-             * Ela decidirá entre:
-             * - check-in;
-             * - aula/material;
-             * - início.
-             */
-            navigate("/", {
-                replace: true,
-            });
+            navigate(
+                "/entrar-classe",
+                {
+                    replace:
+                        true,
+                }
+            );
 
             return;
         }
 
 
-        navigate("/", {
-            replace: true,
-        });
+        if (
+            !user ||
+            !pessoa
+        ) {
+            return;
+        }
+
+
+        if (
+            pessoa.perfil ===
+            "PROFESSOR"
+        ) {
+
+            navigate(
+                "/inicio",
+                {
+                    replace:
+                        true,
+                }
+            );
+
+            return;
+        }
+
+
+        navigate(
+            "/",
+            {
+                replace:
+                    true,
+            }
+        );
 
     }, [
         user,
         pessoa,
+        authLoading,
         navigate,
     ]);
 
-    async function handleGoogleLogin() {
-        try {
-            setLoading(true);
 
-            const { error } =
-                await AuthService.loginWithGoogle(
-                    igrejaId
-                );
+    async function handleGoogleLogin() {
+
+        try {
+
+            setLoading(
+                true
+            );
+
+
+            const {
+                error,
+            } =
+                await AuthService
+                    .loginWithGoogle();
+
 
             if (error) {
+
                 console.error(
                     "Erro no login com Google:",
                     error
@@ -109,7 +201,9 @@ export function LoginPage() {
                 );
             }
 
+
         } catch (error) {
+
             console.error(
                 "Erro inesperado no login com Google:",
                 error
@@ -118,50 +212,89 @@ export function LoginPage() {
             toast.error(
                 "Não foi possível entrar com o Google."
             );
+
         } finally {
-            setLoading(false);
+
+            setLoading(
+                false
+            );
         }
     }
 
-    async function handleLogin(e: React.FormEvent) {
-        e.preventDefault();
 
-        if (!email.trim() || !password) {
-            toast.error("Informe seu e-mail e senha.");
+    async function handleLogin(
+        event:
+            React.FormEvent
+    ) {
+
+        event.preventDefault();
+
+
+        if (
+            !email.trim() ||
+            !password
+        ) {
+
+            toast.error(
+                "Informe seu e-mail e senha."
+            );
+
             return;
         }
 
-        try {
-            setLoading(true);
 
-            const { data, error } =
-                await AuthService.login(
-                    email.trim(),
-                    password
-                );
+        try {
+
+            setLoading(
+                true
+            );
+
+
+            const {
+                data,
+                error,
+            } =
+                await AuthService
+                    .login(
+                        email.trim(),
+                        password
+                    );
+
 
             if (error) {
-                console.error("Erro no login:", error);
 
-                toast.error(error.message);
+                console.error(
+                    "Erro no login:",
+                    error
+                );
+
+                toast.error(
+                    error.message
+                );
+
                 return;
             }
 
-            if (!data.user) {
+
+            if (
+                !data.user
+            ) {
+
                 toast.error(
                     "Não foi possível identificar o usuário."
                 );
+
                 return;
             }
 
-            console.log(
-                "Login realizado com sucesso:",
-                data.user.id
+
+            toast.success(
+                "Login realizado com sucesso!"
             );
 
-            toast.success("Login realizado com sucesso!");
 
         } catch (error) {
+
             console.error(
                 "Erro inesperado no login:",
                 error
@@ -172,205 +305,343 @@ export function LoginPage() {
             );
 
         } finally {
-            setLoading(false);
+
+            setLoading(
+                false
+            );
         }
     }
 
+
     async function handleRecovery() {
-        if (!recoveryEmail.trim()) {
-            toast.error("Informe seu e-mail.");
+
+        if (
+            !recoveryEmail.trim()
+        ) {
+
+            toast.error(
+                "Informe seu e-mail."
+            );
+
             return;
         }
 
-        try {
-            setSendingRecovery(true);
 
-            await PasswordRecoveryService.solicitarRedefinicao(
-                recoveryEmail
+        try {
+
+            setSendingRecovery(
+                true
             );
 
-            setModalOpen(false);
-            setRecoveryEmail("");
+
+            await PasswordRecoveryService
+                .solicitarRedefinicao(
+                    recoveryEmail
+                );
+
+
+            setModalOpen(
+                false
+            );
+
+            setRecoveryEmail(
+                ""
+            );
+
 
             toast.success(
-                "Solicitação enviada com sucesso. Aguarde o Administrador entrar em contato com sua nova senha."
+                "Solicitação enviada. Aguarde o contato do administrador."
             );
+
+
         } catch (error) {
+
             console.error(
                 "Erro ao solicitar redefinição de senha:",
                 error
             );
+
 
             toast.error(
                 error instanceof Error
                     ? error.message
                     : "Não foi possível enviar sua solicitação."
             );
+
         } finally {
-            setSendingRecovery(false);
+
+            setSendingRecovery(
+                false
+            );
         }
     }
 
+
     return (
-        <div className="flex min-h-screen items-center justify-center bg-slate-100">
-            <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
-                <div className="mb-8 text-center">
-                    <h1 className="text-3xl font-bold text-blue-600">
-                        EBD Manager
-                    </h1>
+        <div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-slate-50 to-blue-50/50 px-4 py-8">
 
-                    <p className="mt-2 text-slate-500">
-                        Sistema de Gestão da Escola Bíblica
-                    </p>
-                </div>
+            <div className="w-full max-w-md">
 
-                <form onSubmit={handleLogin} className="space-y-5">
-                    <div>
-                        <label className="mb-2 block text-sm font-medium">
-                            E-mail
-                        </label>
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
 
-                        <input
-                            type="email"
-                            className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-600"
-                            placeholder="email@igreja.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
+                    <div className="text-center">
 
-                    <div>
-                        <label className="mb-2 block text-sm font-medium">
-                            Senha
-                        </label>
-
-                        <div className="relative">
-                            <input
-                                type={showPassword ? "text" : "password"}
-                                className="w-full rounded-lg border border-slate-300 px-4 py-3 pr-12 outline-none focus:border-blue-600"
-                                placeholder="********"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                            />
-
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-500 hover:text-blue-600"
-                                aria-label={
-                                    showPassword
-                                        ? "Ocultar senha"
-                                        : "Mostrar senha"
-                                }
-                            >
-                                {showPassword ? (
-                                    <EyeOff size={20} />
-                                ) : (
-                                    <Eye size={20} />
-                                )}
-                            </button>
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-xl font-black text-white shadow-lg shadow-blue-200">
+                            E
                         </div>
+
+                        <h1 className="mt-4 text-3xl font-black text-slate-900">
+                            EBD Manager
+                        </h1>
+
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                            Entre de forma simples e acesse sua Escola Bíblica.
+                        </p>
+
                     </div>
 
-                    <button
-                        type="submit"
-                        className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-700"
-                    >
-                        {loading ? "Entrando..." : "Entrar"}
-                    </button>
-
-                    <div className="flex items-center gap-3">
-                        <div className="h-px flex-1 bg-slate-200" />
-
-                        <span className="text-xs text-slate-400">
-                            OU
-                        </span>
-
-                        <div className="h-px flex-1 bg-slate-200" />
-                    </div>
 
                     <button
                         type="button"
-                        onClick={handleGoogleLogin}
-                        disabled={loading}
-                        className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-300 bg-white py-3 font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        onClick={
+                            handleGoogleLogin
+                        }
+                        disabled={
+                            loading
+                        }
+                        className="mt-7 flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3.5 font-bold text-slate-800 shadow-sm transition hover:bg-slate-50 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full text-sm font-bold text-red-500">
+
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-black text-blue-600">
                             G
                         </span>
 
-                        Continuar com Google
+                        {loading
+                            ? "Abrindo Google..."
+                            : "Continuar com Google"}
+
                     </button>
 
-                    <div className="space-y-3 text-center">
-                        <button
-                            type="button"
-                            onClick={() => setModalOpen(true)}
-                            className="block w-full text-sm text-blue-600 hover:underline"
-                        >
-                            Esqueci minha senha
-                        </button>
 
-                        <button
-                            type="button"
-                            onClick={() => {
+                    <div className="mt-4 flex items-start gap-2 rounded-2xl bg-blue-50 px-4 py-3 text-xs leading-5 text-blue-800">
 
-                                if (igrejaId) {
+                        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
 
-                                    navigate(
-                                        `/cadastro?igreja_id=${encodeURIComponent(
-                                            igrejaId
-                                        )}`
-                                    );
+                        <p>
+                            Aluno novo entra com Google e depois informa apenas o número da classe. Não precisa criar senha nem confirmar e-mail.
+                        </p>
 
-                                    return;
-                                }
-
-                                navigate(
-                                    "/cadastro-igreja"
-                                );
-                            }}
-                            className="text-sm text-blue-600 hover:underline"
-                        >
-                            {igrejaId
-                                ? "Criar minha conta nesta igreja"
-                                : "Testar o EBD Manager grátis"}
-                        </button>
-
-                        {!igrejaId && (
-                            <p className="text-xs text-slate-400">
-                                Sem CNPJ, sem cartão e sem cadastro da igreja para começar.
-                            </p>
-                        )}
                     </div>
 
 
-                </form>
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setMostrarSenha(
+                                (atual) =>
+                                    !atual
+                            )
+                        }
+                        className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                    >
+
+                        Já tenho e-mail e senha
+
+                        {mostrarSenha ? (
+                            <ChevronUp className="h-4 w-4" />
+                        ) : (
+                            <ChevronDown className="h-4 w-4" />
+                        )}
+
+                    </button>
+
+
+                    {mostrarSenha && (
+
+                        <form
+                            onSubmit={
+                                handleLogin
+                            }
+                            className="mt-3 space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                        >
+
+                            <div>
+
+                                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                                    E-mail
+                                </label>
+
+                                <input
+                                    type="email"
+                                    className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                                    placeholder="email@igreja.com"
+                                    value={
+                                        email
+                                    }
+                                    onChange={(
+                                        event
+                                    ) =>
+                                        setEmail(
+                                            event.target.value
+                                        )
+                                    }
+                                    autoComplete="email"
+                                />
+
+                            </div>
+
+
+                            <div>
+
+                                <label className="mb-1.5 block text-sm font-semibold text-slate-700">
+                                    Senha
+                                </label>
+
+                                <div className="relative">
+
+                                    <input
+                                        type={
+                                            showPassword
+                                                ? "text"
+                                                : "password"
+                                        }
+                                        className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 pr-12 outline-none transition focus:border-blue-600 focus:ring-4 focus:ring-blue-100"
+                                        placeholder="********"
+                                        value={
+                                            password
+                                        }
+                                        onChange={(
+                                            event
+                                        ) =>
+                                            setPassword(
+                                                event.target.value
+                                            )
+                                        }
+                                        autoComplete="current-password"
+                                    />
+
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setShowPassword(
+                                                (atual) =>
+                                                    !atual
+                                            )
+                                        }
+                                        className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 hover:text-blue-600"
+                                        aria-label={
+                                            showPassword
+                                                ? "Ocultar senha"
+                                                : "Mostrar senha"
+                                        }
+                                    >
+
+                                        {showPassword ? (
+                                            <EyeOff className="h-5 w-5" />
+                                        ) : (
+                                            <Eye className="h-5 w-5" />
+                                        )}
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+
+                            <button
+                                type="submit"
+                                disabled={
+                                    loading
+                                }
+                                className="w-full rounded-xl bg-slate-900 py-3 font-bold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                            >
+                                {loading
+                                    ? "Entrando..."
+                                    : "Entrar com senha"}
+                            </button>
+
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setModalOpen(
+                                        true
+                                    )
+                                }
+                                className="block w-full text-center text-sm font-semibold text-blue-600 hover:underline"
+                            >
+                                Esqueci minha senha
+                            </button>
+
+                        </form>
+
+                    )}
+
+
+                    <div className="mt-6 border-t border-slate-100 pt-5 text-center">
+
+                        <p className="text-xs text-slate-400">
+                            Ainda não conhece a plataforma?
+                        </p>
+
+                        <button
+                            type="button"
+                            onClick={() =>
+                                navigate(
+                                    "/cadastro-igreja"
+                                )
+                            }
+                            className="mt-2 text-sm font-bold text-blue-600 hover:underline"
+                        >
+                            Testar o EBD Manager grátis
+                        </button>
+
+                    </div>
+
+                </div>
+
             </div>
 
+
             <Modal
-                open={modalOpen}
+                open={
+                    modalOpen
+                }
                 title="Solicitar nova senha"
-                onClose={() => setModalOpen(false)}
+                onClose={() =>
+                    setModalOpen(
+                        false
+                    )
+                }
             >
 
                 <p className="mb-4 text-sm text-slate-600">
-                    Informe seu e-mail. Sua solicitação será enviada para o Administrador,
-                    que entrará em contato com sua nova senha.
+                    Informe seu e-mail. Sua solicitação será enviada para o administrador.
                 </p>
 
                 <Input
                     type="email"
                     placeholder="Digite seu e-mail"
-                    value={recoveryEmail}
-                    onChange={(e) =>
-                        setRecoveryEmail(e.target.value)
+                    value={
+                        recoveryEmail
+                    }
+                    onChange={(
+                        event
+                    ) =>
+                        setRecoveryEmail(
+                            event.target.value
+                        )
                     }
                 />
 
                 <Button
-                    onClick={handleRecovery}
-                    disabled={sendingRecovery}
+                    onClick={
+                        handleRecovery
+                    }
+                    disabled={
+                        sendingRecovery
+                    }
                 >
                     {sendingRecovery
                         ? "Enviando solicitação..."
@@ -378,6 +649,7 @@ export function LoginPage() {
                 </Button>
 
             </Modal>
+
         </div>
     );
 }

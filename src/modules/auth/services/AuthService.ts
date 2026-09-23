@@ -37,29 +37,25 @@ export class AuthService {
   // LOGIN GOOGLE
   // ============================================================
 
-  static async loginWithGoogle(
-    igrejaId?: string | null
-  ) {
+  static async loginWithGoogle() {
 
-    if (igrejaId) {
-      localStorage.setItem(
-        "ebd_convite_igreja_id",
-        igrejaId
-      );
-    }
-
-    const redirectUrl =
-      igrejaId
-        ? `${window.location.origin}/login?igreja_id=${encodeURIComponent(
-          igrejaId
-        )}`
-        : `${window.location.origin}/login`;
+    /*
+     * O Google passa a ser o acesso simples principal.
+     *
+     * Não vinculamos mais a conta a uma igreja por URL.
+     * Usuário novo entra primeiro na tela neutra e informa
+     * o número da classe.
+     */
+    localStorage.removeItem(
+      "ebd_convite_igreja_id"
+    );
 
     return await supabase.auth.signInWithOAuth({
       provider: "google",
 
       options: {
-        redirectTo: redirectUrl,
+        redirectTo:
+          `${window.location.origin}/login`,
       },
     });
 

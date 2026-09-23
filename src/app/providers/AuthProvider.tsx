@@ -473,7 +473,7 @@ export function AuthProvider({
 
 
     // =====================================================
-    // BUSCA A PESSOA OU CRIA AUTOMATICAMENTE
+    // BUSCA A PESSOA / VINCULA CADASTRO EXISTENTE
     // =====================================================
 
     async function buscarOuCriarPessoa(
@@ -505,151 +505,64 @@ export function AuthProvider({
         }
 
 
-        // Usuário já possui cadastro
         if (data) {
-
             return data;
         }
 
 
-        // =================================================
-        // PRIMEIRO LOGIN COM GOOGLE
-        // Cria como ALUNO ATIVO quando veio por convite
-        // =================================================
+        /*
+         * Primeiro acesso com Google:
+         *
+         * antes de tratar como novo aluno, tenta localizar um
+         * cadastro já criado pela igreja usando o e-mail
+         * confirmado da conta autenticada.
+         *
+         * Isso permite que professor, secretário, superintendente
+         * e administrador entrem com Google sem perder o perfil.
+         */
+        const {
+            data:
+                pessoaVinculada,
+            error:
+                erroVinculo,
+        } =
+            await supabase
+                .schema("ebd")
+                .rpc(
+                    "resolver_acesso_google"
+                );
 
-        console.log(
-            "Novo usuário autenticado. Criando cadastro..."
-        );
 
-
-        const igrejaIdConvite =
-            localStorage.getItem(
-                "ebd_convite_igreja_id"
-            );
-
-
-        if (!igrejaIdConvite) {
+        if (erroVinculo) {
 
             console.error(
-                "Novo usuário Google sem igreja de convite."
+                "Erro ao resolver acesso existente:",
+                erroVinculo
             );
 
             return null;
         }
-
-
-        const {
-            data: igrejaConvite,
-            error: igrejaConviteError,
-        } =
-            await supabase
-                .schema("ebd")
-                .from("igrejas")
-                .select(`
-            id,
-            nome,
-            ativa
-        `)
-                .eq(
-                    "id",
-                    igrejaIdConvite
-                )
-                .eq(
-                    "ativa",
-                    true
-                )
-                .maybeSingle();
 
 
         if (
-            igrejaConviteError ||
-            !igrejaConvite
+            pessoaVinculada
         ) {
 
-            console.error(
-                "Igreja do convite inválida:",
-                igrejaConviteError
-            );
+            AuthService
+                .saveLoginTime();
 
-            localStorage.removeItem(
-                "ebd_convite_igreja_id"
-            );
-
-            return null;
-        }
-
-
-        const {
-            data: novaPessoa,
-            error: erroCadastro,
-        } =
-            await supabase
-                .schema("ebd")
-                .from("pessoas")
-                .insert({
-
-                    user_id:
-                        usuario.id,
-
-                    igreja_id:
-                        igrejaConvite.id,
-
-                    nome:
-                        usuario.user_metadata?.full_name ??
-                        usuario.user_metadata?.name ??
-                        "Usuário",
-
-                    email:
-                        usuario.email ?? "",
-
-                    telefone:
-                        "",
-
-                    ativo:
-                        true,
-
-                    status:
-                        "ATIVO",
-
-                    perfil:
-                        "ALUNO",
-
-                })
-                .select()
-                .single();
-
-
-        if (!erroCadastro) {
-
-            localStorage.removeItem(
-                "ebd_convite_igreja_id"
-            );
-
-            localStorage.setItem(
-                "login_at",
-                new Date().toISOString()
+            return (
+                pessoaVinculada as Pessoa
             );
         }
 
 
-        if (erroCadastro) {
-
-            console.error(
-                "Erro ao criar cadastro:",
-                erroCadastro
-            );
-
-            return null;
-        }
-
-
-        console.log(
-            "Cadastro criado com sucesso:",
-            novaPessoa
-        );
-
-
-        return novaPessoa;
+        /*
+         * Sem cadastro prévio:
+         * permanece autenticado, porém ainda sem pessoa.
+         * ProtectedRoute direcionará para /entrar-classe.
+         */
+        return null;
     }
 
 

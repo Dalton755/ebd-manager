@@ -11,6 +11,8 @@ export interface Classe {
 
   cor?: string;
 
+  codigo_acesso?: string;
+
   ativa?: boolean;
 
   created_at?: string;
