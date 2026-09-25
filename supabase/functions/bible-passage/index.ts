@@ -1,7 +1,7 @@
 const allowedVersions = {
   ALM1911: {
-    provider: "GETBIBLE",
-    label: "Almeida 1911",
+    provider: "BIBLIA_ALMEIDA",
+    label: "Almeida 1911 · ortografia modernizada",
   },
   ONBV: {
     provider: "EBIBLE",
@@ -356,87 +356,137 @@ function requestedVerseNumbers(
   return wanted;
 }
 
+type AlmeidaLivro = {
+  n?: string;
+  c?: string[][];
+};
+
+let almeidaCache:
+  AlmeidaLivro[] | null = null;
+
+let almeidaCarregando:
+  Promise<AlmeidaLivro[]> | null = null;
+
+async function carregarAlmeida1911() {
+  if (almeidaCache) {
+    return almeidaCache;
+  }
+
+  if (almeidaCarregando) {
+    return await almeidaCarregando;
+  }
+
+  const sourceUrl =
+    "https://bibliaalmeida.com/data/alm1911m.json";
+
+  almeidaCarregando =
+    (async () => {
+      const response =
+        await fetch(
+          sourceUrl,
+          {
+            headers: {
+              Accept:
+                "application/json",
+              "User-Agent":
+                "EBD-Manager/1.0 BibleReferenceReader",
+            },
+            signal:
+              AbortSignal.timeout(
+                10000,
+              ),
+          },
+        );
+
+      if (!response.ok) {
+        console.error(
+          "BibliaAlmeida upstream error",
+          response.status,
+          sourceUrl,
+        );
+
+        throw new Error(
+          "Não foi possível consultar Almeida 1911.",
+        );
+      }
+
+      const data =
+        await response.json();
+
+      if (
+        !Array.isArray(data) ||
+        data.length !== 66
+      ) {
+        throw new Error(
+          "A fonte Almeida 1911 retornou dados inválidos.",
+        );
+      }
+
+      almeidaCache =
+        data as AlmeidaLivro[];
+
+      return almeidaCache;
+    })();
+
+  try {
+    return await almeidaCarregando;
+  } finally {
+    almeidaCarregando =
+      null;
+  }
+}
+
 async function fetchAlmeida1911(
   bookNumber: number,
   chapter: number,
 ) {
   const sourceUrl =
-    `https://api.getbible.net/v2/almeida/${bookNumber}/${chapter}.json`;
+    "https://bibliaalmeida.com/data/alm1911m.json";
 
-  const response =
-    await fetch(
-      sourceUrl,
-      {
-        headers: {
-          Accept:
-            "application/json",
-          "User-Agent":
-            "EBD-Manager/1.0 BibleReferenceReader",
-        },
-        signal:
-          AbortSignal.timeout(
-            8000,
-          ),
-      },
-    );
+  const bible =
+    await carregarAlmeida1911();
 
-  if (!response.ok) {
-    console.error(
-      "GetBible upstream error",
-      response.status,
-      sourceUrl,
-    );
+  const chapterVerses =
+    bible[
+      bookNumber - 1
+    ]?.c?.[
+      chapter - 1
+    ];
 
+  if (
+    !Array.isArray(
+      chapterVerses,
+    )
+  ) {
     throw new Error(
-      "Não foi possível consultar Almeida 1911.",
+      "Capítulo não encontrado na Almeida 1911.",
     );
   }
 
-  const data =
-    await response.json();
-
   const verses =
-    Array.isArray(
-      data?.verses,
-    )
-      ? data.verses
-          .map(
-            (
-              verse: {
-                verse?: number;
-                text?: string;
-              },
-            ) => ({
-              numero:
-                Number(
-                  verse.verse,
-                ),
-              texto:
-                cleanText(
-                  String(
-                    verse.text ??
-                    "",
-                  ),
-                ),
-            }),
-          )
-          .filter(
-            (
-              verse: {
-                numero: number;
-                texto: string;
-              },
-            ) =>
-              Number.isInteger(
-                verse.numero,
-              ) &&
-              verse.numero >
-                0 &&
-              Boolean(
-                verse.texto,
+    chapterVerses
+      .map(
+        (
+          text,
+          index,
+        ) => ({
+          numero:
+            index + 1,
+          texto:
+            cleanText(
+              String(
+                text ??
+                "",
               ),
-          )
-      : [];
+            ),
+        }),
+      )
+      .filter(
+        (verse) =>
+          Boolean(
+            verse.texto,
+          ),
+      );
 
   return {
     sourceUrl,
