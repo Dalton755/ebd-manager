@@ -46,11 +46,12 @@ export const VERSOES_BIBLICAS:
         {
             codigo: "ALM1911",
             abreviacao: "ALM1911",
-            nome: "Almeida 1911",
+            nome:
+                "Almeida 1911 · ortografia modernizada",
             credito:
                 "Texto de 1911 em domínio público",
             fonte:
-                "GetBible",
+                "bibliaalmeida.com",
             local: false,
         },
         {
