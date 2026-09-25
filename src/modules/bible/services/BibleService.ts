@@ -154,6 +154,18 @@ function obterOpcaoTraducao(
 }
 
 
+function limparColchetesBibliaLivre(
+    texto: string
+) {
+    return texto
+        .replace(
+            /\[([^\]]+)\]/g,
+            "$1"
+        )
+        .trim();
+}
+
+
 function formatarReferencia(
     referencia: ReferenciaBiblica
 ) {
@@ -366,6 +378,22 @@ export class BibleService {
         }
 
 
+        const versiculosExibicao =
+            codigoTraducao ===
+            "BLIVRE"
+                ? versiculos.map(
+                    (versiculo) => ({
+                        ...versiculo,
+
+                        texto:
+                            limparColchetesBibliaLivre(
+                                versiculo.texto
+                            ),
+                    })
+                )
+                : versiculos;
+
+
         return {
             referencia:
                 formatarReferencia(
@@ -385,7 +413,8 @@ export class BibleService {
 
             versiculoInicial,
             versiculoFinal,
-            versiculos,
+            versiculos:
+                versiculosExibicao,
         };
     }
 
