@@ -3595,78 +3595,80 @@ const pdf =
                             event.stopPropagation()
                         }
                     >
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
+                        <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
 
-                            <div>
+                            <div className="flex items-center justify-between gap-3">
+
                                 <p className="text-sm font-medium text-slate-500">
                                     Referência bíblica
                                 </p>
 
-                                <h2 className="mt-1 text-2xl font-bold sm:text-3xl">
-                                    {passagemBiblica?.referencia ??
-                                        `${referenciaSelecionada.livro} ${referenciaSelecionada.capitulo}`}
-                                </h2>
-                            </div>
+                                <div className="flex shrink-0 items-center gap-1">
 
-                            <div className="flex shrink-0 items-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setTamanhoFonteBiblia(
+                                                (tamanho) =>
+                                                    Math.max(
+                                                        18,
+                                                        tamanho - 2
+                                                    )
+                                            )
+                                        }
+                                        disabled={
+                                            tamanhoFonteBiblia <= 18
+                                        }
+                                        className="flex h-10 min-w-10 items-center justify-center rounded-full px-2 text-base font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30 sm:h-11 sm:min-w-11"
+                                        aria-label="Diminuir tamanho do texto"
+                                        title="Diminuir texto"
+                                    >
+                                        A−
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setTamanhoFonteBiblia(
-                                            (tamanho) =>
-                                                Math.max(
-                                                    18,
-                                                    tamanho - 2
-                                                )
-                                        )
-                                    }
-                                    disabled={
-                                        tamanhoFonteBiblia <= 18
-                                    }
-                                    className="flex h-11 min-w-11 items-center justify-center rounded-full px-2 text-base font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-                                    aria-label="Diminuir tamanho do texto"
-                                    title="Diminuir texto"
-                                >
-                                    A−
-                                </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setTamanhoFonteBiblia(
+                                                (tamanho) =>
+                                                    Math.min(
+                                                        36,
+                                                        tamanho + 2
+                                                    )
+                                            )
+                                        }
+                                        disabled={
+                                            tamanhoFonteBiblia >= 36
+                                        }
+                                        className="flex h-10 min-w-10 items-center justify-center rounded-full px-2 text-xl font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30 sm:h-11 sm:min-w-11"
+                                        aria-label="Aumentar tamanho do texto"
+                                        title="Aumentar texto"
+                                    >
+                                        A+
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setTamanhoFonteBiblia(
-                                            (tamanho) =>
-                                                Math.min(
-                                                    36,
-                                                    tamanho + 2
-                                                )
-                                        )
-                                    }
-                                    disabled={
-                                        tamanhoFonteBiblia >= 36
-                                    }
-                                    className="flex h-11 min-w-11 items-center justify-center rounded-full px-2 text-xl font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-                                    aria-label="Aumentar tamanho do texto"
-                                    title="Aumentar texto"
-                                >
-                                    A+
-                                </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setReferenciaSelecionada(
+                                                null
+                                            )
+                                        }
+                                        className="flex h-10 w-10 items-center justify-center rounded-full text-3xl leading-none text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:h-11 sm:w-11"
+                                        aria-label="Fechar texto bíblico"
+                                        title="Fechar"
+                                    >
+                                        ×
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setReferenciaSelecionada(
-                                            null
-                                        )
-                                    }
-                                    className="flex h-11 w-11 items-center justify-center rounded-full text-3xl leading-none text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                                    aria-label="Fechar texto bíblico"
-                                    title="Fechar"
-                                >
-                                    ×
-                                </button>
+                                </div>
 
                             </div>
+
+                            <h2 className="mt-1 pr-1 text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">
+                                {passagemBiblica?.referencia ??
+                                    `${referenciaSelecionada.livro} ${referenciaSelecionada.capitulo}`}
+                            </h2>
 
                         </div>
 
