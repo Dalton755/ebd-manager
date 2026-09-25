@@ -62,6 +62,7 @@ import type {
 
 import {
     BibleService,
+    VERSOES_BIBLICAS,
 } from "@/modules/bible/services/BibleService";
 
 import type {
@@ -332,6 +333,15 @@ export function PresentationPage() {
         tamanhoFonteBiblia,
         setTamanhoFonteBiblia,
     ] = useState(22);
+
+    const [
+        traducaoBiblia,
+        setTraducaoBiblia,
+    ] = useState(
+        () =>
+            BibleService
+                .obterTraducaoPreferida()
+    );
 
 
     const [
@@ -1189,13 +1199,10 @@ export function PresentationPage() {
         }
     }
 
-    async function abrirReferenciaBiblica(
-        referencia: ReferenciaBiblica
+    async function carregarPassagemBiblica(
+        referencia: ReferenciaBiblica,
+        codigoTraducao: string
     ) {
-
-        setReferenciaSelecionada(
-            referencia
-        );
 
         setPassagemBiblica(null);
         setErroPassagem(null);
@@ -1207,7 +1214,7 @@ export function PresentationPage() {
                 await BibleService
                     .buscarPassagem(
                         referencia,
-                        "BLIVRE"
+                        codigoTraducao
                     );
 
             setPassagemBiblica(
@@ -1231,6 +1238,46 @@ export function PresentationPage() {
 
             setCarregandoPassagem(false);
 
+        }
+    }
+
+
+    async function abrirReferenciaBiblica(
+        referencia: ReferenciaBiblica
+    ) {
+
+        setReferenciaSelecionada(
+            referencia
+        );
+
+        await carregarPassagemBiblica(
+            referencia,
+            traducaoBiblia
+        );
+    }
+
+
+    async function trocarTraducaoBiblica(
+        codigo: string
+    ) {
+
+        setTraducaoBiblia(
+            codigo
+        );
+
+        BibleService
+            .salvarTraducaoPreferida(
+                codigo
+            );
+
+
+        if (
+            referenciaSelecionada
+        ) {
+            await carregarPassagemBiblica(
+                referenciaSelecionada,
+                codigo
+            );
         }
     }
 
@@ -3548,78 +3595,128 @@ const pdf =
                             event.stopPropagation()
                         }
                     >
-                        <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 sm:px-6">
+                        <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
 
-                            <div>
+                            <div className="flex items-center justify-between gap-3">
+
                                 <p className="text-sm font-medium text-slate-500">
                                     Referência bíblica
                                 </p>
 
-                                <h2 className="mt-1 text-2xl font-bold sm:text-3xl">
-                                    {passagemBiblica?.referencia ??
-                                        `${referenciaSelecionada.livro} ${referenciaSelecionada.capitulo}`}
-                                </h2>
-                            </div>
+                                <div className="flex shrink-0 items-center gap-1">
 
-                            <div className="flex shrink-0 items-center gap-1">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setTamanhoFonteBiblia(
+                                                (tamanho) =>
+                                                    Math.max(
+                                                        18,
+                                                        tamanho - 2
+                                                    )
+                                            )
+                                        }
+                                        disabled={
+                                            tamanhoFonteBiblia <= 18
+                                        }
+                                        className="flex h-10 min-w-10 items-center justify-center rounded-full px-2 text-base font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30 sm:h-11 sm:min-w-11"
+                                        aria-label="Diminuir tamanho do texto"
+                                        title="Diminuir texto"
+                                    >
+                                        A−
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setTamanhoFonteBiblia(
-                                            (tamanho) =>
-                                                Math.max(
-                                                    18,
-                                                    tamanho - 2
-                                                )
-                                        )
-                                    }
-                                    disabled={
-                                        tamanhoFonteBiblia <= 18
-                                    }
-                                    className="flex h-11 min-w-11 items-center justify-center rounded-full px-2 text-base font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-                                    aria-label="Diminuir tamanho do texto"
-                                    title="Diminuir texto"
-                                >
-                                    A−
-                                </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setTamanhoFonteBiblia(
+                                                (tamanho) =>
+                                                    Math.min(
+                                                        36,
+                                                        tamanho + 2
+                                                    )
+                                            )
+                                        }
+                                        disabled={
+                                            tamanhoFonteBiblia >= 36
+                                        }
+                                        className="flex h-10 min-w-10 items-center justify-center rounded-full px-2 text-xl font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30 sm:h-11 sm:min-w-11"
+                                        aria-label="Aumentar tamanho do texto"
+                                        title="Aumentar texto"
+                                    >
+                                        A+
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setTamanhoFonteBiblia(
-                                            (tamanho) =>
-                                                Math.min(
-                                                    36,
-                                                    tamanho + 2
-                                                )
-                                        )
-                                    }
-                                    disabled={
-                                        tamanhoFonteBiblia >= 36
-                                    }
-                                    className="flex h-11 min-w-11 items-center justify-center rounded-full px-2 text-xl font-bold text-slate-600 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-30"
-                                    aria-label="Aumentar tamanho do texto"
-                                    title="Aumentar texto"
-                                >
-                                    A+
-                                </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setReferenciaSelecionada(
+                                                null
+                                            )
+                                        }
+                                        className="flex h-10 w-10 items-center justify-center rounded-full text-3xl leading-none text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 sm:h-11 sm:w-11"
+                                        aria-label="Fechar texto bíblico"
+                                        title="Fechar"
+                                    >
+                                        ×
+                                    </button>
 
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        setReferenciaSelecionada(
-                                            null
-                                        )
-                                    }
-                                    className="flex h-11 w-11 items-center justify-center rounded-full text-3xl leading-none text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                                    aria-label="Fechar texto bíblico"
-                                    title="Fechar"
-                                >
-                                    ×
-                                </button>
+                                </div>
 
                             </div>
+
+                            <h2 className="mt-1 pr-1 text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">
+                                {passagemBiblica?.referencia ??
+                                    `${referenciaSelecionada.livro} ${referenciaSelecionada.capitulo}`}
+                            </h2>
+
+                        </div>
+
+                        <div className="flex flex-col gap-2 border-b border-slate-200 bg-slate-50/80 px-5 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+
+                            <label
+                                htmlFor="ebd-bible-version"
+                                className="text-xs font-bold uppercase tracking-[0.12em] text-slate-500"
+                            >
+                                Tradução
+                            </label>
+
+                            <select
+                                id="ebd-bible-version"
+                                value={
+                                    traducaoBiblia
+                                }
+                                onChange={(event) =>
+                                    void trocarTraducaoBiblica(
+                                        event.target.value
+                                    )
+                                }
+                                disabled={
+                                    carregandoPassagem
+                                }
+                                className="min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 disabled:cursor-wait disabled:opacity-60 sm:w-auto sm:min-w-[270px]"
+                            >
+                                {VERSOES_BIBLICAS.map(
+                                    (versao) => (
+                                        <option
+                                            key={
+                                                versao.codigo
+                                            }
+                                            value={
+                                                versao.codigo
+                                            }
+                                        >
+                                            {
+                                                versao.abreviacao
+                                            }
+                                            {" · "}
+                                            {
+                                                versao.nome
+                                            }
+                                        </option>
+                                    )
+                                )}
+                            </select>
 
                         </div>
 
