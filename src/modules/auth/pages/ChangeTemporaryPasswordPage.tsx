@@ -61,14 +61,24 @@ export function ChangeTemporaryPasswordPage() {
             }
 
             toast.success(
-                "Senha alterada com sucesso!"
+                "Senha alterada com sucesso! Entre novamente com sua nova senha."
             );
 
-            // Atualiza a sessão para garantir
-            // que o usuário continue autenticado.
-            await supabase.auth.refreshSession();
+            // Alterar a senha encerra a sessão atual no Supabase.
+            // Não tente atualizar (refresh) esta sessão, pois o
+            // refresh token anterior deixa de ser válido.
+            try {
+                await supabase.auth.signOut({
+                    scope: "local",
+                });
+            } catch {
+                // A sessão pode já ter sido invalidada pelo Auth.
+                // O redirecionamento para o login deve ocorrer mesmo assim.
+            }
 
-            window.location.href = "/";
+            navigate("/login", {
+                replace: true,
+            });
 
         } catch (error) {
 
@@ -76,6 +86,25 @@ export function ChangeTemporaryPasswordPage() {
                 "Erro ao alterar senha temporária:",
                 error
             );
+
+            // Se a senha já tiver sido alterada e a sessão tiver
+            // sido encerrada, direciona o usuário para autenticar
+            // novamente em vez de deixá-lo preso nesta tela.
+            const {
+                data: sessionData,
+            } = await supabase.auth.getSession();
+
+            if (!sessionData.session) {
+                toast.info(
+                    "Sua sessão foi encerrada. Entre novamente com a nova senha."
+                );
+
+                navigate("/login", {
+                    replace: true,
+                });
+
+                return;
+            }
 
             toast.error(
                 error instanceof Error
