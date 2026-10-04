@@ -79,58 +79,51 @@ export const NotificationService = {
             );
         }
 
-        // 1. Grava a notificação no banco
-        
-            await NotificationRepository.criar({
-                pessoa_id:
-                    notificacao.pessoa_id,
+        // 1. Grava a notificação no banco.
+        // O salvamento da ação principal só precisa aguardar
+        // esta etapa, que é a fonte de verdade da notificação.
+        await NotificationRepository.criar({
+            pessoa_id:
+                notificacao.pessoa_id,
 
-                tipo:
-                    notificacao.tipo,
+            tipo:
+                notificacao.tipo,
 
-                titulo:
-                    notificacao.titulo,
+            titulo:
+                notificacao.titulo,
 
-                mensagem:
-                    notificacao.mensagem,
+            mensagem:
+                notificacao.mensagem,
 
-                aula_id:
-                    notificacao.aula_id ?? null,
-            });
+            aula_id:
+                notificacao.aula_id ?? null,
+        });
 
-        // 2. Envia o Push para os dispositivos
-        try {
+        // 2. O Push é complementar e não deve bloquear
+        // o salvamento de aulas, escalas ou outras ações.
+        // Disparamos em segundo plano e tratamos qualquer falha
+        // sem desfazer a notificação já gravada no sistema.
+        void PushNotificationService.enviar({
+            pessoa_id:
+                notificacao.pessoa_id,
 
-            await PushNotificationService.enviar({
-                pessoa_id:
-                    notificacao.pessoa_id,
+            titulo:
+                notificacao.titulo,
 
-                titulo:
-                    notificacao.titulo,
+            mensagem:
+                notificacao.mensagem,
 
-                mensagem:
-                    notificacao.mensagem,
+            aula_id:
+                notificacao.aula_id ?? null,
 
-                aula_id:
-                    notificacao.aula_id ?? null,
-
-                url:
-                    notificacao.url ?? "/",
-            });
-
-        } catch (error) {
-
+            url:
+                notificacao.url ?? "/",
+        }).catch((error) => {
             console.error(
                 "Notificação criada, mas o Push não pôde ser enviado:",
                 error
             );
-
-            // Não desfazemos a notificação do banco.
-            // O usuário continuará vendo a notificação
-            // dentro do sistema.
-        }
-
-       
+        });
     },
 
     async notificarTodosOsAlunos(
