@@ -47,6 +47,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       || nome.length < 3 || ![11, 14].includes(documento.length))
     return res.status(400).json({ error: "Confira seu nome, CPF/CNPJ e opções de oferta." });
 
+  if (periodicidade === "MENSAL" && formaPagamento === "CREDIT_CARD") return res.status(400).json({ error: "O apoio mensal por cartão está indisponível. Utilize Pix ou boleto." });
+
   const { data: pessoa } = await db.schema("ebd").from("pessoas")
     .select("igreja_id").eq("user_id", auth.user.id).maybeSingle();
   const { data: recente } = await db.schema("ebd").from("ofertas_desenvolvedor")
