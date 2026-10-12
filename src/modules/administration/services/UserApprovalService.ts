@@ -88,9 +88,9 @@ export const UserApprovalService = {
             );
         }
 
-        const igrejaId = pessoa.igreja_id;
+        // A aprovação permanece sujeita ao perfil do usuário, não a cotas comerciais.
 
-        // A aprovação permanece sujeita ao perfil do usuário, não a cotas comerciais.\n\n        // =================================================
+        // =================================================
         // APROVA USUÁRIO
         // =================================================
 
