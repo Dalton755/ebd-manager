@@ -1,35 +1,6 @@
-﻿import type { ReactNode } from "react";
-
-import { usePlan } from "@/shared/plans/usePlan";
+import type { ReactNode } from "react";
 import type { RecursoCodigo } from "@/shared/plans/PlanTypes";
-
-type Props = {
-    recurso: RecursoCodigo;
-    children: ReactNode;
-    fallback?: ReactNode;
-};
-
-export function PlanGuard({
-    recurso,
-    children,
-    fallback = null,
-}: Props) {
-    const {
-        temRecurso,
-        loading,
-        plano,
-    } = usePlan();
-
-    if (
-        loading &&
-        !plano
-    ) {
-        return null;
-    }
-
-    if (!temRecurso(recurso)) {
-        return <>{fallback}</>;
-    }
-
+// Permissões de perfis permanecem em PermissionRoute; nenhum recurso tem plano pago.
+export function PlanGuard({ children }: { recurso: RecursoCodigo; children: ReactNode; fallback?: ReactNode }) {
     return <>{children}</>;
 }
