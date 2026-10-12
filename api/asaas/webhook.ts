@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const novosStatus: Record<string, string> = {
         PAYMENT_RECEIVED: "RECEBIDA", PAYMENT_CONFIRMED: "CONFIRMADA",
         PAYMENT_OVERDUE: "VENCIDA", PAYMENT_REFUNDED: "ESTORNADA",
-        PAYMENT_DELETED: "CANCELADA", PAYMENT_CREATED: "PENDENTE",
+        PAYMENT_DELETED: "PAGAMENTO_CANCELADO", PAYMENT_CREATED: "PENDENTE",
         SUBSCRIPTION_DELETED: "CANCELADA",
     };
     const status = novosStatus[nome];
@@ -42,6 +42,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (idAssinatura) query = query.eq("asaas_subscription_id", idAssinatura);
     else if (idPagamento) query = query.eq("asaas_payment_id", idPagamento);
     else query = query.eq("id", idExterno);
+    if (nome !== "SUBSCRIPTION_DELETED") query = query.neq("status", "CANCELADA");
     const { error } = await query;
     if (error) {
         console.error("[ASAAS WEBHOOK]", error.message);
