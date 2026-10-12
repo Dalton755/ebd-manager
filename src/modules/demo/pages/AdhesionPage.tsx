@@ -390,21 +390,11 @@ export function AdhesionPage() {
 
 
             toast.success(
-                "Igreja cadastrada. Agora escolha a condição do seu plano."
+                "Igreja cadastrada! O EBD Manager está liberado gratuitamente."
             );
 
 
-            const destino =
-                ofertaId
-                    ? `/planos?oferta=${encodeURIComponent(
-                        ofertaId
-                    )}&adesao=1`
-                    : "/planos?adesao=1";
-
-
-            window.location.assign(
-                destino
-            );
+            window.location.assign("/");\n
 
 
         } catch (error) {
@@ -835,7 +825,7 @@ export function AdhesionPage() {
                             <CheckCircle2 className="h-5 w-5" />
                             {loading
                                 ? "Criando ambiente real..."
-                                : "Continuar para o plano e pagamento"}
+                                : "Concluir cadastro gratuito"}
                         </button>
 
                     </form>
