@@ -21,7 +21,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const nome = evento.event;
     const pagamento = evento.payment;
     const idPagamento = typeof pagamento?.id === "string" ? pagamento.id : null;
-    const idAssinatura = typeof pagamento?.subscription === "string" ? pagamento.subscription : typeof evento.subscription?.id === "string" ? evento.subscription.id : null;
+    const idAssinatura = typeof pagamento?.subscription === "string" ? pagamento.subscription : typeof evento.subscription?.id === "string" ? evento.subscription.id : typeof evento.subscription === "string" ? evento.subscription : null;
     const idExterno = typeof pagamento?.externalReference === "string" ? pagamento.externalReference : null;
     if (!idPagamento && !idAssinatura && !idExterno) return res.status(200).json({ ok: true });
 
@@ -37,8 +37,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let query = db.schema("ebd").from("ofertas_desenvolvedor").update({
         status, ...(["RECEBIDA", "CONFIRMADA"].includes(status) ? { ultimo_pagamento_em: new Date().toISOString() } : {}),
     });
-    if (idPagamento) query = query.eq("asaas_payment_id", idPagamento);
-    else if (idAssinatura) query = query.eq("asaas_subscription_id", idAssinatura);
+    // Cobranças seguintes de apoio mensal recebem novos payment.id.
+    // A associação estável é subscription.id, não o primeiro payment.id.
+    if (idAssinatura) query = query.eq("asaas_subscription_id", idAssinatura);
+    else if (idPagamento) query = query.eq("asaas_payment_id", idPagamento);
     else query = query.eq("id", idExterno);
     const { error } = await query;
     if (error) {
