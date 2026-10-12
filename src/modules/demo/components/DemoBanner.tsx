@@ -42,11 +42,11 @@ export function DemoBanner() {
                 <div className="min-w-0">
 
                     <p className="text-sm font-black">
-                        Você está na demonstração completa
+                        Experimente o EBD Manager gratuitamente
                     </p>
 
                     <p className="mt-0.5 text-xs leading-5 text-blue-700">
-                        Dados fictícios · todos os recursos · 1 PDF próprio
+                        Dados fictícios para conhecer as telas · acesso completo
                         {expira
                             ? ` · disponível até ${expira}`
                             : ""}
@@ -61,7 +61,7 @@ export function DemoBanner() {
                 to="/adesao"
                 className="inline-flex shrink-0 items-center justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700"
             >
-                Usar na minha igreja
+                Cadastrar minha igreja gratuitamente
             </Link>
 
         </div>
