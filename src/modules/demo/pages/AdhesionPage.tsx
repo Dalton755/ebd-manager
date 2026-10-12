@@ -394,7 +394,8 @@ export function AdhesionPage() {
             );
 
 
-            window.location.assign("/");\n
+            window.location.assign("/");
+
 
 
         } catch (error) {
