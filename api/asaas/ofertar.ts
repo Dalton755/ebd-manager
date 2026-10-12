@@ -50,7 +50,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { data: pessoa } = await db.schema("ebd").from("pessoas")
     .select("igreja_id").eq("user_id", auth.user.id).maybeSingle();
   const { data: recente } = await db.schema("ebd").from("ofertas_desenvolvedor")
-    .select("id").eq("user_id", auth.user.id)
+    .select("id").eq("user_id", auth.user.id).neq("status", "ERRO")
     .gte("criado_em", new Date(Date.now() - 60000).toISOString()).limit(1);
   if (recente?.length) return res.status(429).json({ error: "Aguarde um minuto antes de solicitar outra oferta." });
 
@@ -62,44 +62,82 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (insercao) return res.status(500).json({ error: "Não foi possível registrar a oferta." });
 
   try {
-    const cliente = await asaas("/customers", "POST", {
-      name: nome, cpfCnpj: documento, email: auth.user.email,
-      externalReference: auth.user.id, notificationDisabled: false,
-    });
+    const { data: anterior } = await db.schema("ebd").from("ofertas_desenvolvedor")
+      .select("asaas_customer_id").eq("user_id", auth.user.id)
+      .not("asaas_customer_id", "is", null).order("criado_em", { ascending: false })
+      .limit(1).maybeSingle();
+    const cliente = anterior?.asaas_customer_id
+      ? { id: anterior.asaas_customer_id }
+      : await asaas("/customers", "POST", {
+          name: nome, cpfCnpj: documento, email: auth.user.email,
+          externalReference: auth.user.id, notificationDisabled: false,
+        });
     const campos = {
       customer: cliente.id, billingType: formaPagamento, value: valor,
       description: "Oferta voluntária EBD Manager", externalReference: id,
     };
-    const dataHoje = new Intl.DateTimeFormat("en-CA", {
+    const partes = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
       timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit",
-    }).format(new Date());
+    }).formatToParts(new Date()).map(p => [p.type, p.value]));
+    const dataHoje = `${partes.year}-${partes.month}-${partes.day}`;
 
     const criado = periodicidade === "UNICA"
       ? await asaas("/payments", "POST", { ...campos, dueDate: dataHoje })
       : await asaas("/subscriptions", "POST", { ...campos, cycle: "MONTHLY", nextDueDate: dataHoje });
     const assinaturaId = periodicidade === "MENSAL" ? criado.id : null;
-    const primeiro = assinaturaId
-      ? (await asaas("/subscriptions/" + encodeURIComponent(assinaturaId) + "/payments?limit=1")).data?.[0]
-      : criado;
-    const pagamentoId = primeiro?.id ?? null;
-    const link = primeiro?.invoiceUrl ?? null;
-    let pix = null;
-    if (formaPagamento === "PIX" && pagamentoId) {
-      const codigo = await asaas("/payments/" + encodeURIComponent(pagamentoId) + "/pixQrCode");
-      pix = { payload: codigo.payload, encodedImage: codigo.encodedImage };
+
+    // Persista o ID gerado antes de consultas auxiliares; essas podem falhar
+    // sem que a assinatura ou cobrança tenha falhado no Asaas.
+    const { error: registro } = await db.schema("ebd").from("ofertas_desenvolvedor")
+      .update({
+        status: "PENDENTE", asaas_customer_id: cliente.id,
+        asaas_subscription_id: assinaturaId,
+        asaas_payment_id: assinaturaId ? null : criado.id,
+        invoice_url: assinaturaId ? null : criado.invoiceUrl ?? null,
+      }).eq("id", id);
+    if (registro) throw new Error("A cobrança foi criada no Asaas, mas o registro não foi salvo. Contate o suporte antes de tentar outra oferta.");
+
+    let primeiro = assinaturaId ? null : criado;
+    if (assinaturaId) {
+      try {
+        const parcelas = await asaas("/subscriptions/" + encodeURIComponent(assinaturaId) + "/payments?limit=1");
+        primeiro = parcelas?.data?.[0] ?? null;
+      } catch (error) {
+        // A primeira cobrança da assinatura pode aparecer posteriormente.
+        console.error("[ASAAS] Consulta da primeira cobrança indisponível:", error);
+      }
     }
 
-    const { error: atualizacao } = await db.schema("ebd").from("ofertas_desenvolvedor")
-      .update({ status: "PENDENTE", asaas_customer_id: cliente.id,
-        asaas_subscription_id: assinaturaId, asaas_payment_id: pagamentoId, invoice_url: link })
-      .eq("id", id);
-    if (atualizacao) throw new Error("Cobrança criada, mas registro não atualizado. Entre em contato com o suporte.");
-    return res.status(200).json({ id, periodicidade, formaPagamento, invoiceUrl: link, pix,
+    const pagamentoId = primeiro?.id ?? null;
+    const link = primeiro?.invoiceUrl ?? null;
+    if (assinaturaId && pagamentoId) {
+      await db.schema("ebd").from("ofertas_desenvolvedor").update({
+        asaas_payment_id: pagamentoId, invoice_url: link,
+      }).eq("id", id);
+    }
+
+    let pix = null;
+    if (formaPagamento === "PIX" && pagamentoId) {
+      try {
+        const codigo = await asaas("/payments/" + encodeURIComponent(pagamentoId) + "/pixQrCode");
+        pix = { payload: codigo.payload, encodedImage: codigo.encodedImage };
+      } catch (error) {
+        console.error("[ASAAS] Pix ainda não disponível:", error);
+      }
+    }
+    return res.status(200).json({
+      id, periodicidade, formaPagamento, invoiceUrl: link, pix,
       instrucoes: periodicidade === "MENSAL"
         ? "O Asaas emitirá cobranças mensais. No Pix e boleto, cada mês precisa ser pago pelo apoiador."
-        : "Obrigado pelo gesto! O uso do app nunca depende de uma oferta." });
+        : "O aplicativo permanece gratuito, independentemente do pagamento."
+    });
   } catch (error) {
-    await db.schema("ebd").from("ofertas_desenvolvedor").update({ status: "ERRO" }).eq("id", id);
-    return res.status(502).json({ error: error instanceof Error ? error.message : "Erro ao criar cobrança." });
+    // Se o Asaas criou a cobrança e o banco falhou, nunca sugerir repetição automática.
+    console.error("[ASAAS] Falha na solicitação:", error);
+    const mensagem = error instanceof Error ? error.message : "Não foi possível gerar a cobrança.";
+    const possivelmenteCriada = mensagem.includes("registro não foi salvo");
+    await db.schema("ebd").from("ofertas_desenvolvedor")
+      .update({ status: possivelmenteCriada ? "VERIFICACAO_MANUAL" : "ERRO" }).eq("id", id);
+    return res.status(502).json({ error: mensagem });
   }
 }
