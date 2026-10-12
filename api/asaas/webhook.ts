@@ -2,51 +2,65 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "node:crypto";
 
-const configurado = Boolean(process.env.ASAAS_WEBHOOK_TOKEN && process.env.SUPABASE_SERVICE_ROLE_KEY && (process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL));
-function sameToken(received: string, expected: string) {
-    const a = Buffer.from(received);
-    const b = Buffer.from(expected);
-    return a.length === b.length && timingSafeEqual(a, b);
+function verificarToken(recebido: string, esperado: string) {
+  const a = Buffer.from(recebido);
+  const b = Buffer.from(esperado);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    if (req.method !== "POST") return res.status(405).json({ error: "Método não permitido." });
-    if (!configurado) return res.status(503).json({ error: "Webhook não configurado." });
-    const recebido = String(req.headers["asaas-access-token"] ?? "");
-    if (!sameToken(recebido, process.env.ASAAS_WEBHOOK_TOKEN!)) return res.status(401).json({ error: "Token inválido." });
+  if (req.method !== "POST") return res.status(405).json({ error: "Método não permitido." });
 
-    const evento = req.body ?? {};
-    if (typeof evento.id !== "string" || typeof evento.event !== "string") return res.status(400).json({ error: "Evento inválido." });
-    const db = createClient(process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        { db: { schema: "ebd" }, auth: { autoRefreshToken: false, persistSession: false } });
-    const nome = evento.event;
-    const pagamento = evento.payment;
-    const idPagamento = typeof pagamento?.id === "string" ? pagamento.id : null;
-    const idAssinatura = typeof pagamento?.subscription === "string" ? pagamento.subscription : typeof evento.subscription?.id === "string" ? evento.subscription.id : typeof evento.subscription === "string" ? evento.subscription : null;
-    const idExterno = typeof pagamento?.externalReference === "string" ? pagamento.externalReference : null;
-    if (!idPagamento && !idAssinatura && !idExterno) return res.status(200).json({ ok: true });
+  const url = process.env.VITE_SUPABASE_URL ?? process.env.SUPABASE_URL;
+  const chave = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const token = process.env.ASAAS_WEBHOOK_TOKEN;
+  if (!url || !chave || !token) return res.status(503).json({ error: "Webhook não configurado." });
 
-    // Só atualiza ofertas já vinculadas a IDs registrados pelo backend.
-    const novosStatus: Record<string, string> = {
-        PAYMENT_RECEIVED: "RECEBIDA", PAYMENT_CONFIRMED: "CONFIRMADA",
-        PAYMENT_OVERDUE: "VENCIDA", PAYMENT_REFUNDED: "ESTORNADA",
-        PAYMENT_DELETED: "PAGAMENTO_CANCELADO", PAYMENT_CREATED: "PENDENTE",
-        SUBSCRIPTION_DELETED: "CANCELADA",
-    };
-    const status = novosStatus[nome];
-    if (!status) return res.status(200).json({ ok: true });
-    let query = db.schema("ebd").from("ofertas_desenvolvedor").update({
-        status, ...(["RECEBIDA", "CONFIRMADA"].includes(status) ? { ultimo_pagamento_em: new Date().toISOString() } : {}),
-    });
-    // Cobranças seguintes de apoio mensal recebem novos payment.id.
-    // A associação estável é subscription.id, não o primeiro payment.id.
-    if (idAssinatura) query = query.eq("asaas_subscription_id", idAssinatura);
-    else if (idPagamento) query = query.eq("asaas_payment_id", idPagamento);
-    else query = query.eq("id", idExterno);
-    if (nome !== "SUBSCRIPTION_DELETED") query = query.neq("status", "CANCELADA");
-    const { error } = await query;
-    if (error) {
-        console.error("[ASAAS WEBHOOK]", error.message);
-        return res.status(500).json({ error: "Erro ao registrar evento." });
-    }
-    return res.status(200).json({ ok: true });
+  if (!verificarToken(String(req.headers["asaas-access-token"] ?? ""), token))
+    return res.status(401).json({ error: "Origem não autenticada." });
+
+  const evento = req.body ?? {};
+  if (typeof evento.id !== "string" || typeof evento.event !== "string")
+    return res.status(400).json({ error: "Evento inválido." });
+
+  const payment = evento.payment ?? {};
+  const subscription = evento.subscription ?? null;
+  const assinaturaId = typeof payment.subscription === "string"
+    ? payment.subscription
+    : typeof subscription === "string"
+      ? subscription
+      : typeof subscription?.id === "string"
+        ? subscription.id
+        : null;
+  const pagamentoId = typeof payment.id === "string" ? payment.id : null;
+  const referencia = typeof payment.externalReference === "string"
+    ? payment.externalReference
+    : typeof subscription?.externalReference === "string"
+      ? subscription.externalReference
+      : null;
+
+  if (!assinaturaId && !pagamentoId && !referencia)
+    return res.status(200).json({ ok: true, resultado: "ignorado" });
+
+  const db = createClient(url, chave, {
+    db: { schema: "ebd" },
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  // A rotina no Postgres registra o ID do evento e atualiza a oferta
+  // na MESMA transação. Duplicidades recebem 200 sem reprocessamento.
+  const { data, error } = await db.schema("ebd").rpc("processar_webhook_asaas", {
+    p_event_id: evento.id,
+    p_evento: evento.event,
+    p_pagamento_id: pagamentoId,
+    p_assinatura_id: assinaturaId,
+    p_referencia: referencia,
+  });
+
+  if (error) {
+    console.error("[ASAAS WEBHOOK] Falha de persistência:", error.code);
+    return res.status(500).json({ error: "Falha temporária ao registrar o evento." });
+  }
+
+  return res.status(200).json({ ok: true, resultado: data });
 }
