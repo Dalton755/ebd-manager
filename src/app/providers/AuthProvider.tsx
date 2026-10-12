@@ -608,7 +608,10 @@ export function AuthProvider({
         // VERIFICA EXPIRAÇÃO DA ASSINATURA
         // =================================================
 
-        // Acesso permanente e gratuito, sem consulta à situação de pagamento.\n        setAssinaturaExpirada(false);\n\n        // =================================================
+        // Acesso permanente e gratuito, sem consulta à situação de pagamento.
+        setAssinaturaExpirada(false);
+
+        // =================================================
         // REGISTRA DISPOSITIVO PARA PUSH
         // =================================================
 
