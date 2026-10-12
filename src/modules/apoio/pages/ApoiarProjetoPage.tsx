@@ -119,7 +119,7 @@ export function ApoiarProjetoPage() {
           <legend className="mb-2 text-sm font-bold text-slate-800">Tipo de oferta</legend>
           <div className="grid grid-cols-2 gap-3">
             {(["UNICA", "MENSAL"] as const).map(tipo => (
-              <button key={tipo} type="button" onClick={() => { setPeriodicidade(tipo); setResultado(null); }}
+              <button key={tipo} type="button" onClick={() => { setPeriodicidade(tipo); if (tipo === "MENSAL" && formaPagamento === "CREDIT_CARD") setFormaPagamento("PIX"); setResultado(null); }}
                 aria-pressed={periodicidade === tipo}
                 className={`rounded-xl border px-4 py-3 text-sm font-semibold transition ${periodicidade === tipo ? "border-blue-600 bg-blue-50 text-blue-800" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}>
                 {tipo === "UNICA" ? "Oferta única" : "Oferta mensal"}
@@ -127,7 +127,7 @@ export function ApoiarProjetoPage() {
             ))}
           </div>
           {periodicidade === "MENSAL" && <p className="mt-2 text-xs leading-5 text-slate-500">
-            Você poderá cancelar quando desejar. Pix e boleto serão cobrados mensalmente e precisam ser pagos a cada vencimento.
+            Você poderá cancelar quando desejar. Pix e boleto gerarão uma nova cobrança a cada mês. A opção de cartão recorrente ainda está indisponível.
           </p>}
         </fieldset>
         <div>
@@ -149,6 +149,7 @@ export function ApoiarProjetoPage() {
             {([{ valor: "PIX", rotulo: "Pix" }, { valor: "BOLETO", rotulo: "Boleto" }, { valor: "CREDIT_CARD", rotulo: "Cartão" }] as const).map(item => (
               <button key={item.valor} type="button" aria-pressed={formaPagamento === item.valor}
                 onClick={() => { setFormaPagamento(item.valor); setResultado(null); }}
+                disabled={periodicidade === "MENSAL" && item.valor === "CREDIT_CARD"}
                 className={`rounded-xl border px-2 py-3 text-sm font-semibold transition ${formaPagamento === item.valor ? "border-blue-600 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600"}`}>{item.rotulo}</button>
             ))}
           </div>
