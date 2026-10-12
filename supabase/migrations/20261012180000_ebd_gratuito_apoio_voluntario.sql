@@ -38,7 +38,7 @@ CREATE OR REPLACE FUNCTION ebd.igreja_tem_recurso(p_codigo text)
 RETURNS boolean
 LANGUAGE sql
 STABLE
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = 'ebd', 'public'
 AS $$
   SELECT
