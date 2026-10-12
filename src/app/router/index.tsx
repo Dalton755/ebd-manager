@@ -1,3 +1,4 @@
+import { ApoiarProjetoPage } from "@/modules/apoio/pages/ApoiarProjetoPage";
 import {
     useEffect,
     useState,
@@ -14,7 +15,6 @@ import { DashboardPage } from "../../modules/dashboard/pages/DashboardPage";
 import { LoginPage } from "../../modules/auth/pages/LoginPage";
 import { ProtectedRoute } from "@/modules/auth/components/ProtectedRoute";
 import { SubscriptionGuard } from "@/modules/auth/components/SubscriptionGuard";
-import { SubscriptionExpiredPage } from "@/modules/plans/pages/SubscriptionExpiredPage";
 import { PeoplePage } from "@/modules/people/pages/PeoplePage";
 import { ResetPasswordPage } from "../../modules/auth/pages/ResetPasswordPage";
 import { ChangeTemporaryPasswordPage } from "../../modules/auth/pages/ChangeTemporaryPasswordPage";
@@ -32,7 +32,6 @@ import { LessonsPage } from "@/modules/lessons/pages/LessonsPage";
 import { ClassLessonsPage } from "@/modules/lessons/pages/ClassLessonsPage";
 import { ClassesPage } from "@/modules/classes/pages/ClassesPage";
 import { ClassroomPage } from "@/modules/classroom/pages/ClassroomPage";
-import { MyPlanPage } from "@/modules/plans/pages/MyPlanPage";
 import { PermissionRoute } from "@/modules/auth/components/PermissionRoute";
 import { PlanGuard } from "@/modules/auth/components/PlanGuard";
 import { PasswordRecoveryRequestsPage } from "@/modules/password-recovery/pages/PasswordRecoveryRequestsPage";
@@ -42,13 +41,9 @@ import { StudentAttendancePage } from "@/modules/student/pages/StudentAttendance
 import { MeusDadosPage } from "@/modules/student/pages/MeusDadosPage";
 import { MinhasAulasPage } from "../../modules/lessons/pages/MinhasAulasPage";
 import { PresentationPage } from "@/modules/lessons/pages/PresentationPage";
-import { PlansPage } from "@/modules/plans/pages/PlansPage";
 import { useAuth } from "@/modules/auth/hooks/useAuth";
-import { FinancePageBloqueada } from "@/modules/finance/pages/FinancePageBloqueada";
 import { PlatformAdminPage } from "@/modules/platform-admin/pages/PlatformAdminPage";
 import { IgrejasPage } from "@/modules/platform-admin/pages/IgrejasPage";
-import { AssinaturasPage } from "@/modules/platform-admin/pages/AssinaturasPage";
-import { PlanosPage } from "@/modules/platform-admin/pages/PlanosPage";
 import { RecursosPage } from "@/modules/platform-admin/pages/RecursosPage";
 import { StudentCheckinService } from "@/modules/student/services/StudentCheckinService";
 import { DemoRegistrationPage } from "@/modules/demo/pages/DemoRegistrationPage";
@@ -380,7 +375,7 @@ export const router = createBrowserRouter([
 
     {
         path: "/assinatura-expirada",
-        element: <SubscriptionExpiredPage />,
+        element: <Navigate to="/" replace />,
     },
 
     {
@@ -426,22 +421,27 @@ export const router = createBrowserRouter([
 
             {
                 path: "planos",
-                element: <PlansPage />,
+                element: <Navigate to="/apoiar" replace />,
             },
 
             {
                 path: "administracao/plataforma/assinaturas",
-                element: <AssinaturasPage />,
+                element: <Navigate to="/administracao/plataforma" replace />,
             },
 
             {
                 path: "administracao/plataforma/planos",
-                element: <PlanosPage />,
+                element: <Navigate to="/administracao/plataforma" replace />,
             },
 
             {
                 path: "administracao/plataforma/recursos",
                 element: <RecursosPage />,
+            },
+
+            {
+                path: "apoiar",
+                element: <ApoiarProjetoPage />,
             },
 
             {
@@ -540,7 +540,7 @@ export const router = createBrowserRouter([
                     >
                         <PlanGuard
                             recurso="FINANCEIRO"
-                            fallback={<FinancePageBloqueada />}
+                            
                         >
                             <FinancePage />
                         </PlanGuard>
@@ -605,7 +605,7 @@ export const router = createBrowserRouter([
 
             {
                 path: "/meu-plano",
-                element: <MyPlanPage />,
+                element: <Navigate to="/apoiar" replace />,
             },
 
             {
