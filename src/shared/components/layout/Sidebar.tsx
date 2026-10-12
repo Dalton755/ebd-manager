@@ -13,10 +13,9 @@ import {
     MapPin,
     KeyRound,
     Wallet,
-    CreditCard,
-    Crown,
     Settings,
     Building2,
+    HeartHandshake,
 } from "lucide-react";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
