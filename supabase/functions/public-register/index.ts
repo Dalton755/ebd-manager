@@ -230,85 +230,7 @@ Deno.serve(async (req: Request) => {
             );
         }
 
-        // =====================================================
-        // LOCALIZA A OFERTA GRATUITA DA SEMENTER
-        // =====================================================
-
-        const {
-            data: oferta,
-            error: ofertaError,
-        } =
-            await supabaseAdmin
-                .schema("ebd")
-                .from("ofertas_planos")
-                .select(`
-            id,
-            plano_id,
-            preco_recorrente,
-            gratuito,
-            duracao_gratuita_dias,
-            periodo_recorrente,
-            ativa,
-            planos (
-                id,
-                nome,
-                ativo
-            )
-        `)
-                .eq("ativa", true)
-                .eq("gratuito", true)
-                .eq("duracao_gratuita_dias", 5)
-                .maybeSingle();
-
-
-        if (ofertaError) {
-
-            throw ofertaError;
-
-        }
-
-
-        if (!oferta) {
-
-            return resposta(
-                {
-                    error:
-                        "O período de teste gratuito não está disponível no momento.",
-
-                    codigo:
-                        "TESTE_GRATUITO_INDISPONIVEL",
-                },
-                400
-            );
-
-        }
-
-
-        const plano =
-            Array.isArray(oferta.planos)
-                ? oferta.planos[0]
-                : oferta.planos;
-
-
-        if (
-            !plano ||
-            !plano.ativo ||
-            plano.nome !== "Semente"
-        ) {
-
-            return resposta(
-                {
-                    error:
-                        "O plano gratuito Semente não está disponível no momento.",
-
-                    codigo:
-                        "PLANO_SEMENTE_INDISPONIVEL",
-                },
-                400
-            );
-
-        }
-
+        // Cadastro aberto e gratuito. Nenhuma oferta comercial é exigida.
 
         // =====================================================
         // CRIA USUÁRIO AUTH
@@ -470,27 +392,6 @@ Deno.serve(async (req: Request) => {
 
 
         // =====================================================
-        // IMPORTANTE
-        // =====================================================
-        // A assinatura NÃO é criada aqui.
-        //
-        // A igreja acabou de ser cadastrada.
-        // O próximo passo será o administrador escolher
-        // uma oferta na tela /planos.
-        //
-        // Isso garante que:
-        //
-        // cadastro da igreja
-        //        ↓
-        // escolha da oferta
-        //        ↓
-        // criação da assinatura
-        //
-        // A condição comercial ficará congelada
-        // no momento da contratação.
-
-
-        // =====================================================
         // SUCESSO
         // =====================================================
 
@@ -501,7 +402,7 @@ Deno.serve(async (req: Request) => {
                     true,
 
                 message:
-                    "Igreja cadastrada com sucesso. Escolha agora o plano desejado.",
+                    "Igreja cadastrada com sucesso. Todos os recursos estão gratuitos.",
 
 
                 igreja: {

@@ -77,3 +77,9 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/demo-convert/deno.json"
 entrypoint = "./functions/demo-convert/index.ts"
+
+# Receptor isolado: Asaas não envia JWT de usuário. Autenticação interna via EBD_ASAAS_WEBHOOK_TOKEN.
+[functions.asaas-ebd-webhook]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/asaas-ebd-webhook/index.ts"

@@ -13,10 +13,9 @@ import {
     MapPin,
     KeyRound,
     Wallet,
-    CreditCard,
-    Crown,
     Settings,
     Building2,
+    HeartHandshake,
 } from "lucide-react";
 
 import { useAuth } from "@/modules/auth/hooks/useAuth";
@@ -119,10 +118,6 @@ export function Sidebar({
         temAcesso("VER_MINHAS_AULAS") ||
         temAcesso("FAZER_CHECKIN") ||
         temAcesso("VER_MINHAS_PRESENCAS");
-
-    const podeVerPlanos =
-        pessoa?.perfil === "ADMIN" ||
-        pessoa?.perfil === "PASTOR";
 
     return (
         <aside className="flex h-full min-h-0 w-full flex-col border-r border-slate-200 bg-white">
@@ -339,52 +334,20 @@ export function Sidebar({
                     </>
                 )}
 
-                {/* PLANOS */}
-
-                {podeVerPlanos && (
-                    <>
-                        <NavLink
-                            to="/planos"
-                            onClick={() => onNavigate?.()}
-                            className={({ isActive }) =>
-                                `group block rounded-md border px-3 py-2 transition ${isActive
-                                    ? "border-blue-300 bg-gradient-to-r from-blue-100 to-purple-100 font-bold text-blue-800 shadow-sm"
-                                    : "border-blue-200 bg-gradient-to-r from-blue-50 to-purple-50 font-semibold text-blue-700 hover:border-blue-300 hover:from-blue-100 hover:to-purple-100 hover:text-purple-700"
-                                }`
-                            }
-                        >
-                            <div className="flex items-center gap-3">
-                                <Crown
-                                    size={18}
-                                    className="text-purple-600 transition-transform group-hover:scale-110"
-                                />
-
-                                <span>Planos</span>
-
-                                <span className="ml-auto rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-700">
-                                    Upgrade
-                                </span>
-                            </div>
-                        </NavLink>
-
-                        {/* MEU PLANO */}
-
-                        <NavLink
-                            to="/meu-plano"
-                            onClick={() => onNavigate?.()}
-                            className={({ isActive }) =>
-                                `block rounded-md px-3 py-2 transition ${isActive
-                                    ? "bg-blue-50 font-semibold text-blue-800"
-                                    : "text-slate-700 hover:bg-slate-50 hover:text-blue-700"
-                                }`
-                            }
-                        >
-                            <div className="flex items-center gap-3">
-                                <CreditCard size={18} />
-                                <span>Meu Plano</span>
-                            </div>
-                        </NavLink>
-                    </>
+                {/* Apoio é totalmente voluntário e não limita funcionalidades. */}
+                {pessoa?.perfil !== "PENDENTE" && (
+                    <NavLink
+                        to="/apoiar"
+                        onClick={() => onNavigate?.()}
+                        className={({ isActive }) =>
+                            isActive
+                                ? "flex items-center gap-3 rounded-xl bg-amber-100 px-3 py-2.5 font-semibold text-amber-900"
+                                : "flex items-center gap-3 rounded-xl px-3 py-2.5 text-slate-700 transition hover:bg-amber-50 hover:text-amber-900"
+                        }
+                    >
+                        <HeartHandshake size={18} className="text-amber-600" />
+                        Apoiar o projeto
+                    </NavLink>
                 )}
 
                 {/* ADMINISTRAÇÃO DA PLATAFORMA */}
