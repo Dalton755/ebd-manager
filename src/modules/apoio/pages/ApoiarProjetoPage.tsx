@@ -21,6 +21,23 @@ type Retorno = {
 
 const dinheiro = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+async function executarSandbox(body: Record<string, unknown>): Promise<Retorno & { ok?: boolean }> {
+  const { data, error } = await supabase.functions.invoke("ebd-asaas-sandbox", { body });
+  if (error) {
+    let mensagem = "Não foi possível executar a operação de teste.";
+    if (error.context instanceof Response) {
+      try {
+        const detalhe = await error.context.json();
+        if (typeof detalhe?.error === "string") mensagem = detalhe.error;
+      } catch { /* resposta sem JSON */ }
+    }
+    throw new Error(mensagem);
+  }
+  if (data?.error) throw new Error(String(data.error));
+  return (data ?? {}) as Retorno & { ok?: boolean };
+}
+
+
 export function ApoiarProjetoPage() {
   const { pessoa, user } = useAuth();
   const [valor, setValor] = useState("20");
@@ -56,12 +73,7 @@ export function ApoiarProjetoPage() {
     try {
       const { data } = await supabase.auth.getSession();
       if (!data.session?.access_token) throw new Error("Sua sessão expirou. Entre novamente.");
-      const resposta = await fetch("/api/asaas/ofertar", {
-        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
-        body: JSON.stringify({ valor: valorNumerico, periodicidade, formaPagamento, nome: nome.trim(), cpfCnpj }),
-      });
-      const dados = await resposta.json();
-      if (!resposta.ok) throw new Error(dados.error ?? "Não foi possível gerar a oferta.");
+      const dados = await executarSandbox({ acao: "ofertar", valor: valorNumerico, periodicidade, formaPagamento, nome: nome.trim(), cpfCnpj });
       setResultado(dados as Retorno);
       setCpfCnpj("");
       await carregarApoios();
@@ -76,12 +88,7 @@ export function ApoiarProjetoPage() {
     try {
       const { data } = await supabase.auth.getSession();
       if (!data.session?.access_token) throw new Error("Sessão expirada.");
-      const res = await fetch("/api/asaas/cancelar-apoio", {
-        method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
-        body: JSON.stringify({ id }),
-      });
-      const dados = await res.json();
-      if (!res.ok) throw new Error(dados.error ?? "Não foi possível cancelar.");
+      await executarSandbox({ acao: "cancelar", id });
       await carregarApoios();
     } catch (error) { setErro(error instanceof Error ? error.message : "Erro ao cancelar."); }
     finally { setCancelando(null); }
@@ -173,7 +180,7 @@ export function ApoiarProjetoPage() {
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-4 py-3.5 text-sm font-extrabold text-white transition hover:bg-blue-800 disabled:opacity-60">
           <Wallet size={19} /> {enviando ? "Gerando cobrança..." : "Ofertar com segurança"}
         </button>
-        <p className="text-center text-xs text-slate-500">Cobrança processada pelo Asaas • Pagamento não é obrigatório.</p>
+        <p className="text-center text-xs font-semibold text-amber-700">Ambiente de testes (Asaas Sandbox) — não faça pagamentos reais.</p>
       </form>
 
       {resultado && <section aria-live="polite" className="space-y-4 rounded-3xl border border-emerald-200 bg-emerald-50 p-5 sm:p-7">
