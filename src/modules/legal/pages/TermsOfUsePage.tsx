@@ -25,7 +25,7 @@ export function TermsOfUsePage() {
                 </h2>
 
                 <p className="mt-2">
-                    O EBD Manager é uma plataforma de apoio à gestão da Escola Bíblica, com recursos para pessoas, classes, aulas, presença, relatórios, apresentações em PDF, notificações, gestão financeira e outras funções disponibilizadas conforme o plano contratado.
+                    O EBD Manager é uma plataforma de apoio à gestão da Escola Bíblica, com recursos para pessoas, classes, aulas, presença, relatórios, apresentações em PDF, notificações, gestão financeira e demais funções, sem planos ou mensalidades obrigatórias.
                 </p>
             </section>
 
@@ -54,11 +54,11 @@ export function TermsOfUsePage() {
 
             <section>
                 <h2 className="text-lg font-black text-slate-900">
-                    4. Adesão, planos e pagamento
+                    4. Gratuidade e apoio voluntário
                 </h2>
 
                 <p className="mt-2">
-                    O ambiente real da igreja é criado somente após a decisão de adesão. Preços, limites, recursos e periodicidade são os apresentados na oferta escolhida no momento da contratação. Quando houver cobrança, o pagamento poderá ser processado por provedor especializado, como o Mercado Pago.
+                    O cadastro da igreja e os recursos do EBD Manager são gratuitos. Para ajudar a manter servidores, banco de dados e evolução do projeto, o usuário poderá oferecer apoio financeiro voluntário, único ou mensal, por meio do Asaas. A oferta não é condição de cadastro, acesso ou continuidade de uso. O apoio mensal pode ser cancelado pelo próprio usuário na página de apoio.
                 </p>
             </section>
 

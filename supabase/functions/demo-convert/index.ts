@@ -285,7 +285,7 @@ Deno.serve(async (
             success:
                 true,
             message:
-                "Dados da igreja registrados. Agora escolha o plano.",
+                "Igreja cadastrada. Todos os recursos estão disponíveis gratuitamente.",
             igreja:
                 data,
         });
