@@ -10,6 +10,11 @@
       "/api/asaas/*"
     ]
   },
-  "previews": {},
+  "previews": {
+    "vars": {
+      "SUPABASE_URL": "https://sxghzubovthsvmfqncch.supabase.co",
+      "ASAAS_ENVIRONMENT": "sandbox"
+    }
+  },
   "main": "worker/index.ts"
 }
