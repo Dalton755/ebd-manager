@@ -10,11 +10,8 @@ import {
     ShieldCheck,
 } from "lucide-react";
 
-import {
-    Link,
-    useNavigate,
-    useSearchParams,
-} from "react-router-dom";
+
+import { Link, useNavigate } from "react-router-dom";
 
 import {
     toast,
@@ -28,9 +25,6 @@ import {
     DemoService,
 } from "../services/DemoService";
 
-import {
-    PlansCatalogService,
-} from "@/shared/plans/PlansCatalogService";
 
 
 function formatarTelefone(
@@ -123,10 +117,6 @@ export function AdhesionPage() {
     const navigate =
         useNavigate();
 
-    const [
-        searchParams,
-    ] =
-        useSearchParams();
 
     const {
         user,
@@ -136,10 +126,6 @@ export function AdhesionPage() {
     } =
         useAuth();
 
-    const ofertaId =
-        searchParams.get(
-            "oferta"
-        );
 
 
     const [
@@ -199,21 +185,6 @@ export function AdhesionPage() {
     ] =
         useState(false);
 
-    const [
-        ofertaNome,
-        setOfertaNome,
-    ] =
-        useState<string | null>(
-            null
-        );
-
-    const [
-        ofertaPreco,
-        setOfertaPreco,
-    ] =
-        useState<number | null>(
-            null
-        );
 
     const [
         loading,
@@ -265,60 +236,6 @@ export function AdhesionPage() {
         user?.email,
     ]);
 
-
-    useEffect(() => {
-
-        if (!ofertaId) {
-            return;
-        }
-
-
-        void PlansCatalogService
-            .listarOfertasAtivas()
-            .then(
-                (
-                    ofertas
-                ) => {
-
-                    const oferta =
-                        ofertas.find(
-                            (
-                                item
-                            ) =>
-                                item.id ===
-                                ofertaId
-                        );
-
-
-                    if (
-                        oferta
-                    ) {
-                        setOfertaNome(
-                            oferta.plano
-                                ?.nome ??
-                                null
-                        );
-
-                        setOfertaPreco(
-                            oferta
-                                .preco_recorrente
-                        );
-                    }
-                }
-            )
-            .catch(
-                (
-                    error
-                ) =>
-                    console.error(
-                        "[ADESÃO] Erro ao carregar oferta:",
-                        error
-                    )
-            );
-
-    }, [
-        ofertaId,
-    ]);
 
 
     async function concluir(
@@ -390,21 +307,12 @@ export function AdhesionPage() {
 
 
             toast.success(
-                "Igreja cadastrada. Agora escolha a condição do seu plano."
+                "Igreja cadastrada! O EBD Manager está liberado gratuitamente."
             );
 
 
-            const destino =
-                ofertaId
-                    ? `/planos?oferta=${encodeURIComponent(
-                        ofertaId
-                    )}&adesao=1`
-                    : "/planos?adesao=1";
+            window.location.assign("/");
 
-
-            window.location.assign(
-                destino
-            );
 
 
         } catch (error) {
@@ -485,42 +393,6 @@ export function AdhesionPage() {
                         </div>
 
 
-                        {ofertaNome &&
-                            ofertaPreco !==
-                                null && (
-
-                            <div className="mt-5 rounded-2xl border border-white/10 bg-white/10 p-4">
-
-                                <p className="text-xs font-bold uppercase text-blue-200">
-                                    Plano selecionado
-                                </p>
-
-                                <div className="mt-1 flex items-end justify-between gap-3">
-
-                                    <strong className="text-lg">
-                                        {ofertaNome}
-                                    </strong>
-
-                                    <span className="text-xl font-black">
-                                        {ofertaPreco.toLocaleString(
-                                            "pt-BR",
-                                            {
-                                                style:
-                                                    "currency",
-                                                currency:
-                                                    "BRL",
-                                            }
-                                        )}
-                                        <small className="text-xs font-medium text-slate-300">
-                                            /mês
-                                        </small>
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                        )}
 
                     </div>
 
@@ -835,7 +707,7 @@ export function AdhesionPage() {
                             <CheckCircle2 className="h-5 w-5" />
                             {loading
                                 ? "Criando ambiente real..."
-                                : "Continuar para o plano e pagamento"}
+                                : "Concluir cadastro gratuito"}
                         </button>
 
                     </form>

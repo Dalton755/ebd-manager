@@ -32,9 +32,7 @@ import {
     DemoBanner,
 } from "@/modules/demo/components/DemoBanner";
 
-import {
-    DemoOfferModal,
-} from "@/modules/demo/components/DemoOfferModal";
+
 
 export function MainLayout() {
 
@@ -373,9 +371,7 @@ export function MainLayout() {
                     }
                 />
 
-                {modoDemo && (
-                    <DemoOfferModal />
-                )}
+
             </div>
         </div>
     );
