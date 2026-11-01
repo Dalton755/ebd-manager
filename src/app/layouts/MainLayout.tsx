@@ -14,6 +14,7 @@ import { X } from "lucide-react";
 import { Sidebar } from "@/shared/components/layout/Sidebar";
 import { Header } from "@/shared/components/layout/Header";
 import { MobileBottomNav } from "@/shared/components/layout/MobileBottomNav";
+import { InstallAppModal } from "@/shared/components/pwa/InstallAppModal";
 import marcaDagua from "@/assets/marca-dagua.png";
 
 import {
@@ -276,6 +277,7 @@ export function MainLayout() {
 
     return (
         <div className="relative flex h-screen h-dvh min-h-0 w-full overflow-hidden bg-slate-50">
+            <InstallAppModal />
 
             {previewUx && (
                 <div className="fixed right-3 top-3 z-[200] rounded-full bg-fuchsia-600 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white shadow-xl">
