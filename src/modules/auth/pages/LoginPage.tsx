@@ -398,9 +398,11 @@ export function LoginPage() {
 
                     <div className="text-center">
 
-                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-600 text-xl font-black text-white shadow-lg shadow-blue-200">
-                            E
-                        </div>
+                        <img
+                            src="/logo-ebd-manager.png"
+                            alt="Logo original do EBD Manager"
+                            className="mx-auto h-20 w-20 rounded-2xl bg-white object-contain shadow-md shadow-slate-200/60"
+                        />
 
                         <h1 className="mt-4 text-3xl font-black text-slate-900">
                             EBD Manager

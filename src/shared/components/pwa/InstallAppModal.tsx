@@ -145,7 +145,7 @@ export function InstallAppModal() {
         </button>
         <div className="mx-auto mb-4 grid h-20 w-20 place-items-center rounded-[22px] bg-blue-50 shadow-inner">
           <img
-            src="/icons/ebd-192.png"
+            src="/logo-ebd-manager.png"
             alt=""
             className="h-16 w-16 rounded-2xl object-contain"
           />
