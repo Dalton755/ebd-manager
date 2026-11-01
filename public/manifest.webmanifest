@@ -1,0 +1,27 @@
+{
+  "name": "EBD Manager — Escola Bíblica",
+  "short_name": "EBD Manager",
+  "description": "Organize aulas, chamadas, alunos e classes da Escola Bíblica.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f9fc",
+  "theme_color": "#1d4ed8",
+  "lang": "pt-BR",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icons/ebd-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/ebd-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
