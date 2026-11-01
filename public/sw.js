@@ -156,3 +156,11 @@ self.addEventListener(
 
     }
 );
+
+// PWA: navegação continua sendo entregue pela rede, sem cachear dados pessoais.
+// Um fetch handler também permite o convite nativo de instalação onde exigido.
+self.addEventListener("fetch", (event) => {
+    if (event.request.mode !== "navigate") return;
+    if (new URL(event.request.url).origin !== self.location.origin) return;
+    event.respondWith(fetch(event.request));
+});
