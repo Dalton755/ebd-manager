@@ -201,6 +201,14 @@ export function Header({
 
                 )}
 
+                {!(plano?.plano?.nome === "Igreja" && igrejaLogoUrl) && (
+                    <img
+                        src="/logo-ebd-manager.png"
+                        alt="EBD Manager"
+                        className="h-9 w-9 shrink-0 rounded-lg bg-white object-contain"
+                    />
+                )}
+
                 {plano?.plano?.nome === "Igreja" && igrejaLogoUrl && (
 
                     <img
