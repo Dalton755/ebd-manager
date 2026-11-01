@@ -12,13 +12,13 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "/icons/ebd-192.png",
+      "src": "/icons/ebd-original-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/ebd-512.png",
+      "src": "/icons/ebd-original-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
