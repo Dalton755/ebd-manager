@@ -8,7 +8,7 @@
 <div class="scroll"><table><thead><tr><th>Rank</th><th>Aluno</th><th>Classe</th><th>Nota</th><th>Data</th></tr></thead><tbody id="rows"></tbody></table></div>
 <p class="muted">Clique em um aluno para abrir as respostas. Atualização automática a cada 15 segundos.</p><div id="details" class="hidden"></div>
 </div></section></main><script>
-const API="https://neqbrwzkrnkyxxaiwhoq.supabase.co/functions/v1/ebd-avaliacao-temporaria";const $=id=>document.getElementById(id);let secret="",students=[],answers=[],timer,active=true;
+const API="/api/quiz";const $=id=>document.getElementById(id);let secret="",students=[],answers=[],timer,active=true;
 function txt(s){return document.createTextNode(String(s))}
 async function call(action,body={}){const r=await fetch(API+"?action="+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({...body,password:secret})});let d=await r.json();if(!r.ok)throw Error(d.error||"Erro na consulta.");return d}
 function ranked(){let s=[...students].sort((a,b)=>b.pontuacao-a.pontuacao||a.aluno_nome.localeCompare(b.aluno_nome));let pos=0,prev=null;return s.map((x,i)=>{if(x.pontuacao!==prev){pos=i+1;prev=x.pontuacao}return {...x,rank:pos}})}
