@@ -388,6 +388,12 @@ export function ClassLessonsPage() {
             ? formularioEdicao
             : formulario;
 
+    const aulaMesmoNumero = aulas.find(
+        (aula) =>
+            aula.numero === Number(formularioAtivo.numero) &&
+            aula.id !== aulaParaEditar?.id
+    );
+
 
     function prepararImagemFormulario(
         aula?: Aula | null
@@ -1077,6 +1083,12 @@ export function ClassLessonsPage() {
             return;
         }
 
+        if (aulaMesmoNumero) {
+            toast.error(
+                `A aula ${aulaMesmoNumero.numero} já existe neste trimestre e classe. Abra a aula cadastrada para editá-la.`
+            );
+            return;
+        }
 
         try {
 
@@ -1280,18 +1292,20 @@ export function ClassLessonsPage() {
                 error
             );
 
+            const duplicidadeNoBanco =
+                typeof error === "object" &&
+                error !== null &&
+                "code" in error &&
+                error.code === "23505";
 
             toast.error(
-
-                error instanceof Error
-
-                    ? error.message
-
-                    : aulaParaEditar
-
-                        ? "Não foi possível atualizar a aula."
-
-                        : "Não foi possível cadastrar a aula."
+                duplicidadeNoBanco
+                    ? "Este número de aula já está cadastrado para esta classe e trimestre. Abra a aula existente para editá-la."
+                    : error instanceof Error
+                        ? error.message
+                        : aulaParaEditar
+                            ? "Não foi possível atualizar a aula."
+                            : "Não foi possível cadastrar a aula."
             );
 
         } finally {
@@ -1792,6 +1806,25 @@ export function ClassLessonsPage() {
                                     className="w-full rounded-xl border border-slate-300 px-3 py-2.5 outline-none transition focus:border-blue-500"
                                 />
 
+                                {aulaMesmoNumero && (
+                                    <div className="mt-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+                                        <p>
+                                            A aula {aulaMesmoNumero.numero} já existe neste trimestre:
+                                            {" "}<strong>{aulaMesmoNumero.titulo}</strong>.
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setModalNovaAula(false);
+                                                setAulaSelecionada(aulaMesmoNumero);
+                                            }}
+                                            className="mt-2 font-semibold text-amber-900 underline underline-offset-2"
+                                        >
+                                            Ver aula existente
+                                        </button>
+                                    </div>
+                                )}
+
                             </div>
 
 
@@ -2000,7 +2033,7 @@ export function ClassLessonsPage() {
                                 <button
                                     type="submit"
                                     disabled={
-                                        saving
+                                        saving || Boolean(aulaMesmoNumero)
                                     }
                                     className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:opacity-60"
                                 >
