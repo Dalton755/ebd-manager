@@ -173,6 +173,11 @@ function formatarReferencia(
     const inicio =
         referencia.versiculoInicial;
 
+    if (referencia.versiculosSelecionados?.length) {
+        return referencia.livro + " " + referencia.capitulo + ":" +
+            referencia.versiculosSelecionados.join(",");
+    }
+
     const fim =
         referencia.versiculoFinal ??
         inicio;
@@ -300,16 +305,6 @@ export class BibleService {
                 .obterTraducaoPreferida()
     ): Promise<PassagemBiblica> {
 
-        if (
-            referencia.versiculoInicial ===
-            null
-        ) {
-            throw new Error(
-                "A referência precisa informar o versículo."
-            );
-        }
-
-
         const opcao =
             obterOpcaoTraducao(
                 codigoTraducao
@@ -352,12 +347,13 @@ export class BibleService {
         }
 
 
+        // Referências sem versículo (ex.: Atos 18) abrem o capítulo completo.
         const versiculoInicial =
-            referencia.versiculoInicial!;
+            referencia.versiculoInicial ?? 1;
 
         const versiculoFinal =
             referencia.versiculoFinal ??
-            versiculoInicial;
+            (referencia.versiculoInicial === null ? 200 : versiculoInicial);
 
 
         const versiculos =
@@ -378,10 +374,17 @@ export class BibleService {
         }
 
 
+        const numerosPermitidos = referencia.versiculosSelecionados?.length
+            ? new Set(referencia.versiculosSelecionados)
+            : null;
+        const versiculosFiltrados = numerosPermitidos
+            ? versiculos.filter((item) => numerosPermitidos.has(item.versiculo))
+            : versiculos;
+
         const versiculosExibicao =
             codigoTraducao ===
             "BLIVRE"
-                ? versiculos.map(
+                ? versiculosFiltrados.map(
                     (versiculo) => ({
                         ...versiculo,
 
@@ -391,7 +394,7 @@ export class BibleService {
                             ),
                     })
                 )
-                : versiculos;
+                : versiculosFiltrados;
 
 
         return {
@@ -412,7 +415,8 @@ export class BibleService {
                 referencia.capitulo,
 
             versiculoInicial,
-            versiculoFinal,
+            versiculoFinal:
+                versiculosExibicao.at(-1)?.versiculo ?? versiculoFinal,
             versiculos:
                 versiculosExibicao,
         };
@@ -437,12 +441,13 @@ export class BibleService {
         }
 
 
+        // Referências sem versículo (ex.: Atos 18) abrem o capítulo completo.
         const versiculoInicial =
-            referencia.versiculoInicial!;
+            referencia.versiculoInicial ?? 1;
 
         const versiculoFinal =
             referencia.versiculoFinal ??
-            versiculoInicial;
+            (referencia.versiculoInicial === null ? 200 : versiculoInicial);
 
 
         const {
@@ -494,9 +499,19 @@ export class BibleService {
         }
 
 
+        const numerosPermitidos = referencia.versiculosSelecionados?.length
+            ? new Set(referencia.versiculosSelecionados)
+            : null;
+        const versosFiltrados = numerosPermitidos
+            ? data.versos.filter(
+                (item: { numero?: number; versiculo?: number }) =>
+                    numerosPermitidos.has(Number(item.numero ?? item.versiculo))
+            )
+            : data.versos;
+
         const versiculos:
             VersiculoBiblia[] =
-            data.versos.map(
+            versosFiltrados.map(
                 (
                     item: {
                         numero?: number;
@@ -564,7 +579,8 @@ export class BibleService {
                 referencia.capitulo,
 
             versiculoInicial,
-            versiculoFinal,
+            versiculoFinal:
+                versiculos.at(-1)?.versiculo ?? versiculoFinal,
             versiculos,
         };
     }
