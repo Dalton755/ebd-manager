@@ -53,8 +53,11 @@ import type {
 } from "@/modules/lessons/types/EditorApresentacao";
 
 import {
-    extrairReferenciasBiblicas,
-} from "@/modules/lessons/utils/bibleReferenceParser";
+    extrairHotspotsReferenciasPdf,
+} from "@/modules/lessons/utils/pdfBibleHotspots";
+import type {
+    ItemTextoReferenciaPdf,
+} from "@/modules/lessons/utils/pdfBibleHotspots";
 
 import type {
     ReferenciaBiblica,
@@ -1915,6 +1918,8 @@ const pdf =
                 const novosTextosPdf:
                     TextoPdfOverlay[] = [];
 
+                const itensReferenciaPdf:
+                    ItemTextoReferenciaPdf[] = [];
 
                 conteudoTexto.items.forEach(
                     (
@@ -1937,6 +1942,12 @@ const pdf =
                             return;
                         }
 
+                        itensReferenciaPdf.push({
+                            str: item.str,
+                            width: item.width,
+                            height: item.height,
+                            transform: item.transform,
+                        });
 
                         const transformacao =
                             pdfjsLib.Util.transform(
@@ -1993,131 +2004,43 @@ const pdf =
                         });
 
 
-                        const referenciasItem =
-                            extrairReferenciasBiblicas(
-                                textoItem
-                            );
-
-                        if (
-                            referenciasItem.length ===
-                            0
-                        ) {
-                            return;
-                        }
-
-
-                        for (
-                            const referencia
-                            of referenciasItem
-                        ) {
-
-                            const versiculos =
-                                referencia
-                                    .versiculoInicial ===
-                                    null
-                                    ? ""
-                                    : referencia
-                                        .versiculoFinal !==
-                                        null &&
-                                        referencia
-                                            .versiculoFinal !==
-                                        referencia
-                                            .versiculoInicial
-                                        ? `:${referencia.versiculoInicial}-${referencia.versiculoFinal}`
-                                        : `:${referencia.versiculoInicial}`;
-
-
-                            const proporcaoInicio =
-                                referencia.inicioTexto /
-                                textoItem.length;
-
-                            const proporcaoLargura =
-                                (
-                                    referencia.fimTexto -
-                                    referencia.inicioTexto
-                                ) /
-                                textoItem.length;
-
-                            const leftReferencia =
-                                left +
-                                larguraItem *
-                                proporcaoInicio;
-
-                            const widthReferencia =
-                                Math.max(
-                                    larguraItem *
-                                        proporcaoLargura,
-                                    18
-                                );
-
-                            const alturaReferencia =
-                                Math.max(
-                                    altura,
-                                    item.height *
-                                        escala
-                                );
-
-
-                            /*
-                             * Hotspots em proporção ao slide,
-                             * não em pixels. Assim continuam
-                             * no lugar certo ao girar a tela.
-                             */
-                            novosOverlays.push({
-                                id:
-                                    `${paginaAtual}-${indice}-${referencia.original}`,
-
-                                original:
-                                    referencia.original,
-
-                                rotulo:
-                                    `${referencia.livro} ${referencia.capitulo}${versiculos}`,
-
-                                referencia,
-
-                                left:
-                                    Math.max(
-                                        0,
-                                        Math.min(
-                                            leftReferencia /
-                                                viewport.width,
-                                            1
-                                        )
-                                    ),
-
-                                top:
-                                    Math.max(
-                                        0,
-                                        Math.min(
-                                            top /
-                                                viewport.height,
-                                            1
-                                        )
-                                    ),
-
-                                width:
-                                    Math.max(
-                                        0.012,
-                                        Math.min(
-                                            widthReferencia /
-                                                viewport.width,
-                                            1
-                                        )
-                                    ),
-
-                                height:
-                                    Math.max(
-                                        0.018,
-                                        Math.min(
-                                            alturaReferencia /
-                                                viewport.height,
-                                            1
-                                        )
-                                    ),
-                            });
-                        }
                     }
                 );
+
+
+                // O PDF.js separa títulos e números em fragmentos.
+                // Agrupar por linha identifica as referências sem depender
+                // de estarem contidas num único item de texto.
+                const hotspotsPdf = extrairHotspotsReferenciasPdf(
+                    itensReferenciaPdf,
+                    viewport,
+                    pdfjsLib.Util.transform
+                );
+
+                hotspotsPdf.forEach((hotspot, indice) => {
+                    const referencia = hotspot.referencia;
+                    const versiculos = referencia.versiculoInicial === null
+                        ? ""
+                        : referencia.versiculosSelecionados?.length
+                            ? ":" + referencia.versiculosSelecionados.join(",")
+                            : referencia.versiculoFinal !== null &&
+                                referencia.versiculoFinal !== referencia.versiculoInicial
+                                ? ":" + referencia.versiculoInicial + "-" +
+                                    referencia.versiculoFinal
+                                : ":" + referencia.versiculoInicial;
+
+                    novosOverlays.push({
+                        id: paginaAtual + "-biblia-" + indice,
+                        original: referencia.original,
+                        rotulo: referencia.livro + " " +
+                            referencia.capitulo + versiculos,
+                        referencia,
+                        left: Math.max(0, Math.min(hotspot.left / viewport.width, 1)),
+                        top: Math.max(0, Math.min(hotspot.top / viewport.height, 1)),
+                        width: Math.max(0.012, Math.min(hotspot.width / viewport.width, 1)),
+                        height: Math.max(0.018, Math.min(hotspot.height / viewport.height, 1)),
+                    });
+                });
 
 
                 /*
