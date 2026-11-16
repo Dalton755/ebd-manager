@@ -209,12 +209,12 @@ export function extrairHotspotsReferenciasPdf(
             });
             if (antes.length === 0) continue;
 
-            // Só associa quando o livro é o fim de um grupo (ou uma
-            // linha de referência completa), não em parágrafos longos.
-            const ultimo = antes[antes.length - 1];
-            const livroCandidato = ultimo.texto.trim();
+            // O nome do livro também pode estar dividido em 2–3 fragmentos.
+            // Limitamos o texto analisado para não associar parágrafos inteiros.
+            const primeiro = antes[0];
+            const livroCandidato = antes.map((item) => item.texto).join(" ").trim();
             const numeroCandidato = fim.texto.trim();
-            if (livroCandidato.length > 55) continue;
+            if (livroCandidato.length > 80) continue;
 
             const refs = extrairReferenciasBiblicas(
                 livroCandidato + " " + numeroCandidato
@@ -226,13 +226,20 @@ export function extrairHotspotsReferenciasPdf(
                     referencia.fimTexto <= livroCandidato.length + 1
                 ) continue;
 
-                if (!referenciaJaExistente(referencia, ultimo.left, ultimo.top)) {
+                if (!referenciaJaExistente(referencia, primeiro.left, primeiro.top)) {
                     hotspots.push({
                         referencia,
-                        left: Math.max(0, ultimo.left - 2),
-                        top: Math.max(0, ultimo.top - 2),
-                        width: Math.max(ultimo.width + 4, 18),
-                        height: Math.max(ultimo.height + 4, 16),
+                        left: Math.max(0, primeiro.left - 2),
+                        top: Math.max(0, Math.min(...antes.map((item) => item.top)) - 2),
+                        width: Math.max(
+                            Math.max(...antes.map((item) => item.left + item.width)) -
+                                primeiro.left + 4,
+                            18
+                        ),
+                        height: Math.max(
+                            ...antes.map((item) => item.height + 4),
+                            16
+                        ),
                     });
                 }
                 if (!referenciaJaExistente(referencia, fim.left, fim.top)) {
