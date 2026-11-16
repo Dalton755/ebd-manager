@@ -108,7 +108,7 @@ export function extrairHotspotsReferenciasPdf(
             if (
                 lacuna >= 0 &&
                 lacuna <= Math.max(180, linha.fontSize * 12) &&
-                /^\d{1,3}\s*[:.]\s*\d{1,3}/u.test(proximoTexto)
+                /^\d(?:\s*\d){0,2}\s*[:.]\s*\d(?:\s*\d){0,2}/u.test(proximoTexto)
             ) {
                 const textoCombinado = primeiro.map((s) => s.texto).join(" ") +
                     " " + proximoTexto;
@@ -197,8 +197,14 @@ export function extrairHotspotsReferenciasPdf(
         const partesA = [...primeira.segmentos].sort((a, b) => a.left - b.left);
         const partesB = [...segunda.segmentos].sort((a, b) => a.left - b.left);
 
-        // Evita captar qualquer número de outra seção do slide.
-        const candidatosB = partesB.filter((item) =>
+        // Capítulo e versículos também podem vir como itens distintos.
+        const linhaB: SegmentoPdf = {
+            ...partesB[0],
+            texto: partesB.map((item) => item.texto).join(" "),
+            width: Math.max(...partesB.map((item) => item.left + item.width)) -
+                partesB[0].left,
+        };
+        const candidatosB = [...partesB, linhaB].filter((item) =>
             /^\s*\d(?:\s*\d){0,2}\s*[:.]\s*\d/u.test(item.texto)
         );
 
