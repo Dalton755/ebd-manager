@@ -105,3 +105,47 @@ test("o hotspot funciona com livro e números em fragmentos separados", () => {
     assert.ok(encontrados.every((x) => x.width > 0 && x.height > 0));
     assert.ok(encontrados[0].width > 250);
 });
+
+
+test("referências com espaço grande entre livro e capítulo na mesma linha", () => {
+    const itens = [
+        { str: "1 CORÍNTIOS", width: 110, height: 12, transform: [12,0,0,12,24,130] },
+        { str: "12:12-27", width: 76, height: 12, transform: [12,0,0,12,255,130] },
+    ];
+    const resultados = hotspot.extrairHotspotsReferenciasPdf(
+        itens,
+        { transform: [1,0,0,1,0,0], width: 900, height: 500, scale: 1 },
+        (_viewport, matrix) => matrix
+    );
+    assert.equal(resultados.length, 1);
+    assert.equal(resultados[0].referencia.livro, "1 Coríntios");
+    assert.equal(resultados[0].referencia.versiculoFinal, 27);
+});
+
+test("a referência quebrada em duas linhas continua clicável nas duas partes", () => {
+    const itens = [
+        { str: "1 CORÍN", width: 75, height: 12, transform: [12,0,0,12,24,130] },
+        { str: "TIOS", width: 42, height: 12, transform: [12,0,0,12,101,130] },
+        { str: "12:12-27", width: 90, height: 12, transform: [12,0,0,12,24,155] },
+    ];
+    const resultados = hotspot.extrairHotspotsReferenciasPdf(
+        itens,
+        { transform: [1,0,0,1,0,0], width: 900, height: 500, scale: 1 },
+        (_viewport, matrix) => matrix
+    );
+    assert.equal(resultados.length, 2);
+    assert.ok(resultados.every((x) => x.referencia.livro === "1 Coríntios"));
+    assert.ok(resultados.every((x) => x.referencia.versiculoInicial === 12));
+    assert.ok(resultados.every((x) => x.referencia.versiculoFinal === 27));
+});
+
+test("não cruza colunas distantes e preserva PDF sem texto extraível", () => {
+    const itens = [
+        { str: "1 CORÍNTIOS", width: 110, height: 12, transform: [12,0,0,12,24,130] },
+        { str: "12:12-27", width: 90, height: 12, transform: [12,0,0,12,640,130] },
+    ];
+    const viewport = { transform: [1,0,0,1,0,0], width: 900, height: 500, scale: 1 };
+    const map = (_viewport, matrix) => matrix;
+    assert.equal(hotspot.extrairHotspotsReferenciasPdf(itens, viewport, map).length, 0);
+    assert.deepEqual(hotspot.extrairHotspotsReferenciasPdf([], viewport, map), []);
+});
