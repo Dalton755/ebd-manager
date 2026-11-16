@@ -33,6 +33,11 @@ const hotspot = carregarModulo(
     { "./bibleReferenceParser": parser },
 );
 
+const resumo = carregarModulo(
+    "src/modules/lessons/utils/pdfBiblePageReferences.ts",
+    { "./bibleReferenceParser": parser },
+);
+
 test("referências padrão e com letras/números espaçados", () => {
     const casos = [
         ["Efésios 4:7–16", ["Efésios 4:7-16"]],
@@ -104,4 +109,126 @@ test("o hotspot funciona com livro e números em fragmentos separados", () => {
     assert.equal(encontrados.length, 2);
     assert.ok(encontrados.every((x) => x.width > 0 && x.height > 0));
     assert.ok(encontrados[0].width > 250);
+});
+
+
+test("referências com espaço grande entre livro e capítulo na mesma linha", () => {
+    const itens = [
+        { str: "1 CORÍNTIOS", width: 110, height: 12, transform: [12,0,0,12,24,130] },
+        { str: "12:12-27", width: 76, height: 12, transform: [12,0,0,12,255,130] },
+    ];
+    const resultados = hotspot.extrairHotspotsReferenciasPdf(
+        itens,
+        { transform: [1,0,0,1,0,0], width: 900, height: 500, scale: 1 },
+        (_viewport, matrix) => matrix
+    );
+    assert.equal(resultados.length, 1);
+    assert.equal(resultados[0].referencia.livro, "1 Coríntios");
+    assert.equal(resultados[0].referencia.versiculoFinal, 27);
+});
+
+test("a referência quebrada em duas linhas continua clicável nas duas partes", () => {
+    const itens = [
+        { str: "1 CORÍN", width: 75, height: 12, transform: [12,0,0,12,24,130] },
+        { str: "TIOS", width: 42, height: 12, transform: [12,0,0,12,101,130] },
+        { str: "12:12-27", width: 90, height: 12, transform: [12,0,0,12,24,155] },
+    ];
+    const resultados = hotspot.extrairHotspotsReferenciasPdf(
+        itens,
+        { transform: [1,0,0,1,0,0], width: 900, height: 500, scale: 1 },
+        (_viewport, matrix) => matrix
+    );
+    assert.equal(resultados.length, 2);
+    assert.ok(resultados.every((x) => x.referencia.livro === "1 Coríntios"));
+    assert.ok(resultados.every((x) => x.referencia.versiculoInicial === 12));
+    assert.ok(resultados.every((x) => x.referencia.versiculoFinal === 27));
+});
+
+test("não cruza colunas distantes e preserva PDF sem texto extraível", () => {
+    const itens = [
+        { str: "1 CORÍNTIOS", width: 110, height: 12, transform: [12,0,0,12,24,130] },
+        { str: "12:12-27", width: 90, height: 12, transform: [12,0,0,12,640,130] },
+    ];
+    const viewport = { transform: [1,0,0,1,0,0], width: 900, height: 500, scale: 1 };
+    const map = (_viewport, matrix) => matrix;
+    assert.equal(hotspot.extrairHotspotsReferenciasPdf(itens, viewport, map).length, 0);
+    assert.deepEqual(hotspot.extrairHotspotsReferenciasPdf([], viewport, map), []);
+});
+
+
+test("livro acima e capítulo/versos separados em itens PDF na linha seguinte", () => {
+    const itens = [
+        { str: "1 CORÍNTIOS", width: 124, height: 12, transform: [12,0,0,12,24,120] },
+        { str: "1 2", width: 33, height: 12, transform: [12,0,0,12,24,145] },
+        { str: ": 1 2 – 2 7", width: 91, height: 12, transform: [12,0,0,12,59,145] },
+    ];
+    const refs = hotspot.extrairHotspotsReferenciasPdf(
+        itens,
+        { transform: [1,0,0,1,0,0], width: 900, height: 600, scale: 1 },
+        (_viewport, matrix) => matrix
+    );
+    assert.ok(refs.some((r) =>
+        r.referencia.livro === "1 Coríntios" &&
+        r.referencia.capitulo === 12 &&
+        r.referencia.versiculoInicial === 12 &&
+        r.referencia.versiculoFinal === 27
+    ));
+});
+
+
+test("Lição 2: todas as 23 citações impressas nos 50 slides são identificadas", () => {
+    // Linhas extraídas do PDF real DOC-20261115-WA0004.pdf, recebido em 15/11.
+    // Há 21 slides que imprimem referências; 29 não trazem citação explícita.
+    const referenciasPorSlide = [
+        [1, "1  CO R Í N T I O S  1 2 : 1 2 – 2 7", ["1 Coríntios 12:12-27"]],
+        [3, "1 Coríntios 12:12–16", ["1 Coríntios 12:12-16"]],
+        [4, "1 Coríntios 12:17–21", ["1 Coríntios 12:17-21"]],
+        [5, "1 Coríntios 12:22–27", ["1 Coríntios 12:22-27"]],
+        [6, "Texto central: 1 Coríntios 12:12", ["1 Coríntios 12:12"]],
+        [10, "E F É S I O S  4 : 1 5 – 1 6  ·  CO LO SS E N S E S  1 : 1 8",
+            ["Efésios 4:15-16", "Colossenses 1:18"]],
+        [11, "1  CO R Í N T I O S  1 2 : 1 4", ["1 Coríntios 12:14"]],
+        [13, "1  CO R Í N T I O S  1 2 : 1 3", ["1 Coríntios 12:13"]],
+        [18, "E F É S I O S  4 : 5", ["Efésios 4:5"]],
+        [20, "1  CO R Í N T I O S  1 2 : 1 8", ["1 Coríntios 12:18"]],
+        [22, "1  CO R Í N T I O S  1 2 : 1 5", ["1 Coríntios 12:15"]],
+        [23, "1  CO R Í N T I O S  1 2 : 2 1", ["1 Coríntios 12:21"]],
+        [29, "1  CO R Í N T I O S  1 2 : 2 1", ["1 Coríntios 12:21"]],
+        [30, "1  CO R Í N T I O S  1 2 : 2 2", ["1 Coríntios 12:22"]],
+        [31, "1  CO R Í N T I O S  1 2 : 2 3 – 2 5", ["1 Coríntios 12:23-25"]],
+        [34, "1  CO R Í N T I O S  1 2 : 2 6", ["1 Coríntios 12:26"]],
+        [35, "1  CO R Í N T I O S  1 2 : 2 6", ["1 Coríntios 12:26"]],
+        [38, "1  CO R Í N T I O S  1 2 : 4 ,  1 1", ["1 Coríntios 12:4,11"]],
+        [40, "1  CO R Í N T I O S  1 2 : 7", ["1 Coríntios 12:7"]],
+        [43, "1  CO R Í N T I O S  1 2 : 3 1  ·  1 3 : 1 – 7",
+            ["1 Coríntios 12:31", "1 Coríntios 13:1-7"]],
+        [49, "E F É S I O S  4 : 1 5 – 1 6", ["Efésios 4:15-16"]],
+    ];
+
+    assert.equal(referenciasPorSlide.length, 21);
+    let numeroDeReferencias = 0;
+    for (const [pagina, texto, esperado] of referenciasPorSlide) {
+        // Fragmentação comum do PDF.js entre o livro e os números.
+        const quebra = texto.indexOf("  1 2 ");
+        const fragmentos = quebra > 0
+            ? [texto.slice(0, quebra), texto.slice(quebra)]
+            : [texto];
+
+        const encontrados = resumo.listarReferenciasBiblicasDoTextoPdf(fragmentos)
+            .map(resumo.rotuloReferenciaBiblica);
+        assert.deepEqual(encontrados, esperado, "Falha no slide " + pagina);
+        numeroDeReferencias += encontrados.length;
+    }
+    assert.equal(numeroDeReferencias, 23);
+});
+
+test("menu da Bíblia mostra a referência principal mesmo sem citações no slide", () => {
+    const [principal] = resumo.listarReferenciasBiblicasDoTextoPdf([
+        "Dons Diferentes, um Só Corpo",
+        "1  CO R Í N T I O S  1 2 : 1 2 – 2 7",
+    ]);
+    assert.equal(resumo.rotuloReferenciaBiblica(principal), "1 Coríntios 12:12-27");
+    assert.deepEqual(resumo.listarReferenciasBiblicasDoTextoPdf([
+        "Uma só Igreja", "Diversidade de dons, unidade no Espírito",
+    ]), []);
 });
