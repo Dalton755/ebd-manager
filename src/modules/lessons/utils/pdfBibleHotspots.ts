@@ -84,7 +84,9 @@ export function extrairHotspotsReferenciasPdf(
 
         for (const segmento of ordenados) {
             // Não associa livros e números de colunas distantes.
-            const limiteEspaco = Math.max(30, segmento.fontSize * 3);
+            // PDFs exportados de slides podem ter grande espaço entre
+            // o nome do livro e o capítulo, mesmo estando na mesma linha.
+            const limiteEspaco = Math.max(72, segmento.fontSize * 7);
             if (grupoAtual.length && segmento.left - margemDireita > limiteEspaco) {
                 grupos.push(grupoAtual);
                 grupoAtual = [];
@@ -93,6 +95,32 @@ export function extrairHotspotsReferenciasPdf(
             margemDireita = Math.max(margemDireita, segmento.left + segmento.width);
         }
         if (grupoAtual.length) grupos.push(grupoAtual);
+
+        // Conectar também referências cujo livro e números foram separados
+        // em grupos distantes na mesma linha (sem juntar colunas inteiras).
+        for (let indice = 0; indice < grupos.length - 1; indice += 1) {
+            const primeiro = grupos[indice];
+            const proximo = grupos[indice + 1];
+            const lacuna = proximo[0].left -
+                Math.max(...primeiro.map((s) => s.left + s.width));
+            const proximoTexto = proximo.map((s) => s.texto).join(" ").trim();
+
+            if (
+                lacuna >= 0 &&
+                lacuna <= Math.max(180, linha.fontSize * 12) &&
+                /^\\d{1,3}\\s*[:.]\\s*\\d{1,3}/u.test(proximoTexto)
+            ) {
+                const textoCombinado = primeiro.map((s) => s.texto).join(" ") +
+                    " " + proximoTexto;
+                const referenciasCombinadas =
+                    extrairReferenciasBiblicas(textoCombinado);
+
+                if (referenciasCombinadas.length > 0) {
+                    grupos.splice(indice, 2, [...primeiro, ...proximo]);
+                    indice -= 1;
+                }
+            }
+        }
 
         for (const grupo of grupos) {
             let texto = "";
@@ -135,6 +163,87 @@ export function extrairHotspotsReferenciasPdf(
                     width: Math.max(right - left + 4, 18),
                     height: Math.max(bottom - top + 4, 16),
                 });
+            }
+        }
+    }
+
+    // Alguns PDFs quebram a referência entre duas linhas:
+    // "1 CORÍNTIOS" na primeira e "12:12-27" logo abaixo.
+    // Produz duas áreas clicáveis ligadas à mesma passagem bíblica.
+    const ordenadas = [...linhas].sort((a, b) => a.baseline - b.baseline);
+    const referenciaJaExistente = (
+        referencia: ReferenciaBiblica,
+        x: number,
+        y: number
+    ) => hotspots.some((atual) =>
+        atual.referencia.livro === referencia.livro &&
+        atual.referencia.capitulo === referencia.capitulo &&
+        atual.referencia.versiculoInicial === referencia.versiculoInicial &&
+        atual.referencia.versiculoFinal === referencia.versiculoFinal &&
+        Math.abs(atual.top - y) < 10 &&
+        Math.abs(atual.left - x) < 12
+    );
+
+    for (let i = 0; i < ordenadas.length - 1; i += 1) {
+        const primeira = ordenadas[i];
+        const segunda = ordenadas[i + 1];
+        const distancia = segunda.baseline - primeira.baseline;
+
+        if (
+            distancia <= 0 ||
+            distancia > Math.max(43, primeira.fontSize * 2.2)
+        ) continue;
+
+        const partesA = [...primeira.segmentos].sort((a, b) => a.left - b.left);
+        const partesB = [...segunda.segmentos].sort((a, b) => a.left - b.left);
+
+        // Evita captar qualquer número de outra seção do slide.
+        const candidatosB = partesB.filter((item) =>
+            /^\\s*\\d(?:\\s*\\d){0,2}\\s*[:.]\\s*\\d/u.test(item.texto)
+        );
+
+        for (const fim of candidatosB) {
+            const antes = partesA.filter((item) => {
+                const separacaoX = Math.abs(item.left - fim.left);
+                return separacaoX < Math.max(190, primeira.fontSize * 15);
+            });
+            if (antes.length === 0) continue;
+
+            // Só associa quando o livro é o fim de um grupo (ou uma
+            // linha de referência completa), não em parágrafos longos.
+            const ultimo = antes[antes.length - 1];
+            const livroCandidato = ultimo.texto.trim();
+            const numeroCandidato = fim.texto.trim();
+            if (livroCandidato.length > 55) continue;
+
+            const refs = extrairReferenciasBiblicas(
+                livroCandidato + " " + numeroCandidato
+            );
+            for (const referencia of refs) {
+                if (
+                    referencia.versiculoInicial === null ||
+                    referencia.inicioTexto >= livroCandidato.length ||
+                    referencia.fimTexto <= livroCandidato.length + 1
+                ) continue;
+
+                if (!referenciaJaExistente(referencia, ultimo.left, ultimo.top)) {
+                    hotspots.push({
+                        referencia,
+                        left: Math.max(0, ultimo.left - 2),
+                        top: Math.max(0, ultimo.top - 2),
+                        width: Math.max(ultimo.width + 4, 18),
+                        height: Math.max(ultimo.height + 4, 16),
+                    });
+                }
+                if (!referenciaJaExistente(referencia, fim.left, fim.top)) {
+                    hotspots.push({
+                        referencia,
+                        left: Math.max(0, fim.left - 2),
+                        top: Math.max(0, fim.top - 2),
+                        width: Math.max(fim.width + 4, 18),
+                        height: Math.max(fim.height + 4, 16),
+                    });
+                }
             }
         }
     }
