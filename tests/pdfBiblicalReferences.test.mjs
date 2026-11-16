@@ -149,3 +149,23 @@ test("não cruza colunas distantes e preserva PDF sem texto extraível", () => {
     assert.equal(hotspot.extrairHotspotsReferenciasPdf(itens, viewport, map).length, 0);
     assert.deepEqual(hotspot.extrairHotspotsReferenciasPdf([], viewport, map), []);
 });
+
+
+test("livro acima e capítulo/versos separados em itens PDF na linha seguinte", () => {
+    const itens = [
+        { str: "1 CORÍNTIOS", width: 124, height: 12, transform: [12,0,0,12,24,120] },
+        { str: "1 2", width: 33, height: 12, transform: [12,0,0,12,24,145] },
+        { str: ": 1 2 – 2 7", width: 91, height: 12, transform: [12,0,0,12,59,145] },
+    ];
+    const refs = hotspot.extrairHotspotsReferenciasPdf(
+        itens,
+        { transform: [1,0,0,1,0,0], width: 900, height: 600, scale: 1 },
+        (_viewport, matrix) => matrix
+    );
+    assert.ok(refs.some((r) =>
+        r.referencia.livro === "1 Coríntios" &&
+        r.referencia.capitulo === 12 &&
+        r.referencia.versiculoInicial === 12 &&
+        r.referencia.versiculoFinal === 27
+    ));
+});
