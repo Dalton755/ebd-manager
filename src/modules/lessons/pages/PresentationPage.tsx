@@ -59,6 +59,11 @@ import type {
     ItemTextoReferenciaPdf,
 } from "@/modules/lessons/utils/pdfBibleHotspots";
 
+import {
+    listarReferenciasBiblicasDoTextoPdf,
+    rotuloReferenciaBiblica,
+} from "@/modules/lessons/utils/pdfBiblePageReferences";
+
 import type {
     ReferenciaBiblica,
 } from "@/modules/lessons/utils/bibleReferenceParser";
@@ -293,6 +298,21 @@ export function PresentationPage() {
         referenciasOverlay,
         setReferenciasOverlay,
     ] = useState<ReferenciaOverlay[]>([]);
+
+    const [
+        referenciasDaPagina,
+        setReferenciasDaPagina,
+    ] = useState<ReferenciaBiblica[]>([]);
+
+    const [
+        leituraBiblicaPrincipal,
+        setLeituraBiblicaPrincipal,
+    ] = useState<ReferenciaBiblica | null>(null);
+
+    const [
+        menuBibliaAberto,
+        setMenuBibliaAberto,
+    ] = useState(false);
 
     const [
         editandoConteudoPdf,
@@ -1383,7 +1403,30 @@ const tarefa =
 
 const pdf =
     await tarefa.promise;
-                
+
+                // A leitura principal é retirada do próprio PDF,
+                // não de uma referência fixada em código.
+                // Ela fica disponível mesmo em slides sem versículos escritos.
+                try {
+                    const paginaInicial = await pdf.getPage(1);
+                    const textoInicial = await paginaInicial.getTextContent();
+                    const fragmentos = textoInicial.items
+                        .filter((item) => "str" in item)
+                        .map((item) => "str" in item ? item.str : "");
+                    const referenciasCapa =
+                        listarReferenciasBiblicasDoTextoPdf(fragmentos);
+
+                    if (ativo) {
+                        setLeituraBiblicaPrincipal(referenciasCapa[0] ?? null);
+                    }
+                } catch (erroLeitura) {
+                    console.info(
+                        "[APRESENTAÇÃO] Leitura principal não identificada:",
+                        erroLeitura
+                    );
+                    if (ativo) setLeituraBiblicaPrincipal(null);
+                }
+
                 if (!ativo) {
                     return;
                 }
@@ -2017,6 +2060,24 @@ const pdf =
                     pdfjsLib.Util.transform
                 );
 
+                // A lista é independente dos hotspots e garante acesso
+                // à passagem mesmo se a tipografia impedir um link sobre
+                // o texto do próprio slide.
+                const referenciasTextoPdf = listarReferenciasBiblicasDoTextoPdf(
+                    itensReferenciaPdf.map((item) => item.str)
+                );
+                const todasReferencias = [
+                    ...referenciasTextoPdf,
+                    ...hotspotsPdf.map((item) => item.referencia),
+                ];
+                const referenciasSemRepeticao = todasReferencias.filter(
+                    (ref, index, todas) =>
+                        todas.findIndex((outra) =>
+                            rotuloReferenciaBiblica(outra) ===
+                            rotuloReferenciaBiblica(ref)
+                        ) === index
+                );
+
                 hotspotsPdf.forEach((hotspot, indice) => {
                     const referencia = hotspot.referencia;
                     const versiculos = referencia.versiculoInicial === null
@@ -2186,6 +2247,10 @@ const pdf =
 
                 setReferenciasOverlay(
                     novosOverlays
+                );
+
+                setReferenciasDaPagina(
+                    referenciasSemRepeticao
                 );
 
                 setTextosPdfOverlay(
@@ -2888,6 +2953,71 @@ const pdf =
                     </span>
 
                 )}
+
+                <div className="relative z-50">
+                    <button
+                        type="button"
+                        onClick={() => setMenuBibliaAberto((aberto) => !aberto)}
+                        aria-label="Consultar referências bíblicas"
+                        aria-expanded={menuBibliaAberto}
+                        title="Referências bíblicas deste slide"
+                        className="flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-2.5 py-2 text-sm font-semibold text-white transition hover:bg-white/20"
+                    >
+                        <BookOpenText className="h-5 w-5" />
+                        <span>Bíblia</span>
+                        {referenciasDaPagina.length > 0 && (
+                            <span className="rounded-full bg-blue-500 px-1.5 text-xs">
+                                {referenciasDaPagina.length}
+                            </span>
+                        )}
+                    </button>
+
+                    {menuBibliaAberto && (
+                        <div className="absolute right-0 top-full z-50 mt-2 max-h-[65vh] w-[min(21rem,calc(100vw-1rem))] overflow-y-auto rounded-xl border border-slate-200 bg-white p-3 text-slate-900 shadow-2xl">
+                            <p className="text-sm font-bold">
+                                Referências do slide {paginaAtual}
+                            </p>
+                            {referenciasDaPagina.length ? (
+                                <div className="mt-2 flex flex-col gap-1.5">
+                                    {referenciasDaPagina.map((ref) => (
+                                        <button
+                                            key={rotuloReferenciaBiblica(ref)}
+                                            type="button"
+                                            onClick={() => {
+                                                setMenuBibliaAberto(false);
+                                                void abrirReferenciaBiblica(ref);
+                                            }}
+                                            className="rounded-lg bg-blue-50 px-3 py-2.5 text-left text-sm font-semibold text-blue-900 transition hover:bg-blue-100"
+                                        >
+                                            {rotuloReferenciaBiblica(ref)}
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="mt-2 text-xs text-slate-600">
+                                    Este slide não contém referência bíblica impressa.
+                                </p>
+                            )}
+                            {leituraBiblicaPrincipal && (
+                                <div className="mt-3 border-t border-slate-200 pt-3">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        Leitura principal da aula
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setMenuBibliaAberto(false);
+                                            void abrirReferenciaBiblica(leituraBiblicaPrincipal);
+                                        }}
+                                        className="mt-2 w-full rounded-lg bg-slate-900 px-3 py-2.5 text-left text-sm font-semibold text-white transition hover:bg-slate-800"
+                                    >
+                                        {rotuloReferenciaBiblica(leituraBiblicaPrincipal)}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
 
                 <button
                     type="button"
