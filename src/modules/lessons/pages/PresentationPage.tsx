@@ -31,10 +31,11 @@ import {
     useAuth,
 } from "@/modules/auth/hooks/useAuth";
 
-import * as pdfjsLib from "pdfjs-dist";
+// Compatibilidade com Android/WebView que ainda não implementam Uint8Array.toHex.
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
 import pdfWorker from
-    "pdfjs-dist/build/pdf.worker.min.mjs?url";
+    "pdfjs-dist/legacy/build/pdf.worker.min.mjs?url";
 
 import {
     PresentationService,
